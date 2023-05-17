@@ -7,10 +7,10 @@ vpython.scene.height = 650
 vpython.scene.range = 1
 
 #constants (don't ask me when k is so low, I will change it later!!!)
-K = 9E-9
+K = 9E-7
 
 # store all spawned charges
-allCharges = []
+allChargedObjs = []
 
 # Class Charge
 class ChargedObj:
@@ -20,7 +20,6 @@ class ChargedObj:
         self.mass = mass
         self.pos = spawnPos
         self.vel = spawnVel
-        self.acc = vpython.vector(0, 0, 0)
         # spheres for now
         if (charge == -1):
             self.display = vpython.sphere(pos=spawnPos, radius=0.05, color = vpython.color.black)
@@ -30,23 +29,29 @@ class ChargedObj:
     def update(self):
         # calculate force from  every other charge
         force = vpython.vector(0, 0, 0)
-        for charge in allCharges:
-            if (charge != self and vpython.mag(self.pos - charge.pos) > 2 * self.display.radius):
-                force += calculateForce(self, charge)
+        for chargedObj in allChargedObjs:
+            if (chargedObj != self):
+                if (vpython.mag(self.pos - chargedObj.pos) > 2 * self.display.radius):
+                    force += calculateForce(self, chargedObj)
         # apply force
-        self.acc += force / self.mass
-        self.vel += self.acc
+        self.vel += force / self.mass
         self.pos += self.vel
         self.display.pos = self.pos
+    
+    def checkCollision(self):
+        for chargedObj in allChargedObjs:
+            if (vpython.mag(self.pos - chargedObj.pos) <= 2 * self.display.radius):
+                self.vel = vpython.vector(0, 0, 0)
+                chargedObj.vel = vpython.vector(0, 0, 0)
 
 # Coulomb's Law
 def calculateForce(q1, q2):
-    r12 = q2.pos - q1.pos
-    return -vpython.norm(r12) * K * q1.charge * q2.charge / (vpython.mag(r12)**2)
+    r12 = q1.pos - q2.pos
+    return vpython.norm(r12) * K * q1.charge * q2.charge / (vpython.mag(r12)**2)
 
 # Click make a charge
 def makeCharge():
-    allCharges.append(ChargedObj(1, spawnCharge, vpython.scene.mouse.project(normal=vpython.vector(0,0, 1)), vpython.vector(0, 0, 0)))
+    allChargedObjs.append(ChargedObj(1, spawnCharge, vpython.scene.mouse.project(normal=vpython.vector(0,0, 1)), vpython.vector(0, 0, 0)))
 
 vpython.scene.bind('click', makeCharge)
 
@@ -65,7 +70,11 @@ wt = vpython.wtext(text='Current Charge: negative')
 
 vpython.button(text="Change Charge", bind=ChangeChargeButton)
 
+# running
 while True:
     vpython.rate(200)
-    for charge in allCharges:
+    for charge in allChargedObjs:
         charge.update()
+    # for charge in allChargedObjs:
+    #     charge.checkCollision()
+        
