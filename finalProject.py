@@ -1,42 +1,59 @@
 import vpython
 
+# Set scene
 vpython.scene.background = vpython.color.white
 vpython.scene.width = 1000
 vpython.scene.height = 650
 vpython.scene.range = 1
 
-K = 0.005
+#constants (don't ask me when k is so low, I will change it later!!!)
+K = 9E-9
 
+# store all spawned charges
 allCharges = []
 
-class Charge:
-    def __init__(self, charge, spawnPos, spawnColor):
+# Class Charge
+class ChargedObj:
+    def __init__(self, mass, charge, spawnPos, spawnVel):
+        # variables
         self.charge = charge
-        self.sphere = vpython.sphere(pos=spawnPos, radius=0.05, color = spawnColor)
+        self.mass = mass
+        self.pos = spawnPos
+        self.vel = spawnVel
+        self.acc = vpython.vector(0, 0, 0)
+        # spheres for now
+        if (charge == -1):
+            self.display = vpython.sphere(pos=spawnPos, radius=0.05, color = vpython.color.black)
+        if (charge == 1):
+            self.display = vpython.sphere(pos=spawnPos, radius=0.05, color = vpython.color.blue)
     
     def update(self):
+        # calculate force from  every other charge
         force = vpython.vector(0, 0, 0)
         for charge in allCharges:
-            if (charge != self and vpython.mag(self.sphere.pos - charge.sphere.pos) > 2 * self.sphere.radius):
+            if (charge != self and vpython.mag(self.pos - charge.pos) > 2 * self.display.radius):
                 force += calculateForce(self, charge)
-        self.sphere.pos += force
+        # apply force
+        self.acc += force / self.mass
+        self.vel += self.acc
+        self.pos += self.vel
+        self.display.pos = self.pos
 
+# Coulomb's Law
 def calculateForce(q1, q2):
-    r12 = q2.sphere.pos - q1.sphere.pos
+    r12 = q2.pos - q1.pos
     return -vpython.norm(r12) * K * q1.charge * q2.charge / (vpython.mag(r12)**2)
 
-allCharges.append(Charge(1, vpython.vector(1, 0, 0), vpython.color.black))
+# Click make a charge
+def makeCharge():
+    allCharges.append(ChargedObj(1, spawnCharge, vpython.scene.mouse.project(normal=vpython.vector(0,0, 1)), vpython.vector(0, 0, 0)))
 
-def makeSphere():
-    print(vpython.scene.mouse.project(normal=vpython.vec(0,0,1)));
-    allCharges.append(Charge(spawnCharge, vpython.scene.mouse.project(normal=vpython.vec(0,0, 1)), vpython.color.blue))
+vpython.scene.bind('click', makeCharge)
 
-vpython.scene.bind('click', makeSphere)
-
-
+# choose charge
 spawnCharge = -1
 
-def Runbutton():
+def ChangeChargeButton():
     global spawnCharge, wt
     spawnCharge = -1 * spawnCharge
     if spawnCharge == -1:
@@ -44,9 +61,9 @@ def Runbutton():
     else:
         wt.text = 'Current Charge: positve'
 
-vpython.button(text="Change Charge", bind=Runbutton)
-
 wt = vpython.wtext(text='Current Charge: negative')
+
+vpython.button(text="Change Charge", bind=ChangeChargeButton)
 
 while True:
     vpython.rate(200)
