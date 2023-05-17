@@ -29,9 +29,24 @@ allCharges.append(Charge(1, vpython.vector(1, 0, 0), vpython.color.black))
 
 def makeSphere():
     print(vpython.scene.mouse.project(normal=vpython.vec(0,0,1)));
-    allCharges.append(Charge(-1, vpython.scene.mouse.project(normal=vpython.vec(0,0, 1)), vpython.color.blue))
+    allCharges.append(Charge(spawnCharge, vpython.scene.mouse.project(normal=vpython.vec(0,0, 1)), vpython.color.blue))
 
 vpython.scene.bind('click', makeSphere)
+
+
+spawnCharge = -1
+
+def Runbutton():
+    global spawnCharge, wt
+    spawnCharge = -1 * spawnCharge
+    if spawnCharge == -1:
+        wt.text = 'Current Charge: negative'
+    else:
+        wt.text = 'Current Charge: positve'
+
+vpython.button(text="Change Charge", bind=Runbutton)
+
+wt = vpython.wtext(text='Current Charge: negative')
 
 while True:
     vpython.rate(200)
