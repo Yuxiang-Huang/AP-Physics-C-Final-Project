@@ -26,7 +26,7 @@ class ChargedObj:
         if (charge == 1):
             self.display = vpython.sphere(pos=spawnPos, radius=0.05, color = vpython.color.blue)
     
-    def update(self):
+    def applyForce(self):
         # calculate force from  every other charge
         force = vpython.vector(0, 0, 0)
         for chargedObj in allChargedObjs:
@@ -35,6 +35,8 @@ class ChargedObj:
                     force += calculateForce(self, chargedObj)
         # apply force
         self.vel += force / self.mass
+
+    def applyVel(self):
         self.pos += self.vel
         self.display.pos = self.pos
     
@@ -51,7 +53,7 @@ def calculateForce(q1, q2):
 
 # Click make a charge
 def makeCharge():
-    allChargedObjs.append(ChargedObj(1, spawnCharge, vpython.scene.mouse.project(normal=vpython.vector(0,0, 1)), vpython.vector(0, 0, 0)))
+    allChargedObjs.append(ChargedObj(1, spawnCharge, vpython.scene.mouse.project(normal=vpython.vector(0, 0, 1)), vpython.vector(0, 0, 0)))
 
 vpython.scene.bind('click', makeCharge)
 
@@ -72,9 +74,11 @@ vpython.button(text="Change Charge", bind=ChangeChargeButton)
 
 # running
 while True:
-    vpython.rate(200)
-    for charge in allChargedObjs:
-        charge.update()
+    vpython.rate(1000)
+    for chargedObj in allChargedObjs:
+        chargedObj.applyForce()
+    for chargedObj in allChargedObjs:
+        chargedObj.applyVel()
     # for charge in allChargedObjs:
     #     charge.checkCollision()
         
