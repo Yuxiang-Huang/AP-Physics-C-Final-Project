@@ -53,13 +53,37 @@ def calculateForce(q1, q2):
     r12 = q1.pos - q2.pos
     return vpython.norm(r12) * K * q1.charge * q2.charge / (vpython.mag(r12)**2)
 
-# Click make a charge
+####################################################################################################
+
+# Clicks
+def clicked():
+    if (mode == "Spawn"):
+        makeCharge()
+
 def makeCharge():
     allChargedObjs.append(ChargedObj(1, spawnCharge, vpython.scene.mouse.project(normal=vpython.vector(0, 0, 1)), vpython.vector(0, 0, 0)))
 
-vpython.scene.bind('click', makeCharge)
+vpython.scene.bind('click', clicked)
 
-# choose charge
+####################################################################################################
+
+# Button and Sliders
+
+# mode button
+mode = "Spawn"
+
+def changeModeButton():
+    global mode, modeButton
+    if mode == "Spawn":
+        mode = "Select"
+    else:
+        mode = "Spawn"
+    modeButton.text = "Mode: " + mode
+
+vpython.scene.append_to_caption("   ")
+modeButton = vpython.button(text="Mode: Spawn", bind=changeModeButton)
+
+# spawn slider
 spawnCharge = -1
 
 def spawnChargeShift():
@@ -70,19 +94,16 @@ def spawnChargeShift():
 s = vpython.slider(bind = spawnChargeShift, min = -5, max = 5, value = -1)
 spawnChargeText = vpython.wtext(text = 'Charge:'+'{:1.2f}'.format(s.value))
 
-# running
+# playing button
 playing = False
-
-def play():
-    playing = not playing
 
 def changePlayButton():
     global playing, playButton
     playing = not playing
     if playing:
-        playButton.text = 'Stop'
+        playButton.text = "Stop"
     else:
-        playButton.text = 'Play'
+        playButton.text = "Play"
 
 vpython.scene.append_to_caption("   ")
 playButton = vpython.button(text="Play", bind=changePlayButton)
