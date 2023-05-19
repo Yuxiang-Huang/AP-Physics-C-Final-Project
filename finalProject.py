@@ -8,6 +8,8 @@ vpython.scene.range = 1
 
 #constants (don't ask me when k is so low, I will change it later!!!)
 K = 9E-7
+# I will figure it out so I don't need to divide by 1000 later !!!
+vectorAxisFactor = 500
 
 # store all spawned charges
 allChargedObjs = []
@@ -97,7 +99,7 @@ def on_mouse_up():
     # apply force vector if necessary
     if (chargedObjToDrag != None):
         if (chargedObjToDrag.forceVec.axis != vpython.vec(0, 0, 0)):
-            chargedObjToDrag.vel += chargedObjToDrag.forceVec.axis / 1000 / chargedObjToDrag.mass 
+            chargedObjToDrag.vel += chargedObjToDrag.forceVec.axis / vectorAxisFactor / chargedObjToDrag.mass 
             chargedObjToDrag.forceVec.axis = vpython.vec(0, 0, 0)
     chargedObjToDrag = None
 
@@ -107,8 +109,8 @@ def on_mouse_move():
         if chargedObjToDrag != None:
             chargedObjToDrag.pos = getMousePos()
             chargedObjToDrag.display.pos = chargedObjToDrag.pos
+            chargedObjToDrag.velVec.pos = chargedObjToDrag.pos
     else:
-        # I will figure it out so I don't need to divide by 1000 later !!!
         if chargedObjToDrag != None:
             # force vector
             if (playing):
@@ -118,7 +120,7 @@ def on_mouse_move():
             else:
                 chargedObjToDrag.velVec.pos = chargedObjToDrag.pos
                 chargedObjToDrag.velVec.axis = getMousePos() - chargedObjToDrag.pos
-                chargedObjToDrag.vel = chargedObjToDrag.velVec.axis / 1000
+                chargedObjToDrag.vel = chargedObjToDrag.velVec.axis / vectorAxisFactor
 
 # Bind event handlers to the box
 vpython.scene.bind('mousedown', on_mouse_down)
@@ -175,8 +177,13 @@ def changePlay():
     else:
         playButton.text = "Play"
     #set velocity vector visibilities
-    for co in allChargedObjs:
-        co.velVec.axis = vpython.vec(0, 0, 0)
+    if (playing):
+        for co in allChargedObjs:
+            co.velVec.axis = vpython.vec(0, 0, 0)
+    else:
+        for co in allChargedObjs:
+            co.velVec.pos = co.pos
+            co.velVec.axis = co.vel * vectorAxisFactor
 
 vpython.scene.append_to_caption("   ")
 playButton = vpython.button(text="Play", bind=changePlay)

@@ -8,6 +8,8 @@ scene.range = 1
 
 #constants (don't ask me when k is so low, I will change it later!!!)
 K = 9E-7
+# I will figure it out so I don't need to divide by 1000 later !!!
+vectorAxisFactor = 500
 
 # store all spawned charges
 allChargedObjs = []
@@ -20,6 +22,7 @@ class ChargedObj:
         self.mass = mass
         self.pos = spawnPos
         self.vel = spawnVel
+        # Displays
         # spheres for now
         if (charge < 0):
             self.display = sphere(pos=spawnPos, radius=0.05, color = color.red)
@@ -27,10 +30,12 @@ class ChargedObj:
             self.display = sphere(pos=spawnPos, radius=0.05, color = color.blue)
         if (charge == 0):
             self.display = sphere(pos=spawnPos, radius=0.05, color = color.black)
+        self.velVec = arrow(axis = vec(0, 0, 0), color = self.display.color)
+        self.forceVec = arrow(axis = vec(0, 0, 0), color = self.display.color)
     
     def applyForce(self):
         # calculate force from  every other charge
-        force = vector(0, 0, 0)
+        force = vec(0, 0, 0)
         for chargedObj in allChargedObjs:
             if (chargedObj != self):
                 if (mag(self.pos - chargedObj.pos) > 2 * self.display.radius):
@@ -45,8 +50,8 @@ class ChargedObj:
     def checkCollision(self):
         for chargedObj in allChargedObjs:
             if (mag(self.pos - chargedObj.pos) <= 2 * self.display.radius):
-                self.vel = vector(0, 0, 0)
-                chargedObj.vel = vector(0, 0, 0)
+                self.vel = vec(0, 0, 0)
+                chargedObj.vel = vec(0, 0, 0)
 
 # Coulomb's Law
 def calculateForce(q1, q2):
@@ -56,26 +61,31 @@ def calculateForce(q1, q2):
 ####################################################################################################
 
 # Clicks
+chargedObjSelected = undefined
+
 def clicked():
     if (clickMode == "Spawn"):
         makeChargeObj()
-    # elif (clickMode == "Select"):
-    #     selectCharge()
+    elif (clickMode == "Select"):
+        selectCharge()
 
 scene.bind('click', clicked)
 
 def makeChargeObj():
-    allChargedObjs.append(ChargedObj(1, spawnCharge, getMousePos(), vector(0, 0, 0)))
+    allChargedObjs.append(ChargedObj(1, spawnCharge, getMousePos(), vec(0, 0, 0)))
+
+def selectCharge():
+    global chargedObjSelected
+    chargedObjSelected = chargedObjOnMouse()
 
 def chargedObjOnMouse():
     mousePos = getMousePos()
     for chargedObj in allChargedObjs:
         if (mag(mousePos - chargedObj.pos) <= chargedObj.display.radius):
-            # chargedObj.display.color = color.green
             return chargedObj
         
 def getMousePos():
-    return scene.mouse.project(normal=vector(0, 0, 1))
+    return scene.mouse.project(normal=vec(0, 0, 1))
 
 # dragging
 chargedObjToDrag = undefined
@@ -86,17 +96,35 @@ def on_mouse_down():
 
 def on_mouse_up():
     global chargedObjToDrag
+    # apply force vector if necessary
+    if (chargedObjToDrag != undefined):
+        if (chargedObjToDrag.forceVec.axis != vec(0, 0, 0)):
+            chargedObjToDrag.vel += chargedObjToDrag.forceVec.axis / vectorAxisFactor / chargedObjToDrag.mass 
+            chargedObjToDrag.forceVec.axis = vec(0, 0, 0)
     chargedObjToDrag = undefined
 
 def on_mouse_move():
-    if chargedObjToDrag != undefined:
-        chargedObjToDrag.pos = getMousePos()
-        chargedObjToDrag.display.pos = chargedObjToDrag.pos
+    if (clickMode == "Spawn"):
+        # set position
+        if chargedObjToDrag != undefined:
+            chargedObjToDrag.pos = getMousePos()
+            chargedObjToDrag.display.pos = chargedObjToDrag.pos
+            chargedObjToDrag.velVec.pos = chargedObjToDrag.pos
+    else:
+        if chargedObjToDrag != undefined:
+            # force vector
+            if (playing):
+                chargedObjToDrag.forceVec.pos = chargedObjToDrag.pos
+                chargedObjToDrag.forceVec.axis = getMousePos() - chargedObjToDrag.pos 
+            # velocity vector
+            else:
+                chargedObjToDrag.velVec.pos = chargedObjToDrag.pos
+                chargedObjToDrag.velVec.axis = getMousePos() - chargedObjToDrag.pos
+                chargedObjToDrag.vel = chargedObjToDrag.velVec.axis / vectorAxisFactor
 
 # Bind event handlers to the box
 scene.bind('mousedown', on_mouse_down)
 scene.bind('mouseup', on_mouse_up)
-scene.bind('mousemove', on_mouse_move)
 
 ####################################################################################################
 
@@ -105,7 +133,7 @@ scene.bind('mousemove', on_mouse_move)
 # mode button
 clickMode = "Spawn"
 
-def changeClickModeButton():
+def changeClickMode():
     global clickMode, clickModeButton
     if clickMode == "Spawn":
         clickMode = "Select"
@@ -114,7 +142,7 @@ def changeClickModeButton():
     clickModeButton.text = "Mode: " + clickMode
 
 scene.append_to_caption("   ")
-clickModeButton = button(text="Mode: Spawn", bind=changeClickModeButton)
+clickModeButton = button(text="Mode: Spawn", bind=changeClickMode)
 
 # spawn slider
 spawnCharge = -1
@@ -127,19 +155,38 @@ def spawnChargeShift():
 s = slider(bind = spawnChargeShift, min = -5, max = 5, value = -1)
 spawnChargeText = wtext(text = 'Charge:'+'{:1.2f}'.format(s.value))
 
+# delete button
+def deleteChargedObj():
+    if (chargedObjSelected != undefined):
+        chargedObjSelected.display.visible = False
+        chargedObjSelected.velVec.visible = False
+        chargedObjSelected.forceVec.visible = False
+        allChargedObjs.remove(chargedObjSelected)
+
+scene.append_to_caption("   ")
+deleteButton = button(text="Delete", bind=deleteChargedObj)
+
 # playing button
 playing = False
 
-def changePlayButton():
+def changePlay():
     global playing, playButton
     playing = not playing
     if playing:
         playButton.text = "Stop"
     else:
         playButton.text = "Play"
+    #set velocity vector visibilities
+    if (playing):
+        for co in allChargedObjs:
+            co.velVec.axis = vec(0, 0, 0)
+    else:
+        for co in allChargedObjs:
+            co.velVec.pos = co.pos
+            co.velVec.axis = co.vel * vectorAxisFactor
 
 scene.append_to_caption("   ")
-playButton = button(text="Play", bind=changePlayButton)
+playButton = button(text="Play", bind=changePlay)
 
 while True:
     rate(1000)
@@ -150,4 +197,7 @@ while True:
             chargedObj.applyVel()
     # for charge in allChargedObjs:
     #     charge.checkCollision()
+
+    # need to call mouse move any frame since for force vector mouse could have been not moving
+    on_mouse_move()
         
