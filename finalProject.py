@@ -28,11 +28,12 @@ class ChargedObj:
             self.display = vpython.sphere(pos=spawnPos, radius=0.05, color = vpython.color.blue)
         if (charge == 0):
             self.display = vpython.sphere(pos=spawnPos, radius=0.05, color = vpython.color.black)
-        self.velVec = vpython.arrow(axis = vpython.vector(0, 0, 0), color = self.display.color)
+        self.velVec = vpython.arrow(axis = vpython.vec(0, 0, 0), color = self.display.color)
+        self.forceVec = vpython.arrow(axis = vpython.vec(0, 0, 0), color = self.display.color)
     
     def applyForce(self):
         # calculate force from  every other charge
-        force = vpython.vector(0, 0, 0)
+        force = vpython.vec(0, 0, 0)
         for chargedObj in allChargedObjs:
             if (chargedObj != self):
                 if (vpython.mag(self.pos - chargedObj.pos) > 2 * self.display.radius):
@@ -47,8 +48,8 @@ class ChargedObj:
     def checkCollision(self):
         for chargedObj in allChargedObjs:
             if (vpython.mag(self.pos - chargedObj.pos) <= 2 * self.display.radius):
-                self.vel = vpython.vector(0, 0, 0)
-                chargedObj.vel = vpython.vector(0, 0, 0)
+                self.vel = vpython.vec(0, 0, 0)
+                chargedObj.vel = vpython.vec(0, 0, 0)
 
 # Coulomb's Law
 def calculateForce(q1, q2):
@@ -67,7 +68,7 @@ def clicked():
 vpython.scene.bind('click', clicked)
 
 def makeChargeObj():
-    allChargedObjs.append(ChargedObj(1, spawnCharge, getMousePos(), vpython.vector(0, 0, 0)))
+    allChargedObjs.append(ChargedObj(1, spawnCharge, getMousePos(), vpython.vec(0, 0, 0)))
 
 def chargedObjOnMouse():
     mousePos = getMousePos()
@@ -76,7 +77,7 @@ def chargedObjOnMouse():
             return chargedObj
         
 def getMousePos():
-    return vpython.scene.mouse.project(normal=vpython.vector(0, 0, 1))
+    return vpython.scene.mouse.project(normal=vpython.vec(0, 0, 1))
 
 # dragging
 chargedObjToDrag = None
@@ -87,23 +88,35 @@ def on_mouse_down():
 
 def on_mouse_up():
     global chargedObjToDrag
+    # apply force vector if necessary
+    if (chargedObjToDrag != None):
+        if (chargedObjToDrag.forceVec.axis != vpython.vec(0, 0, 0)):
+            chargedObjToDrag.vel += chargedObjToDrag.forceVec.axis / 1000 / chargedObjToDrag.mass 
+            chargedObjToDrag.forceVec.axis = vpython.vec(0, 0, 0)
     chargedObjToDrag = None
 
 def on_mouse_move():
-    # if (clickMode == "Spawn"):
-    #     if chargedObjToDrag != None:
-    #         chargedObjToDrag.pos = getMousePos()
-    #         chargedObjToDrag.display.pos = chargedObjToDrag.pos
-    # else:
-    if chargedObjToDrag != None:
-        chargedObjToDrag.velVec.pos = chargedObjToDrag.pos
-        chargedObjToDrag.velVec.axis = getMousePos() - chargedObjToDrag.pos
-        chargedObjToDrag.display.vel = chargedObjToDrag.velVec.axis
+    if (clickMode == "Spawn"):
+        # set position
+        if chargedObjToDrag != None:
+            chargedObjToDrag.pos = getMousePos()
+            chargedObjToDrag.display.pos = chargedObjToDrag.pos
+    else:
+        # I will figure it out so I don't need to divide by 1000 later !!!
+        if chargedObjToDrag != None:
+            # force vector
+            if (playing):
+                chargedObjToDrag.forceVec.pos = chargedObjToDrag.pos
+                chargedObjToDrag.forceVec.axis = getMousePos() - chargedObjToDrag.pos 
+            # velocity vector
+            else:
+                chargedObjToDrag.velVec.pos = chargedObjToDrag.pos
+                chargedObjToDrag.velVec.axis = getMousePos() - chargedObjToDrag.pos
+                chargedObjToDrag.vel = chargedObjToDrag.velVec.axis / 1000
 
 # Bind event handlers to the box
 vpython.scene.bind('mousedown', on_mouse_down)
 vpython.scene.bind('mouseup', on_mouse_up)
-vpython.scene.bind('mousemove', on_mouse_move)
 
 ####################################################################################################
 
@@ -144,6 +157,9 @@ def changePlayButton():
         playButton.text = "Stop"
     else:
         playButton.text = "Play"
+    #set velocity vector visibilities
+    for co in allChargedObjs:
+        co.velVec.axis = vpython.vec(0, 0, 0)
 
 vpython.scene.append_to_caption("   ")
 playButton = vpython.button(text="Play", bind=changePlayButton)
@@ -157,4 +173,7 @@ while True:
             chargedObj.applyVel()
     # for charge in allChargedObjs:
     #     charge.checkCollision()
+
+    # need to call mouse move any frame since for force vector mouse could have been not moving
+    on_mouse_move()
         
