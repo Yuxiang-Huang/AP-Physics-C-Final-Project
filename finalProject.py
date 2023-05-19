@@ -20,6 +20,7 @@ class ChargedObj:
         self.mass = mass
         self.pos = spawnPos
         self.vel = spawnVel
+        # Displays
         # spheres for now
         if (charge < 0):
             self.display = vpython.sphere(pos=spawnPos, radius=0.05, color = vpython.color.red)
@@ -27,6 +28,7 @@ class ChargedObj:
             self.display = vpython.sphere(pos=spawnPos, radius=0.05, color = vpython.color.blue)
         if (charge == 0):
             self.display = vpython.sphere(pos=spawnPos, radius=0.05, color = vpython.color.black)
+        self.velVec = vpython.arrow(axis = vpython.vector(0, 0, 0), color = self.display.color)
     
     def applyForce(self):
         # calculate force from  every other charge
@@ -71,7 +73,6 @@ def chargedObjOnMouse():
     mousePos = getMousePos()
     for chargedObj in allChargedObjs:
         if (vpython.mag(mousePos - chargedObj.pos) <= chargedObj.display.radius):
-            # chargedObj.display.color = vpython.color.green
             return chargedObj
         
 def getMousePos():
@@ -89,9 +90,15 @@ def on_mouse_up():
     chargedObjToDrag = None
 
 def on_mouse_move():
+    # if (clickMode == "Spawn"):
+    #     if chargedObjToDrag != None:
+    #         chargedObjToDrag.pos = getMousePos()
+    #         chargedObjToDrag.display.pos = chargedObjToDrag.pos
+    # else:
     if chargedObjToDrag != None:
-        chargedObjToDrag.pos = getMousePos()
-        chargedObjToDrag.display.pos = chargedObjToDrag.pos
+        chargedObjToDrag.velVec.pos = chargedObjToDrag.pos
+        chargedObjToDrag.velVec.axis = getMousePos() - chargedObjToDrag.pos
+        chargedObjToDrag.display.vel = chargedObjToDrag.velVec.axis
 
 # Bind event handlers to the box
 vpython.scene.bind('mousedown', on_mouse_down)
