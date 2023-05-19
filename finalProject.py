@@ -59,16 +59,22 @@ def calculateForce(q1, q2):
 ####################################################################################################
 
 # Clicks
+chargedObjSelected = None
+
 def clicked():
     if (clickMode == "Spawn"):
         makeChargeObj()
-    # elif (clickMode == "Select"):
-    #     selectCharge()
+    elif (clickMode == "Select"):
+        selectCharge()
 
 vpython.scene.bind('click', clicked)
 
 def makeChargeObj():
     allChargedObjs.append(ChargedObj(1, spawnCharge, getMousePos(), vpython.vec(0, 0, 0)))
+
+def selectCharge():
+    global chargedObjSelected
+    chargedObjSelected = chargedObjOnMouse()
 
 def chargedObjOnMouse():
     mousePos = getMousePos()
@@ -125,7 +131,7 @@ vpython.scene.bind('mouseup', on_mouse_up)
 # mode button
 clickMode = "Spawn"
 
-def changeClickModeButton():
+def changeClickMode():
     global clickMode, clickModeButton
     if clickMode == "Spawn":
         clickMode = "Select"
@@ -134,7 +140,7 @@ def changeClickModeButton():
     clickModeButton.text = "Mode: " + clickMode
 
 vpython.scene.append_to_caption("   ")
-clickModeButton = vpython.button(text="Mode: Spawn", bind=changeClickModeButton)
+clickModeButton = vpython.button(text="Mode: Spawn", bind=changeClickMode)
 
 # spawn slider
 spawnCharge = -1
@@ -147,10 +153,21 @@ def spawnChargeShift():
 s = vpython.slider(bind = spawnChargeShift, min = -5, max = 5, value = -1)
 spawnChargeText = vpython.wtext(text = 'Charge:'+'{:1.2f}'.format(s.value))
 
+# delete button
+def deleteChargedObj():
+    if (chargedObjSelected != None):
+        chargedObjSelected.display.visible = False
+        chargedObjSelected.velVec.visible = False
+        chargedObjSelected.forceVec.visible = False
+        allChargedObjs.remove(chargedObjSelected)
+
+vpython.scene.append_to_caption("   ")
+deleteButton = vpython.button(text="Delete", bind=deleteChargedObj)
+
 # playing button
 playing = False
 
-def changePlayButton():
+def changePlay():
     global playing, playButton
     playing = not playing
     if playing:
@@ -162,7 +179,7 @@ def changePlayButton():
         co.velVec.axis = vpython.vec(0, 0, 0)
 
 vpython.scene.append_to_caption("   ")
-playButton = vpython.button(text="Play", bind=changePlayButton)
+playButton = vpython.button(text="Play", bind=changePlay)
 
 while True:
     vpython.rate(1000)
