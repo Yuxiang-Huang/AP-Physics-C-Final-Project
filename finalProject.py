@@ -59,24 +59,41 @@ def makeCharge():
 
 vpython.scene.bind('click', makeCharge)
 
+# choose charge
 spawnCharge = -1
 
-# choose charge
 def spawnChargeShift():
-    global spawnCharge, wt
+    global spawnCharge, spawnChargeText
     spawnCharge = s.value
-    wt.text = 'Charge:'+'{:1.2f}'.format(s.value)
+    spawnChargeText.text = 'Charge:'+'{:1.2f}'.format(s.value)
 
 s = vpython.slider(bind = spawnChargeShift, min = -5, max = 5, value = -1)
-wt = vpython.wtext(text = 'Charge:'+'{:1.2f}'.format(s.value))
+spawnChargeText = vpython.wtext(text = 'Charge:'+'{:1.2f}'.format(s.value))
 
 # running
+playing = False
+
+def play():
+    playing = not playing
+
+def changePlayButton():
+    global playing, playButton
+    playing = not playing
+    if playing:
+        playButton.text = 'Stop'
+    else:
+        playButton.text = 'Play'
+
+vpython.scene.append_to_caption("   ")
+playButton = vpython.button(text="Play", bind=changePlayButton)
+
 while True:
     vpython.rate(1000)
-    for chargedObj in allChargedObjs:
-        chargedObj.applyForce()
-    for chargedObj in allChargedObjs:
-        chargedObj.applyVel()
+    if (playing):
+        for chargedObj in allChargedObjs:
+            chargedObj.applyForce()
+        for chargedObj in allChargedObjs:
+            chargedObj.applyVel()
     # for charge in allChargedObjs:
     #     charge.checkCollision()
         
