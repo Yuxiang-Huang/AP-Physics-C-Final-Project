@@ -15,7 +15,7 @@ allChargedObjs = []
 # Class Charge
 class ChargedObj:
     def __init__(self, mass, charge, spawnPos, spawnVel):
-        # variables
+        # physics variables
         self.charge = charge
         self.mass = mass
         self.pos = spawnPos
@@ -57,31 +57,64 @@ def calculateForce(q1, q2):
 
 # Clicks
 def clicked():
-    if (mode == "Spawn"):
-        makeCharge()
-
-def makeCharge():
-    allChargedObjs.append(ChargedObj(1, spawnCharge, vpython.scene.mouse.project(normal=vpython.vector(0, 0, 1)), vpython.vector(0, 0, 0)))
+    if (clickMode == "Spawn"):
+        makeChargeObj()
+    # elif (clickMode == "Select"):
+    #     selectCharge()
 
 vpython.scene.bind('click', clicked)
+
+def makeChargeObj():
+    allChargedObjs.append(ChargedObj(1, spawnCharge, getMousePos(), vpython.vector(0, 0, 0)))
+
+def chargedObjOnMouse():
+    mousePos = getMousePos()
+    for chargedObj in allChargedObjs:
+        if (vpython.mag(mousePos - chargedObj.pos) <= chargedObj.display.radius):
+            # chargedObj.display.color = vpython.color.green
+            return chargedObj
+        
+def getMousePos():
+    return vpython.scene.mouse.project(normal=vpython.vector(0, 0, 1))
+
+# dragging
+chargedObjToDrag = None
+
+def on_mouse_down():
+    global chargedObjToDrag
+    chargedObjToDrag = chargedObjOnMouse()
+
+def on_mouse_up():
+    global chargedObjToDrag
+    chargedObjToDrag = None
+
+def on_mouse_move():
+    if chargedObjToDrag != None:
+        chargedObjToDrag.pos = getMousePos()
+        chargedObjToDrag.display.pos = chargedObjToDrag.pos
+
+# Bind event handlers to the box
+vpython.scene.bind('mousedown', on_mouse_down)
+vpython.scene.bind('mouseup', on_mouse_up)
+vpython.scene.bind('mousemove', on_mouse_move)
 
 ####################################################################################################
 
 # Button and Sliders
 
 # mode button
-mode = "Spawn"
+clickMode = "Spawn"
 
-def changeModeButton():
-    global mode, modeButton
-    if mode == "Spawn":
-        mode = "Select"
+def changeClickModeButton():
+    global clickMode, clickModeButton
+    if clickMode == "Spawn":
+        clickMode = "Select"
     else:
-        mode = "Spawn"
-    modeButton.text = "Mode: " + mode
+        clickMode = "Spawn"
+    clickModeButton.text = "Mode: " + clickMode
 
 vpython.scene.append_to_caption("   ")
-modeButton = vpython.button(text="Mode: Spawn", bind=changeModeButton)
+clickModeButton = vpython.button(text="Mode: Spawn", bind=changeClickModeButton)
 
 # spawn slider
 spawnCharge = -1
