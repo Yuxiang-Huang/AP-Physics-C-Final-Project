@@ -21,10 +21,12 @@ class ChargedObj:
         self.pos = spawnPos
         self.vel = spawnVel
         # spheres for now
-        if (charge == -1):
-            self.display = vpython.sphere(pos=spawnPos, radius=0.05, color = vpython.color.black)
-        if (charge == 1):
+        if (charge < 0):
+            self.display = vpython.sphere(pos=spawnPos, radius=0.05, color = vpython.color.red)
+        if (charge > 0):
             self.display = vpython.sphere(pos=spawnPos, radius=0.05, color = vpython.color.blue)
+        if (charge == 0):
+            self.display = vpython.sphere(pos=spawnPos, radius=0.05, color = vpython.color.black)
     
     def applyForce(self):
         # calculate force from  every other charge
@@ -57,20 +59,16 @@ def makeCharge():
 
 vpython.scene.bind('click', makeCharge)
 
-# choose charge
 spawnCharge = -1
 
-def ChangeChargeButton():
+# choose charge
+def spawnChargeShift():
     global spawnCharge, wt
-    spawnCharge = -1 * spawnCharge
-    if spawnCharge == -1:
-        wt.text = 'Current Charge: negative'
-    else:
-        wt.text = 'Current Charge: positve'
+    spawnCharge = s.value
+    wt.text = 'Charge:'+'{:1.2f}'.format(s.value)
 
-wt = vpython.wtext(text='Current Charge: negative')
-
-vpython.button(text="Change Charge", bind=ChangeChargeButton)
+s = vpython.slider(bind = spawnChargeShift, min = -5, max = 5, value = -1)
+wt = vpython.wtext(text = 'Charge:'+'{:1.2f}'.format(s.value))
 
 # running
 while True:
