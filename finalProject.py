@@ -37,7 +37,6 @@ class ChargedObj:
         # possibly sliders for more variables
         self.numOfLine = 8
         self.steps = 10
-        self.size = 0.1
         # initialize all the arrows
         self.electricFieldArrows = [ [0]*self.steps for i in range(self.numOfLine)]
         for i in range(self.numOfLine):
@@ -65,15 +64,21 @@ class ChargedObj:
                 chargedObj.vel = vpython.vec(0, 0, 0)
 
     def displayElectricField(self):
-        # change for more variables
-        for i in range(self.numOfLine):
-            theta = i * 2 * vpython.pi / self.numOfLine
-            curPos = self.pos + vpython.vec(vpython.cos(theta), vpython.sin(theta), 0) * self.display.radius * 2
-            for j in range(self.steps):
-                electricField = vpython.norm(calculateElectricField(curPos)) * self.size
-                self.electricFieldArrows[i][j].pos = curPos
-                self.electricFieldArrows[i][j].axis = electricField
-                curPos += electricField * self.charge / abs(self.charge)
+        if (displayElectricField):
+            size = vpython.scene.range / 10
+            for i in range(self.numOfLine):
+                theta = i * 2 * vpython.pi / self.numOfLine
+                curPos = self.pos + vpython.vec(vpython.cos(theta), vpython.sin(theta), 0) * self.display.radius * 2
+                for j in range(self.steps):
+                    electricField = vpython.norm(calculateElectricField(curPos)) * size
+                    self.electricFieldArrows[i][j].visible = True
+                    self.electricFieldArrows[i][j].pos = curPos
+                    self.electricFieldArrows[i][j].axis = electricField
+                    curPos += electricField * self.charge / abs(self.charge)
+        else: 
+            for i in range(self.numOfLine):   
+                for j in range(self.steps):
+                    self.electricFieldArrows[i][j].visible = False
 
 # Coulomb's Law for force of q2 on q1
 def calculateForce(q1, q2):
@@ -244,9 +249,8 @@ while True:
             chargedObj.applyForce()
         for chargedObj in allChargedObjs:
             chargedObj.applyVel()
-    if (displayElectricField):
-        for chargedObj in allChargedObjs:
-            chargedObj.displayElectricField()
+    for chargedObj in allChargedObjs:
+        chargedObj.displayElectricField()
     # for charge in allChargedObjs:
     #     charge.checkCollision()
 
