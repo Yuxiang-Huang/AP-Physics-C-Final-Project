@@ -68,13 +68,22 @@ class ChargedObj:
             size = vpython.scene.range / 10
             for i in range(self.numOfLine):
                 theta = i * 2 * vpython.pi / self.numOfLine
-                curPos = self.pos + vpython.vec(vpython.cos(theta), vpython.sin(theta), 0) * self.display.radius * 2
+                curPos = self.pos + vpython.vec(vpython.cos(theta), vpython.sin(theta), 0) * self.display.radius
+                if (self.charge < 0):
+                    curPos += vpython.vec(vpython.cos(theta), vpython.sin(theta), 0) * size
+                endForTooClose = False
                 for j in range(self.steps):
-                    electricField = vpython.norm(calculateElectricField(curPos)) * size
-                    self.electricFieldArrows[i][j].visible = True
-                    self.electricFieldArrows[i][j].pos = curPos
-                    self.electricFieldArrows[i][j].axis = electricField
-                    curPos += electricField * self.charge / abs(self.charge)
+                    if (tooClose(self, curPos, size)):
+                        endForTooClose = True
+                    if (endForTooClose):
+                        self.electricFieldArrows[i][j].visible = False
+                    else:
+                        electricField = vpython.norm(calculateElectricField(curPos)) * size
+                        self.electricFieldArrows[i][j].visible = True
+                        self.electricFieldArrows[i][j].pos = curPos
+                        self.electricFieldArrows[i][j].axis = electricField
+                        # self.electricFieldArrows[i][j].shaftwidth = 
+                        curPos += electricField * self.charge / abs(self.charge)
         else: 
             for i in range(self.numOfLine):   
                 for j in range(self.steps):
@@ -97,6 +106,13 @@ def calculateElectricField(pos):
         if (vpython.mag(r) != 0):
             electricField += vpython.norm(r) * K * chargedObj.charge / (vpython.mag(r)**2)
     return electricField
+
+def tooClose(owner, pos, size):
+    for chargedObj in allChargedObjs:
+            if (chargedObj != owner):
+                if vpython.mag(pos - chargedObj.pos) < chargedObj.display.radius + size:
+                    return True
+    return False
 
 ####################################################################################################
 
@@ -201,6 +217,9 @@ def deleteChargedObj():
         chargedObjSelected.display.visible = False
         chargedObjSelected.velVec.visible = False
         chargedObjSelected.forceVec.visible = False
+        for i in range(chargedObjSelected.numOfLine):   
+                for j in range(chargedObjSelected.steps):
+                    chargedObjSelected.electricFieldArrows[i][j].visible = False
         allChargedObjs.remove(chargedObjSelected)
 
 vpython.scene.append_to_caption("   ")
