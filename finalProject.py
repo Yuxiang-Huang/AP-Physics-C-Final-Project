@@ -7,7 +7,7 @@ vpython.scene.height = 650
 vpython.scene.range = 1
 
 #constants (don't ask me when k is so low, I will change it later!!!)
-K = 9E-4
+K = 9E-7
 # I will figure it out so I don't need to divide by 1000 later !!!
 vectorAxisFactor = 500
 
@@ -24,9 +24,9 @@ class ChargedObj:
         self.vel = spawnVel
         # Displays
         # spheres for now
-        if (charge < 0):
-            self.display = vpython.sphere(pos=spawnPos, radius=0.05, color = vpython.color.red)
         if (charge > 0):
+            self.display = vpython.sphere(pos=spawnPos, radius=0.05, color = vpython.color.red)
+        if (charge < 0):
             self.display = vpython.sphere(pos=spawnPos, radius=0.05, color = vpython.color.blue)
         if (charge == 0):
             self.display = vpython.sphere(pos=spawnPos, radius=0.05, color = vpython.color.black)
@@ -34,10 +34,11 @@ class ChargedObj:
         self.forceVec = vpython.arrow(axis = vpython.vec(0, 0, 0), color = self.display.color)
         
         # electric field
-        # possibly more variables
+        # possibly sliders for more variables
         self.numOfLine = 8
         self.steps = 10
         self.size = 0.1
+        # initialize all the arrows
         self.electricFieldArrows = [ [0]*self.steps for i in range(self.numOfLine)]
         for i in range(self.numOfLine):
             for j in range(self.steps):
@@ -72,7 +73,7 @@ class ChargedObj:
                 electricField = vpython.norm(calculateElectricField(curPos)) * self.size
                 self.electricFieldArrows[i][j].pos = curPos
                 self.electricFieldArrows[i][j].axis = electricField
-                curPos += electricField
+                curPos += electricField * self.charge / abs(self.charge)
 
 # Coulomb's Law for force of q2 on q1
 def calculateForce(q1, q2):
@@ -86,9 +87,10 @@ def calculateForce(q1, q2):
 def calculateElectricField(pos):
     electricField = vpython.vec(0, 0, 0)
     for chargedObj in allChargedObjs:
-        r = chargedObj.pos - pos
-        print(r)
-        electricField += vpython.norm(r) * K * chargedObj.charge / (vpython.mag(r)**2)
+        r = pos - chargedObj.pos
+        # just check for now before I figure out what to do in this case
+        if (vpython.mag(r) != 0):
+            electricField += vpython.norm(r) * K * chargedObj.charge / (vpython.mag(r)**2)
     return electricField
 
 ####################################################################################################
@@ -178,14 +180,14 @@ vpython.scene.append_to_caption("   ")
 clickModeButton = vpython.button(text="Mode: Spawn", bind=changeClickMode)
 
 # spawn slider
-spawnCharge = -1
+spawnCharge = 1
 
 def spawnChargeShift():
     global spawnCharge, spawnChargeText
     spawnCharge = s.value
     spawnChargeText.text = 'Charge:'+'{:1.2f}'.format(s.value)
 
-s = vpython.slider(bind = spawnChargeShift, min = -5, max = 5, value = -1)
+s = vpython.slider(bind = spawnChargeShift, min = -5, max = 5, value = 1)
 spawnChargeText = vpython.wtext(text = 'Charge:'+'{:1.2f}'.format(s.value))
 
 # delete button
