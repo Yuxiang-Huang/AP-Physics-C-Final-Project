@@ -7,7 +7,7 @@ vpython.scene.height = 650
 vpython.scene.range = 1
 
 #constants (don't ask me when k is so low, I will change it later!!!)
-K = 9E-2
+K = 9E-4
 # I will figure it out so I don't need to divide by 1000 later !!!
 vectorAxisFactor = 500
 
@@ -32,6 +32,16 @@ class ChargedObj:
             self.display = vpython.sphere(pos=spawnPos, radius=0.05, color = vpython.color.black)
         self.velVec = vpython.arrow(axis = vpython.vec(0, 0, 0), color = self.display.color)
         self.forceVec = vpython.arrow(axis = vpython.vec(0, 0, 0), color = self.display.color)
+        
+        # electric field
+        # possibly more variables
+        self.numOfLine = 8
+        self.steps = 10
+        self.size = 0.1
+        self.electricFieldArrows = [ [0]*self.steps for i in range(self.numOfLine)]
+        for i in range(self.numOfLine):
+            for j in range(self.steps):
+                self.electricFieldArrows[i][j] = vpython.arrow(axis = vpython.vec(0, 0, 0), color = self.display.color)
     
     def applyForce(self):
         # calculate force from every other charge
@@ -55,15 +65,13 @@ class ChargedObj:
 
     def displayElectricField(self):
         # change for more variables
-        numOfLine = 4
-        steps = 1
-        for i in range(numOfLine):
-            theta = i * 2 * vpython.pi / numOfLine
-            curPos = self.pos + vpython.vec(vpython.cos(theta), vpython.sin(theta), 0) * self.display.radius * 10
-            for j in range(steps):
-                electricField = calculateElectricField(curPos)
-                print(electricField)
-                vpython.arrow(pos = curPos, axis = electricField, color = self.display.color)
+        for i in range(self.numOfLine):
+            theta = i * 2 * vpython.pi / self.numOfLine
+            curPos = self.pos + vpython.vec(vpython.cos(theta), vpython.sin(theta), 0) * self.display.radius * 2
+            for j in range(self.steps):
+                electricField = vpython.norm(calculateElectricField(curPos)) * self.size
+                self.electricFieldArrows[i][j].pos = curPos
+                self.electricFieldArrows[i][j].axis = electricField
                 curPos += electricField
 
 # Coulomb's Law for force of q2 on q1
