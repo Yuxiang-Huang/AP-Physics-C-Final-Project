@@ -7,7 +7,7 @@ vpython.scene.height = 650
 vpython.scene.range = 1
 
 #constants (don't ask me when k is so low, I will change it later!!!)
-K = 9E-7
+K = 9E-2
 # I will figure it out so I don't need to divide by 1000 later !!!
 vectorAxisFactor = 500
 
@@ -34,7 +34,7 @@ class ChargedObj:
         self.forceVec = vpython.arrow(axis = vpython.vec(0, 0, 0), color = self.display.color)
     
     def applyForce(self):
-        # calculate force from  every other charge
+        # calculate force from every other charge
         force = vpython.vec(0, 0, 0)
         for chargedObj in allChargedObjs:
             if (chargedObj != self):
@@ -53,10 +53,35 @@ class ChargedObj:
                 self.vel = vpython.vec(0, 0, 0)
                 chargedObj.vel = vpython.vec(0, 0, 0)
 
-# Coulomb's Law
+    def displayElectricField(self):
+        # change for more variables
+        numOfLine = 4
+        steps = 1
+        for i in range(numOfLine):
+            theta = i * 2 * vpython.pi / numOfLine
+            curPos = self.pos + vpython.vec(vpython.cos(theta), vpython.sin(theta), 0) * self.display.radius * 10
+            for j in range(steps):
+                electricField = calculateElectricField(curPos)
+                print(electricField)
+                vpython.arrow(pos = curPos, axis = electricField, color = self.display.color)
+                curPos += electricField
+
+# Coulomb's Law for force of q2 on q1
 def calculateForce(q1, q2):
     r12 = q1.pos - q2.pos
     return vpython.norm(r12) * K * q1.charge * q2.charge / (vpython.mag(r12)**2)
+
+####################################################################################################
+
+# Electric Field
+    
+def calculateElectricField(pos):
+    electricField = vpython.vec(0, 0, 0)
+    for chargedObj in allChargedObjs:
+        r = chargedObj.pos - pos
+        print(r)
+        electricField += vpython.norm(r) * K * chargedObj.charge / (vpython.mag(r)**2)
+    return electricField
 
 ####################################################################################################
 
@@ -166,6 +191,20 @@ def deleteChargedObj():
 vpython.scene.append_to_caption("   ")
 deleteButton = vpython.button(text="Delete", bind=deleteChargedObj)
 
+# delete button
+displayElectricField = True
+
+def changeElectricField():
+    global displayElectricField, electricFieldButton
+    displayElectricField = not displayElectricField
+    if displayElectricField:
+        electricFieldButton.text = "Electric Field: On"
+    else:
+        electricFieldButton.text = "Electric Field: Off"
+
+vpython.scene.append_to_caption("   ")
+electricFieldButton = vpython.button(text="Electric Field: On", bind=changeElectricField)
+
 # playing button
 playing = False
 
@@ -195,6 +234,9 @@ while True:
             chargedObj.applyForce()
         for chargedObj in allChargedObjs:
             chargedObj.applyVel()
+    if (displayElectricField):
+        for chargedObj in allChargedObjs:
+            chargedObj.displayElectricField()
     # for charge in allChargedObjs:
     #     charge.checkCollision()
 
