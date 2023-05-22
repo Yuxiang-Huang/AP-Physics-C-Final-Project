@@ -11,7 +11,9 @@ K = 9E-7
 # I will figure it out so I don't need to divide by 1000 later !!!
 vectorAxisFactor = 500
 
+# electric field stuff
 electricFieldOpacitySetter = 1E-4
+steps = 10
 
 # store all spawned charges
 allChargedObjs = []
@@ -24,6 +26,7 @@ class ChargedObj:
         self.mass = mass
         self.pos = spawnPos
         self.vel = spawnVel
+        self.fixed = False
         # Displays
         # spheres for now
         if (charge > 0):
@@ -38,26 +41,27 @@ class ChargedObj:
         # electric field
         # possibly sliders for more variables
         self.numOfLine = 8
-        self.steps = 10
         # initialize all the arrows
-        self.electricFieldArrows = [ [0]*self.steps for i in range(self.numOfLine)]
+        self.electricFieldArrows = [ [0]*steps for i in range(self.numOfLine)]
         for i in range(self.numOfLine):
-            for j in range(self.steps):
+            for j in range(steps):
                 self.electricFieldArrows[i][j] = vpython.arrow(axis = vpython.vec(0, 0, 0), color = self.display.color)
     
     def applyForce(self):
         # calculate force from every other charge
-        force = vpython.vec(0, 0, 0)
-        for chargedObj in allChargedObjs:
-            if (chargedObj != self):
-                if (vpython.mag(self.pos - chargedObj.pos) > 2 * self.display.radius):
-                    force += calculateForce(self, chargedObj)
-        # apply force
-        self.vel += force / self.mass
+        if (not self.fixed):
+            force = vpython.vec(0, 0, 0)
+            for chargedObj in allChargedObjs:
+                if (chargedObj != self):
+                    if (vpython.mag(self.pos - chargedObj.pos) > 2 * self.display.radius):
+                        force += calculateForce(self, chargedObj)
+            # apply force
+            self.vel += force / self.mass
 
     def applyVel(self):
-        self.pos += self.vel
-        self.display.pos = self.pos
+        if (not self.fixed):
+            self.pos += self.vel
+            self.display.pos = self.pos
     
     def checkCollision(self):
         for chargedObj in allChargedObjs:
@@ -76,7 +80,7 @@ class ChargedObj:
                 curPos = self.pos + vpython.vec(vpython.cos(theta), vpython.sin(theta), 0) * self.display.radius
                 endForTooClose = False
                 #for every step
-                for j in range(self.steps):
+                for j in range(steps):
                     # stop if too close to a charge
                     if (tooClose(self, curPos, size)):
                         endForTooClose = True
@@ -96,7 +100,7 @@ class ChargedObj:
         else: 
             # hide all electric field arrows
             for i in range(self.numOfLine):   
-                for j in range(self.steps):
+                for j in range(steps):
                     self.electricFieldArrows[i][j].visible = False
 
 # Coulomb's Law for force of q2 on q1
@@ -235,7 +239,15 @@ def deleteChargedObj():
 vpython.scene.append_to_caption("   ")
 deleteButton = vpython.button(text="Delete", bind=deleteChargedObj)
 
-# delete button
+# fix button
+def fixChargedObj():
+    if (chargedObjSelected != None):
+        chargedObjSelected.fixed = not chargedObjSelected.fixed
+
+vpython.scene.append_to_caption("   ")
+fixButton = vpython.button(text="Fix", bind=fixChargedObj)
+
+# electic field button
 displayElectricField = True
 
 def changeElectricField():
@@ -262,9 +274,10 @@ def changePlay():
     #set velocity vector visibilities
     if (playing):
         for co in allChargedObjs:
-            co.velVec.axis = vpython.vec(0, 0, 0)
+            co.velVec.visible = False
     else:
         for co in allChargedObjs:
+            co.velVec.visible = True
             co.velVec.pos = co.pos
             co.velVec.axis = co.vel * vectorAxisFactor
 
