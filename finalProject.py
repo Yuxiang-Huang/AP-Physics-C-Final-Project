@@ -11,6 +11,8 @@ K = 9E-7
 # I will figure it out so I don't need to divide by 1000 later !!!
 vectorAxisFactor = 500
 
+electricFieldOpacitySetter = 1E-4
+
 # store all spawned charges
 allChargedObjs = []
 
@@ -65,26 +67,34 @@ class ChargedObj:
 
     def displayElectricField(self):
         if (displayElectricField):
+            # determine size
             size = vpython.scene.range / 10
+            # for every direction
             for i in range(self.numOfLine):
+                # determine starting position
                 theta = i * 2 * vpython.pi / self.numOfLine
                 curPos = self.pos + vpython.vec(vpython.cos(theta), vpython.sin(theta), 0) * self.display.radius
-                if (self.charge < 0):
-                    curPos += vpython.vec(vpython.cos(theta), vpython.sin(theta), 0) * size
                 endForTooClose = False
+                #for every step
                 for j in range(self.steps):
+                    # stop if too close to a charge
                     if (tooClose(self, curPos, size)):
                         endForTooClose = True
                     if (endForTooClose):
                         self.electricFieldArrows[i][j].visible = False
                     else:
-                        electricField = vpython.norm(calculateElectricField(curPos)) * size
+                        # determine the arrow and the next position
+                        electricField = calculateElectricField(curPos)
+                        arrowLength = vpython.norm(electricField) * size
                         self.electricFieldArrows[i][j].visible = True
                         self.electricFieldArrows[i][j].pos = curPos
-                        self.electricFieldArrows[i][j].axis = electricField
-                        # self.electricFieldArrows[i][j].shaftwidth = 
-                        curPos += electricField * self.charge / abs(self.charge)
+                        if (self.charge < 0):
+                            self.electricFieldArrows[i][j].pos += arrowLength
+                        self.electricFieldArrows[i][j].axis = arrowLength
+                        self.electricFieldArrows[i][j].opacity = vpython.mag(electricField) / electricFieldOpacitySetter
+                        curPos += arrowLength * self.charge / abs(self.charge)
         else: 
+            # hide all electric field arrows
             for i in range(self.numOfLine):   
                 for j in range(self.steps):
                     self.electricFieldArrows[i][j].visible = False
