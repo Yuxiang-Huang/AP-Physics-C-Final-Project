@@ -89,7 +89,7 @@ class ChargedObj:
                         self.electricFieldArrows[i][j].visible = True
                         self.electricFieldArrows[i][j].pos = curPos
                         if (self.charge < 0):
-                            self.electricFieldArrows[i][j].pos += arrowLength
+                            self.electricFieldArrows[i][j].pos -= arrowLength
                         self.electricFieldArrows[i][j].axis = arrowLength
                         self.electricFieldArrows[i][j].opacity = vpython.mag(electricField) / electricFieldOpacitySetter
                         curPos += arrowLength * self.charge / abs(self.charge)
