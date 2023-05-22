@@ -5,6 +5,8 @@ vpython.scene.background = vpython.color.white
 vpython.scene.width = 1000
 vpython.scene.height = 650
 vpython.scene.range = 1
+# Use it to make it seem 2D
+# vpython.scene.fov = vpython.pi / 78 
 
 #constants (don't ask me when k is so low, I will change it later!!!)
 K = 9E-7
@@ -14,6 +16,23 @@ vectorAxisFactor = 500
 # electric field stuff
 electricFieldOpacitySetter = 1E-4
 steps = 10
+
+electricFieldArrowsAll = [ [0]*steps for i in range(steps)]
+for i in range(steps):
+    for j in range(steps):
+        electricFieldArrowsAll[i][j] = vpython.arrow(axis = vpython.vec(0, 0, 0), color = vpython.color.orange)
+
+for i in range(steps):
+    for j in range(steps):
+        electricFieldArrowsAll[i][j].visible = True
+        # assume height > width
+        electricFieldArrowsAll[i][j].pos = vpython.vec(
+                    (i - steps / 2) * 2 * vpython.scene.width / vpython.scene.height * vpython.scene.range / steps, 
+                    (j - steps / 2) * 2 * vpython.scene.range / steps, 0)
+        electricFieldArrowsAll[i][j].pos += vpython.vec(
+                    vpython.scene.width / vpython.scene.height * vpython.scene.range / steps, 
+                    vpython.scene.range / steps, 0)
+        electricFieldArrowsAll[i][j].axis = vpython.vec(0, 0.1, 0)
 
 # store all spawned charges
 allChargedObjs = []
@@ -70,7 +89,7 @@ class ChargedObj:
                 chargedObj.vel = vpython.vec(0, 0, 0)
 
     def displayElectricField(self):
-        if (displayElectricField):
+        if (electricFieldMode == 1):
             # determine size
             size = vpython.scene.range / 10
             # for every direction
@@ -111,6 +130,18 @@ def calculateForce(q1, q2):
 ####################################################################################################
 
 # Electric Field
+
+def displayElectricFieldAll():
+    if (electricFieldMode == 2):
+        size = vpython.scene.range / 20
+        for i in range(steps):
+            for j in range(steps):
+                electricFieldArrowsAll[i][j].visible = True
+    else:
+        # hide all electric field
+        for i in range(steps):
+            for j in range(steps):
+                electricFieldArrowsAll[i][j].visible = False
     
 def calculateElectricField(pos):
     electricField = vpython.vec(0, 0, 0)
@@ -232,7 +263,7 @@ def deleteChargedObj():
         chargedObjSelected.velVec.visible = False
         chargedObjSelected.forceVec.visible = False
         for i in range(chargedObjSelected.numOfLine):   
-                for j in range(chargedObjSelected.steps):
+                for j in range(steps):
                     chargedObjSelected.electricFieldArrows[i][j].visible = False
         allChargedObjs.remove(chargedObjSelected)
 
@@ -248,18 +279,17 @@ vpython.scene.append_to_caption("   ")
 fixButton = vpython.button(text="Fix", bind=fixChargedObj)
 
 # electic field button
-displayElectricField = True
+electricFieldMode = 2
 
 def changeElectricField():
-    global displayElectricField, electricFieldButton
-    displayElectricField = not displayElectricField
-    if displayElectricField:
-        electricFieldButton.text = "Electric Field: On"
-    else:
-        electricFieldButton.text = "Electric Field: Off"
+    global electricFieldMode, electricFieldButton
+    electricFieldMode += 1
+    if electricFieldMode == 3:
+        electricFieldMode = 0
+    electricFieldButton.text = "Electric Field: Mode " + str(electricFieldMode)
 
 vpython.scene.append_to_caption("   ")
-electricFieldButton = vpython.button(text="Electric Field: On", bind=changeElectricField)
+electricFieldButton = vpython.button(text="Electric Field: Mode 1", bind=changeElectricField)
 
 # playing button
 playing = False
@@ -293,6 +323,8 @@ while True:
             chargedObj.applyVel()
     for chargedObj in allChargedObjs:
         chargedObj.displayElectricField()
+
+    displayElectricFieldAll()
     # for charge in allChargedObjs:
     #     charge.checkCollision()
 
