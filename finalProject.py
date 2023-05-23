@@ -6,15 +6,17 @@ vpython.scene.width = 1000
 vpython.scene.height = 650
 vpython.scene.range = 1
 # Use it to make it seem 2D
-# vpython.scene.fov = vpython.pi / 78 
+# vpython.scene.fov = vpython.pi / 6
 
-#constants (don't ask me when k is so low, I will change it later!!!)
-K = 9E-7
+#constants
+K = 9E9
 # I will figure it out so I don't need to divide by 1000 later !!!
-vectorAxisFactor = 500
+vectorAxisFactor = 300
+
+spawnDensity = 2500 
 
 # electric field stuff
-electricFieldOpacitySetter = 1E-4
+electricFieldOpacitySetter = 1E4
 steps = 10
 
 electricFieldArrowsAll = [ [0]*steps for i in range(steps)]
@@ -49,13 +51,14 @@ class ChargedObj:
         self.vel = spawnVel
         self.fixed = False
         # Displays
+        spawnRadius = ((spawnMass) / (((4/3)* vpython.pi*spawnDensity)))**(1/3)
         # spheres for now
         if (charge > 0):
-            self.display = vpython.sphere(pos=spawnPos, radius=0.05, color = vpython.color.red)
+            self.display = vpython.sphere(pos=spawnPos, radius=spawnRadius, color = vpython.color.red)
         if (charge < 0):
-            self.display = vpython.sphere(pos=spawnPos, radius=0.05, color = vpython.color.blue)
+            self.display = vpython.sphere(pos=spawnPos, radius=spawnRadius, color = vpython.color.blue)
         if (charge == 0):
-            self.display = vpython.sphere(pos=spawnPos, radius=0.05, color = vpython.color.black)
+            self.display = vpython.sphere(pos=spawnPos, radius=spawnRadius, color = vpython.color.black)
         self.velVec = vpython.arrow(axis = vpython.vec(0, 0, 0), color = self.display.color)
         self.forceVec = vpython.arrow(axis = vpython.vec(0, 0, 0), color = self.display.color)
         
@@ -176,7 +179,7 @@ def clicked():
 vpython.scene.bind('click', clicked)
 
 def makeChargeObj():
-    allChargedObjs.append(ChargedObj(1, spawnCharge, getMousePos(), vpython.vec(0, 0, 0)))
+    allChargedObjs.append(ChargedObj(spawnMass, spawnCharge, getMousePos(), vpython.vec(0, 0, 0)))
 
 def selectCharge():
     global chargedObjSelected
@@ -249,15 +252,26 @@ vpython.scene.append_to_caption("   ")
 clickModeButton = vpython.button(text="Mode: Spawn", bind=changeClickMode)
 
 # spawn slider
-spawnCharge = 1
+spawnCharge = 10E-9
 
 def spawnChargeShift():
     global spawnCharge, spawnChargeText
-    spawnCharge = s.value
-    spawnChargeText.text = 'Charge:'+'{:1.2f}'.format(s.value)
+    spawnCharge = s.value * 10E-9
+    spawnChargeText.text = 'Charge (nC):'+'{:1.2f}'.format(s.value)
+    
+s = vpython.slider(bind = spawnChargeShift, min = -5, max = 5, value = 1, step = 0.1)
+spawnChargeText = vpython.wtext(text = 'Charge (nC):'+'{:1.2f}'.format(s.value))
 
-s = vpython.slider(bind = spawnChargeShift, min = -5, max = 5, value = 1)
-spawnChargeText = vpython.wtext(text = 'Charge:'+'{:1.2f}'.format(s.value))
+# mass slider
+
+spawnMass = 1
+
+def mShift():
+    global spawnMass
+    spawnMass = m.value
+    mShiftText.text = 'Mass: '+'{:1.2f}'.format(m.value)
+m = vpython.slider(bind=mShift, min = 1, max =2, value =1, step = 0.1) 
+mShiftText = vpython.wtext(text = 'Mass: '+'{:1.2f}'.format(m.value))
 
 # delete button
 def deleteChargedObj():
@@ -292,7 +306,7 @@ def changeElectricField():
     electricFieldButton.text = "Electric Field: Mode " + str(electricFieldMode)
 
 vpython.scene.append_to_caption("   ")
-electricFieldButton = vpython.button(text="Electric Field: Mode 1", bind=changeElectricField)
+electricFieldButton = vpython.button(text="Electric Field: Mode 0", bind=changeElectricField)
 
 # playing button
 playing = False
