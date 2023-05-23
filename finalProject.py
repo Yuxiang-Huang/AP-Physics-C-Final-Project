@@ -10,14 +10,20 @@ vpython.scene.range = 1
 
 #constants
 K = 9E9
-# I will figure it out so I don't need to divide by 1000 later !!!
 vectorAxisFactor = 300
-
 spawnDensity = 2500 
+precision = 20
+epsilon = 0.01
 
 # electric field stuff
 electricFieldOpacitySetter = 1E4
 steps = 10
+
+# Test place
+
+
+
+# Initilization
 
 electricFieldArrowsAll = [ [0]*steps for i in range(steps)]
 for i in range(steps):
@@ -70,7 +76,22 @@ class ChargedObj:
         for i in range(self.numOfLine):
             for j in range(steps):
                 self.electricFieldArrows[i][j] = vpython.arrow(axis = vpython.vec(0, 0, 0), color = self.display.color)
-    
+        
+        # select display
+        self.selectDisplay = []
+        self.createSelectDisplay()
+
+    def createSelectDisplay(self):
+        thetaRange = vpython.pi / 4
+        for x in range(4):
+            c = vpython.curve()
+            initialTheta = x * vpython.pi / 2 + vpython.pi / 4
+            for i in range(precision):
+                theta = i * thetaRange / precision + initialTheta - thetaRange / 2 
+                c.append(vpython.vec(vpython.cos(theta) * (self.display.radius + epsilon), 
+                                    vpython.sin(theta) * (self.display.radius + epsilon), 0) 
+                        + self.pos, color = vpython.color.yellow)
+                    
     def applyForce(self):
         # calculate force from every other charge
         if (not self.fixed):
