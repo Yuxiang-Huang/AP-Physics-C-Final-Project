@@ -21,8 +21,6 @@ steps = 10
 
 # Test place
 
-
-
 # Initilization
 
 electricFieldArrowsAll = [ [0]*steps for i in range(steps)]
@@ -82,15 +80,32 @@ class ChargedObj:
         self.createSelectDisplay()
 
     def createSelectDisplay(self):
+        # Math with a circle to create arcs
         thetaRange = vpython.pi / 4
         for x in range(4):
-            c = vpython.curve()
+            arc = vpython.curve()
             initialTheta = x * vpython.pi / 2 + vpython.pi / 4
             for i in range(precision):
                 theta = i * thetaRange / precision + initialTheta - thetaRange / 2 
-                c.append(vpython.vec(vpython.cos(theta) * (self.display.radius + epsilon), 
-                                    vpython.sin(theta) * (self.display.radius + epsilon), 0) 
-                        + self.pos, color = vpython.color.yellow)
+                arc.append(vpython.vec(vpython.cos(theta) * (self.display.radius + epsilon), 
+                                    vpython.sin(theta) * (self.display.radius + epsilon), 0) + self.pos
+                                    , color = vpython.color.yellow) 
+            
+            self.selectDisplay.append(arc)
+        for arc in self.selectDisplay:
+            arc.visible = False
+    
+    def displaySelect(self):
+        thetaRange = vpython.pi / 4
+        for x in range(4):
+            arc = self.selectDisplay[x]
+            initialTheta = x * vpython.pi / 2 + vpython.pi / 4
+            for i in range(precision):
+                theta = i * thetaRange / precision + initialTheta - thetaRange / 2 
+                arc.modify(i, pos = vpython.vec(vpython.cos(theta) * (self.display.radius + epsilon), 
+                                    vpython.sin(theta) * (self.display.radius + epsilon), 0) + self.pos
+                                    , color = vpython.color.yellow)
+            arc.visible = True
                     
     def applyForce(self):
         # calculate force from every other charge
@@ -107,6 +122,8 @@ class ChargedObj:
         if (not self.fixed):
             self.pos += self.vel
             self.display.pos = self.pos
+            if (self == chargedObjSelected):
+                self.displaySelect()
     
     def checkCollision(self):
         for chargedObj in allChargedObjs:
@@ -205,6 +222,9 @@ def makeChargeObj():
 def selectCharge():
     global chargedObjSelected
     chargedObjSelected = chargedObjOnMouse()
+    # show select display
+    if (chargedObjSelected != None):
+        chargedObjSelected.displaySelect()
 
 def chargedObjOnMouse():
     mousePos = getMousePos()
@@ -238,6 +258,7 @@ def on_mouse_move():
             chargedObjToDrag.pos = getMousePos()
             chargedObjToDrag.display.pos = chargedObjToDrag.pos
             chargedObjToDrag.velVec.pos = chargedObjToDrag.pos
+            chargedObjToDrag.displaySelect()
     else:
         if chargedObjToDrag != None:
             # force vector
