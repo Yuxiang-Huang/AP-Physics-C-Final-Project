@@ -23,11 +23,13 @@ precision = 10
 
 # Initilization
 
+# electric field arrows for mode 2
 electricFieldArrowsAll = [ [0]*precision for i in range(precision)]
 for i in range(precision):
     for j in range(precision):
         electricFieldArrowsAll[i][j] = vpython.arrow(axis = vpython.vec(0, 0, 0), color = vpython.color.orange)
 
+# method for rescaling
 def setElectricFieldArrowsAll():
     for i in range(precision):
         for j in range(precision):
@@ -42,6 +44,9 @@ def setElectricFieldArrowsAll():
             
 setElectricFieldArrowsAll()
 
+# ruler
+ruler = vpython.curve(vpython.vector(0, 1, 0), vpython.vector(0, -1, 0), color = vpython.color.cyan)
+         
 # store all spawned charges
 allChargedObjs = []
 
@@ -251,9 +256,12 @@ chargedObjToDrag = None
 mouseDown = False
 
 def on_mouse_down():
-    global chargedObjToDrag, mouseDown
+    global chargedObjToDrag, mouseDown, ruler
     chargedObjToDrag = chargedObjOnMouse()
     mouseDown = True
+    # initial pos of ruler
+    if (chargedObjToDrag == None):
+        ruler.modify(0, getMousePos())
 
 def on_mouse_up():
     global chargedObjToDrag, mouseDown
@@ -266,23 +274,28 @@ def on_mouse_up():
     mouseDown = False
 
 def on_mouse_move():
-    if (chargedObjSelected == None):
-        # set position
-        if chargedObjToDrag != None:
-            mousePos = getMousePos()
-            chargedObjToDrag.pos = mousePos
-            chargedObjToDrag.display.pos = chargedObjToDrag.pos
-            chargedObjToDrag.velVec.pos = chargedObjToDrag.pos
-    else:
-        if chargedObjToDrag != None:
-            # velocity vector
-            if (not playing):
+    global ruler
+    # ruler
+    if chargedObjToDrag == None:
+        ruler.modify(1, getMousePos())
+    else: 
+        # Charge selected is not the charge you are draging
+        if (chargedObjSelected != chargedObjToDrag):
+            # set position
+                mousePos = getMousePos()
+                chargedObjToDrag.pos = mousePos
+                chargedObjToDrag.display.pos = chargedObjToDrag.pos
                 chargedObjToDrag.velVec.pos = chargedObjToDrag.pos
-                chargedObjToDrag.velVec.axis = getMousePos() - chargedObjToDrag.pos
-                # too small reset
-                if (vpython.mag(chargedObjToDrag.velVec.axis) < chargedObjToDrag.display.radius):
-                    chargedObjToDrag.velVec.axis = vpython.vec(0, 0, 0)
-                chargedObjToDrag.vel = chargedObjToDrag.velVec.axis / vectorAxisFactor
+        else:
+            if chargedObjToDrag != None:
+                # velocity vector
+                if (not playing):
+                    chargedObjToDrag.velVec.pos = chargedObjToDrag.pos
+                    chargedObjToDrag.velVec.axis = getMousePos() - chargedObjToDrag.pos
+                    # too small reset
+                    if (vpython.mag(chargedObjToDrag.velVec.axis) < chargedObjToDrag.display.radius):
+                        chargedObjToDrag.velVec.axis = vpython.vec(0, 0, 0)
+                    chargedObjToDrag.vel = chargedObjToDrag.velVec.axis / vectorAxisFactor
 
 # Bind event handlers to the box
 vpython.scene.bind('mousedown', on_mouse_down)
