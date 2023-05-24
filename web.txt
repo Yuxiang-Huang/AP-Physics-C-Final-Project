@@ -6,36 +6,69 @@ scene.width = 1000
 scene.height = 650
 scene.range = 1
 # Use it to make it seem 2D
-# scene.fov = pi / 78 
+# scene.fov = pi / 6
 
-#constants (don't ask me when k is so low, I will change it later!!!)
-K = 9E-7
-# I will figure it out so I don't need to divide by 1000 later !!!
-vectorAxisFactor = 500
+#constants
+K = 9E9
+vectorAxisFactor = 300
+spawnDensity = 2500 
+steps = 10
+epsilon = 0.01
 
 # electric field stuff
-electricFieldOpacitySetter = 1E-4
-steps = 10
+electricFieldOpacitySetter = 1E4
+precision = 10
 
-electricFieldArrowsAll = [ [0]*steps for i in range(steps)]
-for i in range(steps):
-    for j in range(steps):
+# Test place
+
+# Initilization
+
+# electric field arrows for mode 2
+electricFieldArrowsAll = [ [0]*precision for i in range(precision)]
+for i in range(precision):
+    for j in range(precision):
         electricFieldArrowsAll[i][j] = arrow(axis = vec(0, 0, 0), color = color.orange)
 
+# method for rescaling
 def setElectricFieldArrowsAll():
-    for i in range(steps):
-        for j in range(steps):
+    for i in range(precision):
+        for j in range(precision):
             electricFieldArrowsAll[i][j].visible = True
             # assume height > width
             electricFieldArrowsAll[i][j].pos = vec(
-                        (i - steps / 2) * 2 * scene.width / scene.height * scene.range / steps, 
-                        (j - steps / 2) * 2 * scene.range / steps, 0)
+                        (i - precision / 2) * 2 * scene.width / scene.height * scene.range / precision, 
+                        (j - precision / 2) * 2 * scene.range / precision, 0)
             electricFieldArrowsAll[i][j].pos += vec(
-                        scene.width / scene.height * scene.range / steps, 
-                        scene.range / steps, 0)
+                        scene.width / scene.height * scene.range / precision, 
+                        scene.range / precision, 0)
             
 setElectricFieldArrowsAll()
 
+# ruler
+ruler = curve({"pos": vector(0, 0, 0), "color": color.cyan},
+                      {"pos": vector(0, 0, 0), "color": color.cyan})
+
+def createRulerText():
+    global rulerText, ruler, spawnLock
+    # minimum length check
+    if (mag(ruler.point(1)['pos'] - ruler.point(0)['pos']) < epsilon):
+        ruler = curve({"pos": vector(0, 0, 0), "color": color.cyan},
+                      {"pos": vector(0, 0, 0), "color": color.cyan})
+        rulerText.visible = False
+        spawnLock = True
+    else:   
+        # create new ruler text at the point
+        rulerText = text(text="{0:.3f}".format(mag(ruler.point(1)['pos'] - ruler.point(0)['pos'])) + "m",
+        align='center', axis = ruler.point(1)['pos'] - ruler.point(0)['pos'], pos = ruler.point(1)['pos'], color = color.cyan,
+        visible = False)
+        rulerText.height = 0.06 * scene.range
+        rulerText.length = 0.2 * scene.range
+        rulerText.depth = 0.01 * scene.range
+        rulerText.visible = True
+
+# place holder
+rulerText = text(text="0", visible = False)
+         
 # store all spawned charges
 allChargedObjs = []
 
@@ -49,13 +82,14 @@ class ChargedObj:
         self.vel = spawnVel
         self.fixed = False
         # Displays
+        spawnRadius = ((spawnMass) / (((4/3)* pi*spawnDensity)))**(1/3)
         # spheres for now
         if (charge > 0):
-            self.display = sphere(pos=spawnPos, radius=0.05, color = color.red)
+            self.display = sphere(pos=spawnPos, radius=spawnRadius, color = color.red)
         if (charge < 0):
-            self.display = sphere(pos=spawnPos, radius=0.05, color = color.blue)
+            self.display = sphere(pos=spawnPos, radius=spawnRadius, color = color.blue)
         if (charge == 0):
-            self.display = sphere(pos=spawnPos, radius=0.05, color = color.black)
+            self.display = sphere(pos=spawnPos, radius=spawnRadius, color = color.black)
         self.velVec = arrow(axis = vec(0, 0, 0), color = self.display.color)
         self.forceVec = arrow(axis = vec(0, 0, 0), color = self.display.color)
         
@@ -63,11 +97,48 @@ class ChargedObj:
         # possibly sliders for more variables
         self.numOfLine = 8
         # initialize all the arrows
-        self.electricFieldArrows = [ [0]*steps for i in range(self.numOfLine)]
+        self.electricFieldArrows = [ [0]*precision for i in range(self.numOfLine)]
         for i in range(self.numOfLine):
-            for j in range(steps):
+            for j in range(precision):
                 self.electricFieldArrows[i][j] = arrow(axis = vec(0, 0, 0), color = self.display.color)
+        
+        # select display
+        self.selectDisplay = []
+        self.createSelectDisplay()
+
+    def createSelectDisplay(self):
+        # Math with a circle to create arcs
+        thetaRange = pi / 4
+        for x in range(4):
+            arc = curve()
+            initialTheta = x * pi / 2 + pi / 4
+            for i in range(steps):
+                theta = i * thetaRange / steps + initialTheta - thetaRange / 2 
+                arc.append({"pos": vec(cos(theta) * (self.display.radius + epsilon), 
+                                    sin(theta) * (self.display.radius + epsilon), 0) + self.pos
+                                    , "color": color.yellow})
+            
+            self.selectDisplay.append(arc)
+        for arc in self.selectDisplay:
+            arc.visible = False
     
+    def displaySelect(self):
+        thetaRange = pi / 4
+        for x in range(4):
+            arc = self.selectDisplay[x]
+            initialTheta = x * pi / 2 + pi / 4
+            for i in range(steps):
+                theta = i * thetaRange / steps + initialTheta - thetaRange / 2 
+                arc.modify(i, pos = vec(cos(theta) * (self.display.radius + epsilon), 
+                                    sin(theta) * (self.display.radius + epsilon), 0) + self.pos
+                                    , color = color.yellow)
+            arc.visible = True
+    
+    def hideSelect(self):
+        for x in range(4):
+            arc = self.selectDisplay[x]
+            arc.visible = False
+                    
     def applyForce(self):
         # calculate force from every other charge
         if (not self.fixed):
@@ -83,6 +154,8 @@ class ChargedObj:
         if (not self.fixed):
             self.pos += self.vel
             self.display.pos = self.pos
+            if (self == chargedObjSelected):
+                self.displaySelect()
     
     def checkCollision(self):
         for chargedObj in allChargedObjs:
@@ -101,7 +174,7 @@ class ChargedObj:
                 curPos = self.pos + vec(cos(theta), sin(theta), 0) * self.display.radius
                 endForTooClose = False
                 #for every step
-                for j in range(steps):
+                for j in range(precision):
                     # stop if too close to a charge
                     if (tooClose(self, curPos, size)):
                         endForTooClose = True
@@ -121,7 +194,7 @@ class ChargedObj:
         else: 
             # hide all electric field arrows
             for i in range(self.numOfLine):   
-                for j in range(steps):
+                for j in range(precision):
                     self.electricFieldArrows[i][j].visible = False
 
 # Coulomb's Law for force of q2 on q1
@@ -136,14 +209,14 @@ def calculateForce(q1, q2):
 def displayElectricFieldAll():
     if (electricFieldMode == 2):
         size = scene.range / 20
-        for i in range(steps):
-            for j in range(steps):
+        for i in range(precision):
+            for j in range(precision):
                 electricFieldArrowsAll[i][j].visible = True
                 electricFieldArrowsAll[i][j].axis = norm(calculateElectricField(electricFieldArrowsAll[i][j].pos)) * size
     else:
         # hide all electric field
-        for i in range(steps):
-            for j in range(steps):
+        for i in range(precision):
+            for j in range(precision):
                 electricFieldArrowsAll[i][j].visible = False
     
 def calculateElectricField(pos):
@@ -168,19 +241,30 @@ def tooClose(owner, pos, size):
 chargedObjSelected = undefined
 
 def clicked():
-    if (clickMode == "Spawn"):
-        makeChargeObj()
-    elif (clickMode == "Select"):
-        selectCharge()
+    global chargedObjSelected
+    # only when not playing
+    if (not playing):
+        # When no charge is selected, try spawn or select charge 
+        if (chargedObjSelected == undefined):
+            chargedObjSelected = chargedObjOnMouse()
+            # select the charge
+            if (chargedObjSelected != undefined):
+                chargedObjSelected.displaySelect()
+            # spawn when the click is not on a charged object
+            else:
+                makeChargeObj()
+        else:
+            # deselect if needed
+            if (chargedObjSelected != undefined):
+                chargedObjSelected.hideSelect()
+            chargedObjSelected = chargedObjOnMouse()
+            if (chargedObjSelected != undefined):
+                chargedObjSelected.displaySelect()
 
 scene.bind('click', clicked)
 
 def makeChargeObj():
-    allChargedObjs.append(ChargedObj(1, spawnCharge, getMousePos(), vec(0, 0, 0)))
-
-def selectCharge():
-    global chargedObjSelected
-    chargedObjSelected = chargedObjOnMouse()
+    allChargedObjs.append(ChargedObj(spawnMass, spawnCharge, getMousePos(), vec(0, 0, 0)))
 
 def chargedObjOnMouse():
     mousePos = getMousePos()
@@ -193,82 +277,102 @@ def getMousePos():
 
 # dragging
 chargedObjToDrag = undefined
+mouseDown = False
 
 def on_mouse_down():
-    global chargedObjToDrag
+    global chargedObjToDrag, mouseDown, ruler
     chargedObjToDrag = chargedObjOnMouse()
+    mouseDown = True
+    # initial pos of ruler
+    if (chargedObjToDrag == undefined):
+        ruler.modify(0, getMousePos())
+        ruler.modify(1, getMousePos())
+
+    # ruler
+    rulerText.visible = False
 
 def on_mouse_up():
-    global chargedObjToDrag
+    global chargedObjToDrag, mouseDown
     # apply force vector if necessary
-    if (chargedObjToDrag != undefined):
-        if (chargedObjToDrag.forceVec.axis != vec(0, 0, 0)):
-            chargedObjToDrag.vel += chargedObjToDrag.forceVec.axis / vectorAxisFactor / chargedObjToDrag.mass 
-            chargedObjToDrag.forceVec.axis = vec(0, 0, 0)
+    if (chargedObjSelected != undefined):
+        if (chargedObjSelected.forceVec.axis != vec(0, 0, 0)):
+            chargedObjSelected.vel += chargedObjSelected.forceVec.axis / vectorAxisFactor / chargedObjSelected.mass 
+            chargedObjSelected.forceVec.axis = vec(0, 0, 0)
     chargedObjToDrag = undefined
+    mouseDown = False
+
+    # ruler
+    createRulerText()
 
 def on_mouse_move():
-    if (clickMode == "Spawn"):
-        # set position
-        if chargedObjToDrag != undefined:
-            chargedObjToDrag.pos = getMousePos()
-            chargedObjToDrag.display.pos = chargedObjToDrag.pos
-            chargedObjToDrag.velVec.pos = chargedObjToDrag.pos
-    else:
-        if chargedObjToDrag != undefined:
-            # force vector
-            if (playing):
-                chargedObjToDrag.forceVec.pos = chargedObjToDrag.pos
-                chargedObjToDrag.forceVec.axis = getMousePos() - chargedObjToDrag.pos 
-            # velocity vector
-            else:
+    global ruler
+    # ruler
+    if chargedObjToDrag == undefined:
+        ruler.modify(1, getMousePos())
+    else: 
+        # Charge selected is not the charge you are draging
+        if (chargedObjSelected != chargedObjToDrag):
+            # set position
+                mousePos = getMousePos()
+                chargedObjToDrag.pos = mousePos
+                chargedObjToDrag.display.pos = chargedObjToDrag.pos
                 chargedObjToDrag.velVec.pos = chargedObjToDrag.pos
-                chargedObjToDrag.velVec.axis = getMousePos() - chargedObjToDrag.pos
-                chargedObjToDrag.vel = chargedObjToDrag.velVec.axis / vectorAxisFactor
+        else:
+            if chargedObjToDrag != undefined:
+                # velocity vector
+                if (not playing):
+                    chargedObjToDrag.velVec.pos = chargedObjToDrag.pos
+                    chargedObjToDrag.velVec.axis = getMousePos() - chargedObjToDrag.pos
+                    # too small reset
+                    if (mag(chargedObjToDrag.velVec.axis) < chargedObjToDrag.display.radius):
+                        chargedObjToDrag.velVec.axis = vec(0, 0, 0)
+                    chargedObjToDrag.vel = chargedObjToDrag.velVec.axis / vectorAxisFactor
 
 # Bind event handlers to the box
 scene.bind('mousedown', on_mouse_down)
 scene.bind('mouseup', on_mouse_up)
+scene.bind('mousemove', on_mouse_move)
 
 ####################################################################################################
 
 # Button and Sliders
 
-# mode button
-clickMode = "Spawn"
-
-def changeClickMode():
-    global clickMode, clickModeButton
-    if clickMode == "Spawn":
-        clickMode = "Select"
-    else:
-        clickMode = "Spawn"
-    clickModeButton.text = "Mode: " + clickMode
-
-scene.append_to_caption("   ")
-clickModeButton = button(text="Mode: Spawn", bind=changeClickMode)
-
 # spawn slider
-spawnCharge = 1
+spawnCharge = 10E-9
 
 def spawnChargeShift():
     global spawnCharge, spawnChargeText
-    spawnCharge = s.value
-    spawnChargeText.text = 'Charge:'+'{:1.2f}'.format(s.value)
+    spawnCharge = s.value * 10E-9
+    spawnChargeText.text = 'Charge (nC):'+'{:1.2f}'.format(s.value)
+    
+s = slider(bind = spawnChargeShift, min = -5, max = 5, value = 1, step = 0.1)
+spawnChargeText = wtext(text = 'Charge (nC):'+'{:1.2f}'.format(s.value))
 
-s = slider(bind = spawnChargeShift, min = -5, max = 5, value = 1)
-spawnChargeText = wtext(text = 'Charge:'+'{:1.2f}'.format(s.value))
+# mass slider
+
+spawnMass = 1
+
+def mShift():
+    global spawnMass
+    spawnMass = m.value
+    mShiftText.text = 'Mass: '+'{:1.2f}'.format(m.value)
+m = slider(bind=mShift, min = 1, max =2, value =1, step = 0.1) 
+mShiftText = wtext(text = 'Mass: '+'{:1.2f}'.format(m.value))
 
 # delete button
 def deleteChargedObj():
+    global chargedObjSelected
     if (chargedObjSelected != undefined):
+        # hide everything, remove from list, reset chargedObjSelected
         chargedObjSelected.display.visible = False
         chargedObjSelected.velVec.visible = False
         chargedObjSelected.forceVec.visible = False
+        chargedObjSelected.hideSelect()
         for i in range(chargedObjSelected.numOfLine):   
-                for j in range(steps):
+                for j in range(precision):
                     chargedObjSelected.electricFieldArrows[i][j].visible = False
         allChargedObjs.remove(chargedObjSelected)
+        chargedObjSelected = undefined
 
 scene.append_to_caption("   ")
 deleteButton = button(text="Delete", bind=deleteChargedObj)
@@ -292,7 +396,7 @@ def changeElectricField():
     electricFieldButton.text = "Electric Field: Mode " + str(electricFieldMode)
 
 scene.append_to_caption("   ")
-electricFieldButton = button(text="Electric Field: Mode 1", bind=changeElectricField)
+electricFieldButton = button(text="Electric Field: Mode 0", bind=changeElectricField)
 
 # playing button
 playing = False
@@ -329,6 +433,7 @@ while True:
     for chargedObj in allChargedObjs:
         chargedObj.displayElectricField()
 
+    # reset electric field arrows for all if user zooms
     if (curRange != scene.range):
         curRange = scene.range
         setElectricFieldArrowsAll()
@@ -337,6 +442,9 @@ while True:
     # for charge in allChargedObjs:
     #     charge.checkCollision()
 
-    # need to call mouse move any frame since for force vector mouse could have been not moving
-    on_mouse_move()
+    # update force vector because it is possible that mouse is not moving
+    if (playing and mouseDown and chargedObjSelected != undefined):
+        chargedObjSelected.forceVec.pos = chargedObjSelected.pos
+        chargedObjSelected.forceVec.axis = getMousePos() - chargedObjSelected.pos 
+
         

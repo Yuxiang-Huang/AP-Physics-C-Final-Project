@@ -114,9 +114,9 @@ class ChargedObj:
             initialTheta = x * vpython.pi / 2 + vpython.pi / 4
             for i in range(steps):
                 theta = i * thetaRange / steps + initialTheta - thetaRange / 2 
-                arc.append(vpython.vec(vpython.cos(theta) * (self.display.radius + epsilon), 
+                arc.append({"pos": vpython.vec(vpython.cos(theta) * (self.display.radius + epsilon), 
                                     vpython.sin(theta) * (self.display.radius + epsilon), 0) + self.pos
-                                    , color = vpython.color.yellow) 
+                                    , "color": vpython.color.yellow})
             
             self.selectDisplay.append(arc)
         for arc in self.selectDisplay:
@@ -241,7 +241,7 @@ def tooClose(owner, pos, size):
 chargedObjSelected = None
 
 def clicked():
-    global chargedObjSelected, ruler
+    global chargedObjSelected
     # only when not playing
     if (not playing):
         # When no charge is selected, try spawn or select charge 
