@@ -106,6 +106,11 @@ class ChargedObj:
                                     vpython.sin(theta) * (self.display.radius + epsilon), 0) + self.pos
                                     , color = vpython.color.yellow)
             arc.visible = True
+    
+    def hideSelect(self):
+        for x in range(4):
+            arc = self.selectDisplay[x]
+            arc.visible = False
                     
     def applyForce(self):
         # calculate force from every other charge
@@ -209,22 +214,25 @@ def tooClose(owner, pos, size):
 chargedObjSelected = None
 
 def clicked():
-    if (clickMode == "Spawn"):
-        makeChargeObj()
-    elif (clickMode == "Select"):
-        selectCharge()
+    global chargedObjSelected
+    # When no charge is selected, try spawn or select charge
+    if (chargedObjSelected == None):
+        chargedObjSelected = chargedObjOnMouse()
+        if (chargedObjSelected == None):
+            makeChargeObj()
+        else:
+            chargedObjSelected.displaySelect()
+    else:
+        # deselect if needed
+        chargedObjSelected.hideSelect()
+        chargedObjSelected = chargedObjOnMouse()
+        if (chargedObjSelected != None):
+            chargedObjSelected.displaySelect()
 
 vpython.scene.bind('click', clicked)
 
 def makeChargeObj():
     allChargedObjs.append(ChargedObj(spawnMass, spawnCharge, getMousePos(), vpython.vec(0, 0, 0)))
-
-def selectCharge():
-    global chargedObjSelected
-    chargedObjSelected = chargedObjOnMouse()
-    # show select display
-    if (chargedObjSelected != None):
-        chargedObjSelected.displaySelect()
 
 def chargedObjOnMouse():
     mousePos = getMousePos()
@@ -252,13 +260,12 @@ def on_mouse_up():
     chargedObjToDrag = None
 
 def on_mouse_move():
-    if (clickMode == "Spawn"):
+    if (chargedObjSelected == None):
         # set position
         if chargedObjToDrag != None:
             chargedObjToDrag.pos = getMousePos()
             chargedObjToDrag.display.pos = chargedObjToDrag.pos
             chargedObjToDrag.velVec.pos = chargedObjToDrag.pos
-            chargedObjToDrag.displaySelect()
     else:
         if chargedObjToDrag != None:
             # force vector
@@ -278,20 +285,6 @@ vpython.scene.bind('mouseup', on_mouse_up)
 ####################################################################################################
 
 # Button and Sliders
-
-# mode button
-clickMode = "Spawn"
-
-def changeClickMode():
-    global clickMode, clickModeButton
-    if clickMode == "Spawn":
-        clickMode = "Select"
-    else:
-        clickMode = "Spawn"
-    clickModeButton.text = "Mode: " + clickMode
-
-vpython.scene.append_to_caption("   ")
-clickModeButton = vpython.button(text="Mode: Spawn", bind=changeClickMode)
 
 # spawn slider
 spawnCharge = 10E-9
@@ -317,14 +310,17 @@ mShiftText = vpython.wtext(text = 'Mass: '+'{:1.2f}'.format(m.value))
 
 # delete button
 def deleteChargedObj():
+    global chargedObjSelected
     if (chargedObjSelected != None):
         chargedObjSelected.display.visible = False
         chargedObjSelected.velVec.visible = False
         chargedObjSelected.forceVec.visible = False
+        chargedObjSelected.hideSelect()
         for i in range(chargedObjSelected.numOfLine):   
                 for j in range(steps):
                     chargedObjSelected.electricFieldArrows[i][j].visible = False
         allChargedObjs.remove(chargedObjSelected)
+        chargedObjSelected = None
 
 vpython.scene.append_to_caption("   ")
 deleteButton = vpython.button(text="Delete", bind=deleteChargedObj)
@@ -385,6 +381,7 @@ while True:
     for chargedObj in allChargedObjs:
         chargedObj.displayElectricField()
 
+    # reset electric field arrows for all if user zooms
     if (curRange != vpython.scene.range):
         curRange = vpython.scene.range
         setElectricFieldArrowsAll()
