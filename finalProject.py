@@ -49,16 +49,25 @@ ruler = vpython.curve({"pos": vpython.vector(0, 0, 0), "color": vpython.color.cy
                       {"pos": vpython.vector(0, 0, 0), "color": vpython.color.cyan})
 
 def createRulerText():
-    global rulerText
-    rulerText = vpython.text(text="{0:.3f}".format(vpython.mag(ruler.point(1)['pos'] - ruler.point(0)['pos'])) + "m",
-     align='center', axis = ruler.point(1)['pos'] - ruler.point(0)['pos'], pos = ruler.point(1)['pos'], color = vpython.color.cyan,
-       visible = False)
-    rulerText.height = 0.03
-    rulerText.length = 0.1
-    rulerText.depth = 0.01
-    rulerText.visible = True
+    global rulerText, ruler, spawnLock
+    # minimum length check
+    if (vpython.mag(ruler.point(1)['pos'] - ruler.point(0)['pos']) < epsilon):
+        ruler = vpython.curve({"pos": vpython.vector(0, 0, 0), "color": vpython.color.cyan},
+                      {"pos": vpython.vector(0, 0, 0), "color": vpython.color.cyan})
+        rulerText.visible = False
+        spawnLock = True
+    else:   
+        # create new ruler text at the point
+        rulerText = vpython.text(text="{0:.3f}".format(vpython.mag(ruler.point(1)['pos'] - ruler.point(0)['pos'])) + "m",
+        align='center', axis = ruler.point(1)['pos'] - ruler.point(0)['pos'], pos = ruler.point(1)['pos'], color = vpython.color.cyan,
+        visible = False)
+        rulerText.height = 0.06 * vpython.scene.range
+        rulerText.length = 0.2 * vpython.scene.range
+        rulerText.depth = 0.01 * vpython.scene.range
+        rulerText.visible = True
 
-rulerText = None
+# place holder
+rulerText = vpython.text(text="0", visible = False)
          
 # store all spawned charges
 allChargedObjs = []
@@ -232,16 +241,18 @@ def tooClose(owner, pos, size):
 chargedObjSelected = None
 
 def clicked():
-    global chargedObjSelected
+    global chargedObjSelected, ruler
     # only when not playing
     if (not playing):
         # When no charge is selected, try spawn or select charge 
         if (chargedObjSelected == None):
             chargedObjSelected = chargedObjOnMouse()
-            if (chargedObjSelected == None):
-                makeChargeObj()
-            else:
+            # select the charge
+            if (chargedObjSelected != None):
                 chargedObjSelected.displaySelect()
+            # spawn when the click is not on a charged object
+            else:
+                makeChargeObj()
         else:
             # deselect if needed
             if (chargedObjSelected != None):
@@ -278,8 +289,7 @@ def on_mouse_down():
         ruler.modify(1, getMousePos())
 
     # ruler
-    if (rulerText != None):
-        rulerText.visible = False
+    rulerText.visible = False
 
 def on_mouse_up():
     global chargedObjToDrag, mouseDown
