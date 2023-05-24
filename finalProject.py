@@ -49,13 +49,12 @@ ruler = vpython.curve({"pos": vpython.vector(0, 0, 0), "color": vpython.color.cy
                       {"pos": vpython.vector(0, 0, 0), "color": vpython.color.cyan})
 
 def createRulerText():
-    global rulerText, ruler, spawnLock
+    global rulerText, ruler
     # minimum length check
-    if (vpython.mag(ruler.point(1)['pos'] - ruler.point(0)['pos']) < epsilon):
-        ruler = vpython.curve({"pos": vpython.vector(0, 0, 0), "color": vpython.color.cyan},
-                      {"pos": vpython.vector(0, 0, 0), "color": vpython.color.cyan})
+    if (vpython.mag(ruler.point(1)['pos'] - ruler.point(0)['pos']) < epsilon * vpython.scene.range):
         rulerText.visible = False
-        spawnLock = True
+        ruler.modify(0, vpython.vec(0, 0, 0))
+        ruler.modify(1, vpython.vec(0, 0, 0))
     else:   
         # create new ruler text at the point
         rulerText = vpython.text(text="{0:.3f}".format(vpython.mag(ruler.point(1)['pos'] - ruler.point(0)['pos'])) + "m",
@@ -284,8 +283,6 @@ def on_mouse_down():
     if (chargedObjToDrag == None and not playing):
         ruler.modify(0, getMousePos())
         ruler.modify(1, getMousePos())
-
-    # ruler
     rulerText.visible = False
 
 def on_mouse_up():
@@ -298,14 +295,14 @@ def on_mouse_up():
     chargedObjToDrag = None
     mouseDown = False
 
-    # ruler
     createRulerText()
 
 def on_mouse_move():
     global ruler
     # ruler
     if chargedObjToDrag == None and not playing:
-        ruler.modify(1, getMousePos())
+        if (mouseDown):
+            ruler.modify(1, getMousePos())
     else: 
         # Charge selected is not the charge you are draging
         if (chargedObjSelected != chargedObjToDrag):
