@@ -245,42 +245,46 @@ def getMousePos():
 
 # dragging
 chargedObjToDrag = None
+mouseDown = False
 
 def on_mouse_down():
-    global chargedObjToDrag
+    global chargedObjToDrag, mouseDown
     chargedObjToDrag = chargedObjOnMouse()
+    mouseDown = True
 
 def on_mouse_up():
-    global chargedObjToDrag
+    global chargedObjToDrag, mouseDown
     # apply force vector if necessary
-    if (chargedObjToDrag != None):
-        if (chargedObjToDrag.forceVec.axis != vpython.vec(0, 0, 0)):
-            chargedObjToDrag.vel += chargedObjToDrag.forceVec.axis / vectorAxisFactor / chargedObjToDrag.mass 
-            chargedObjToDrag.forceVec.axis = vpython.vec(0, 0, 0)
+    if (chargedObjSelected != None):
+        if (chargedObjSelected.forceVec.axis != vpython.vec(0, 0, 0)):
+            chargedObjSelected.vel += chargedObjSelected.forceVec.axis / vectorAxisFactor / chargedObjSelected.mass 
+            chargedObjSelected.forceVec.axis = vpython.vec(0, 0, 0)
     chargedObjToDrag = None
+    mouseDown = False
 
 def on_mouse_move():
     if (chargedObjSelected == None):
         # set position
         if chargedObjToDrag != None:
-            chargedObjToDrag.pos = getMousePos()
+            mousePos = getMousePos()
+            chargedObjToDrag.pos = mousePos
             chargedObjToDrag.display.pos = chargedObjToDrag.pos
             chargedObjToDrag.velVec.pos = chargedObjToDrag.pos
     else:
         if chargedObjToDrag != None:
-            # force vector
-            if (playing):
-                chargedObjToDrag.forceVec.pos = chargedObjToDrag.pos
-                chargedObjToDrag.forceVec.axis = getMousePos() - chargedObjToDrag.pos 
             # velocity vector
-            else:
+            if (not playing):
                 chargedObjToDrag.velVec.pos = chargedObjToDrag.pos
                 chargedObjToDrag.velVec.axis = getMousePos() - chargedObjToDrag.pos
+                # too small reset
+                if (vpython.mag(chargedObjToDrag.velVec.axis) < chargedObjToDrag.display.radius):
+                    chargedObjToDrag.velVec.axis = vpython.vec(0, 0, 0)
                 chargedObjToDrag.vel = chargedObjToDrag.velVec.axis / vectorAxisFactor
 
 # Bind event handlers to the box
 vpython.scene.bind('mousedown', on_mouse_down)
 vpython.scene.bind('mouseup', on_mouse_up)
+vpython.scene.bind('mousemove', on_mouse_move)
 
 ####################################################################################################
 
@@ -312,6 +316,7 @@ mShiftText = vpython.wtext(text = 'Mass: '+'{:1.2f}'.format(m.value))
 def deleteChargedObj():
     global chargedObjSelected
     if (chargedObjSelected != None):
+        # hide everything, remove from list, reset chargedObjSelected
         chargedObjSelected.display.visible = False
         chargedObjSelected.velVec.visible = False
         chargedObjSelected.forceVec.visible = False
@@ -390,6 +395,9 @@ while True:
     # for charge in allChargedObjs:
     #     charge.checkCollision()
 
-    # need to call mouse move any frame since for force vector mouse could have been not moving
-    on_mouse_move()
+    # update force vector because it is possible that mouse is not moving
+    if (playing and mouseDown and chargedObjSelected != None):
+        chargedObjSelected.forceVec.pos = chargedObjSelected.pos
+        chargedObjSelected.forceVec.axis = getMousePos() - chargedObjSelected.pos 
+
         
