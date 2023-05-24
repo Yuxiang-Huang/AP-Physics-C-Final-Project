@@ -12,33 +12,33 @@ vpython.scene.range = 1
 K = 9E9
 vectorAxisFactor = 300
 spawnDensity = 2500 
-precision = 20
+steps = 10
 epsilon = 0.01
 
 # electric field stuff
 electricFieldOpacitySetter = 1E4
-steps = 10
+precision = 10
 
 # Test place
 
 # Initilization
 
-electricFieldArrowsAll = [ [0]*steps for i in range(steps)]
-for i in range(steps):
-    for j in range(steps):
+electricFieldArrowsAll = [ [0]*precision for i in range(precision)]
+for i in range(precision):
+    for j in range(precision):
         electricFieldArrowsAll[i][j] = vpython.arrow(axis = vpython.vec(0, 0, 0), color = vpython.color.orange)
 
 def setElectricFieldArrowsAll():
-    for i in range(steps):
-        for j in range(steps):
+    for i in range(precision):
+        for j in range(precision):
             electricFieldArrowsAll[i][j].visible = True
             # assume height > width
             electricFieldArrowsAll[i][j].pos = vpython.vec(
-                        (i - steps / 2) * 2 * vpython.scene.width / vpython.scene.height * vpython.scene.range / steps, 
-                        (j - steps / 2) * 2 * vpython.scene.range / steps, 0)
+                        (i - precision / 2) * 2 * vpython.scene.width / vpython.scene.height * vpython.scene.range / precision, 
+                        (j - precision / 2) * 2 * vpython.scene.range / precision, 0)
             electricFieldArrowsAll[i][j].pos += vpython.vec(
-                        vpython.scene.width / vpython.scene.height * vpython.scene.range / steps, 
-                        vpython.scene.range / steps, 0)
+                        vpython.scene.width / vpython.scene.height * vpython.scene.range / precision, 
+                        vpython.scene.range / precision, 0)
             
 setElectricFieldArrowsAll()
 
@@ -70,9 +70,9 @@ class ChargedObj:
         # possibly sliders for more variables
         self.numOfLine = 8
         # initialize all the arrows
-        self.electricFieldArrows = [ [0]*steps for i in range(self.numOfLine)]
+        self.electricFieldArrows = [ [0]*precision for i in range(self.numOfLine)]
         for i in range(self.numOfLine):
-            for j in range(steps):
+            for j in range(precision):
                 self.electricFieldArrows[i][j] = vpython.arrow(axis = vpython.vec(0, 0, 0), color = self.display.color)
         
         # select display
@@ -85,8 +85,8 @@ class ChargedObj:
         for x in range(4):
             arc = vpython.curve()
             initialTheta = x * vpython.pi / 2 + vpython.pi / 4
-            for i in range(precision):
-                theta = i * thetaRange / precision + initialTheta - thetaRange / 2 
+            for i in range(steps):
+                theta = i * thetaRange / steps + initialTheta - thetaRange / 2 
                 arc.append(vpython.vec(vpython.cos(theta) * (self.display.radius + epsilon), 
                                     vpython.sin(theta) * (self.display.radius + epsilon), 0) + self.pos
                                     , color = vpython.color.yellow) 
@@ -100,8 +100,8 @@ class ChargedObj:
         for x in range(4):
             arc = self.selectDisplay[x]
             initialTheta = x * vpython.pi / 2 + vpython.pi / 4
-            for i in range(precision):
-                theta = i * thetaRange / precision + initialTheta - thetaRange / 2 
+            for i in range(steps):
+                theta = i * thetaRange / steps + initialTheta - thetaRange / 2 
                 arc.modify(i, pos = vpython.vec(vpython.cos(theta) * (self.display.radius + epsilon), 
                                     vpython.sin(theta) * (self.display.radius + epsilon), 0) + self.pos
                                     , color = vpython.color.yellow)
@@ -147,7 +147,7 @@ class ChargedObj:
                 curPos = self.pos + vpython.vec(vpython.cos(theta), vpython.sin(theta), 0) * self.display.radius
                 endForTooClose = False
                 #for every step
-                for j in range(steps):
+                for j in range(precision):
                     # stop if too close to a charge
                     if (tooClose(self, curPos, size)):
                         endForTooClose = True
@@ -167,7 +167,7 @@ class ChargedObj:
         else: 
             # hide all electric field arrows
             for i in range(self.numOfLine):   
-                for j in range(steps):
+                for j in range(precision):
                     self.electricFieldArrows[i][j].visible = False
 
 # Coulomb's Law for force of q2 on q1
@@ -182,14 +182,14 @@ def calculateForce(q1, q2):
 def displayElectricFieldAll():
     if (electricFieldMode == 2):
         size = vpython.scene.range / 20
-        for i in range(steps):
-            for j in range(steps):
+        for i in range(precision):
+            for j in range(precision):
                 electricFieldArrowsAll[i][j].visible = True
                 electricFieldArrowsAll[i][j].axis = vpython.norm(calculateElectricField(electricFieldArrowsAll[i][j].pos)) * size
     else:
         # hide all electric field
-        for i in range(steps):
-            for j in range(steps):
+        for i in range(precision):
+            for j in range(precision):
                 electricFieldArrowsAll[i][j].visible = False
     
 def calculateElectricField(pos):
@@ -215,19 +215,22 @@ chargedObjSelected = None
 
 def clicked():
     global chargedObjSelected
-    # When no charge is selected, try spawn or select charge
-    if (chargedObjSelected == None):
-        chargedObjSelected = chargedObjOnMouse()
+    # only when not playing
+    if (not playing):
+        # When no charge is selected, try spawn or select charge 
         if (chargedObjSelected == None):
-            makeChargeObj()
+            chargedObjSelected = chargedObjOnMouse()
+            if (chargedObjSelected == None):
+                makeChargeObj()
+            else:
+                chargedObjSelected.displaySelect()
         else:
-            chargedObjSelected.displaySelect()
-    else:
-        # deselect if needed
-        chargedObjSelected.hideSelect()
-        chargedObjSelected = chargedObjOnMouse()
-        if (chargedObjSelected != None):
-            chargedObjSelected.displaySelect()
+            # deselect if needed
+            if (chargedObjSelected != None):
+                chargedObjSelected.hideSelect()
+            chargedObjSelected = chargedObjOnMouse()
+            if (chargedObjSelected != None):
+                chargedObjSelected.displaySelect()
 
 vpython.scene.bind('click', clicked)
 
@@ -322,7 +325,7 @@ def deleteChargedObj():
         chargedObjSelected.forceVec.visible = False
         chargedObjSelected.hideSelect()
         for i in range(chargedObjSelected.numOfLine):   
-                for j in range(steps):
+                for j in range(precision):
                     chargedObjSelected.electricFieldArrows[i][j].visible = False
         allChargedObjs.remove(chargedObjSelected)
         chargedObjSelected = None
