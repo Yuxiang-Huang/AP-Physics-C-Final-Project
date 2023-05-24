@@ -172,13 +172,10 @@ class ChargedObj:
                 # determine starting position
                 theta = i * 2 * vpython.pi / self.numOfLine
                 curPos = self.pos + vpython.vec(vpython.cos(theta), vpython.sin(theta), 0) * self.display.radius
-                endForTooClose = False
                 #for every step
                 for j in range(precision):
-                    # stop if too close to a charge
+                    # don't display if too close to a charge
                     if (tooClose(self, curPos, size)):
-                        endForTooClose = True
-                    if (endForTooClose):
                         self.electricFieldArrows[i][j].visible = False
                     else:
                         # determine the arrow and the next position
@@ -284,7 +281,7 @@ def on_mouse_down():
     chargedObjToDrag = chargedObjOnMouse()
     mouseDown = True
     # initial pos of ruler
-    if (chargedObjToDrag == None):
+    if (chargedObjToDrag == None and not playing):
         ruler.modify(0, getMousePos())
         ruler.modify(1, getMousePos())
 
@@ -307,12 +304,13 @@ def on_mouse_up():
 def on_mouse_move():
     global ruler
     # ruler
-    if chargedObjToDrag == None:
+    if chargedObjToDrag == None and not playing:
         ruler.modify(1, getMousePos())
     else: 
         # Charge selected is not the charge you are draging
         if (chargedObjSelected != chargedObjToDrag):
             # set position
+            if (chargedObjToDrag != None):
                 mousePos = getMousePos()
                 chargedObjToDrag.pos = mousePos
                 chargedObjToDrag.display.pos = chargedObjToDrag.pos
