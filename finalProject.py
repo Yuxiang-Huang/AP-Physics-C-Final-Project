@@ -45,7 +45,20 @@ def setElectricFieldArrowsAll():
 setElectricFieldArrowsAll()
 
 # ruler
-ruler = vpython.curve(vpython.vector(0, 1, 0), vpython.vector(0, -1, 0), color = vpython.color.cyan)
+ruler = vpython.curve({"pos": vpython.vector(0, 0, 0), "color": vpython.color.cyan},
+                      {"pos": vpython.vector(0, 0, 0), "color": vpython.color.cyan})
+
+def createRulerText():
+    global rulerText
+    rulerText = vpython.text(text="{0:.3f}".format(vpython.mag(ruler.point(1)['pos'] - ruler.point(0)['pos'])) + "m",
+     align='center', axis = ruler.point(1)['pos'] - ruler.point(0)['pos'], pos = ruler.point(1)['pos'], color = vpython.color.cyan,
+       visible = False)
+    rulerText.height = 0.03
+    rulerText.length = 0.1
+    rulerText.depth = 0.01
+    rulerText.visible = True
+
+rulerText = None
          
 # store all spawned charges
 allChargedObjs = []
@@ -262,6 +275,11 @@ def on_mouse_down():
     # initial pos of ruler
     if (chargedObjToDrag == None):
         ruler.modify(0, getMousePos())
+        ruler.modify(1, getMousePos())
+
+    # ruler
+    if (rulerText != None):
+        rulerText.visible = False
 
 def on_mouse_up():
     global chargedObjToDrag, mouseDown
@@ -272,6 +290,9 @@ def on_mouse_up():
             chargedObjSelected.forceVec.axis = vpython.vec(0, 0, 0)
     chargedObjToDrag = None
     mouseDown = False
+
+    # ruler
+    createRulerText()
 
 def on_mouse_move():
     global ruler
