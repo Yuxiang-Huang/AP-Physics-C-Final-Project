@@ -1,12 +1,13 @@
 import vpython
 
 vpython.scene.background = vpython.color.white
-vpython.scene.width = 900
-vpython.scene.height = 600
+vpython.scene.width = 1000
+vpython.scene.height = 650
 vpython.scene.range = 1
 vpython.scene.userzoom = False
 # vpython.scene.userspin = False
 vpython.scene.fov = vpython.pi / 50
+vpython.scene.align = "left"
 
 #constants
 K = 9E9
@@ -85,24 +86,47 @@ class ChargedObj:
         self.fixed = False
         # Displays
         spawnRadius = ((spawnMass) / (((4/3)* vpython.pi*spawnDensity)))**(1/3)
+
         # spheres for now
         if (charge > 0):
-            self.display = vpython.sphere(pos=spawnPos, radius=spawnRadius, color = vpython.color.red)
-        if (charge < 0):
-            self.display = vpython.sphere(pos=spawnPos, radius=spawnRadius, color = vpython.color.blue)
-        if (charge == 0):
+            self.display = vpython.sphere(pos=spawnPos, radius=spawnRadius, texture = "https://i.imgur.com/Id1Q11U.png")
+            self.velVec = vpython.arrow(axis = vpython.vec(0, 0, 0), color = vpython.color.red)
+            self.forceVec = vpython.arrow(axis = vpython.vec(0, 0, 0), color = vpython.color.red)
+
+            # electric field
+            # possibly sliders for more variables
+            self.numOfLine = 8
+            # initialize all the arrows
+            self.electricFieldArrows = [ [0]*precision for i in range(self.numOfLine)]
+            for i in range(self.numOfLine):
+                for j in range(precision):
+                    self.electricFieldArrows[i][j] = vpython.arrow(axis = vpython.vec(0, 0, 0), color = vpython.color.red)
+        elif (charge < 0):
+            self.display = vpython.sphere(pos=spawnPos, radius=spawnRadius, texture="https://i.imgur.com/r6loarb.png")
+            self.velVec = vpython.arrow(axis = vpython.vec(0, 0, 0), color = vpython.color.blue)
+            self.forceVec = vpython.arrow(axis = vpython.vec(0, 0, 0), color = vpython.color.blue)
+
+            # electric field
+            # possibly sliders for more variables
+            self.numOfLine = 8
+            # initialize all the arrows
+            self.electricFieldArrows = [ [0]*precision for i in range(self.numOfLine)]
+            for i in range(self.numOfLine):
+                for j in range(precision):
+                    self.electricFieldArrows[i][j] = vpython.arrow(axis = vpython.vec(0, 0, 0), color = vpython.color.blue)
+        else:
             self.display = vpython.sphere(pos=spawnPos, radius=spawnRadius, color = vpython.color.black)
-        self.velVec = vpython.arrow(axis = vpython.vec(0, 0, 0), color = self.display.color)
-        self.forceVec = vpython.arrow(axis = vpython.vec(0, 0, 0), color = self.display.color)
-        
-        # electric field
-        # possibly sliders for more variables
-        self.numOfLine = 8
-        # initialize all the arrows
-        self.electricFieldArrows = [ [0]*precision for i in range(self.numOfLine)]
-        for i in range(self.numOfLine):
-            for j in range(precision):
-                self.electricFieldArrows[i][j] = vpython.arrow(axis = vpython.vec(0, 0, 0), color = self.display.color)
+            self.velVec = vpython.arrow(axis = vpython.vec(0, 0, 0), color = vpython.color.black)
+            self.forceVec = vpython.arrow(axis = vpython.vec(0, 0, 0), color = vpython.color.black)
+
+            # electric field
+            # possibly sliders for more variables
+            self.numOfLine = 8
+            # initialize all the arrows
+            self.electricFieldArrows = [ [0]*precision for i in range(self.numOfLine)]
+            for i in range(self.numOfLine):
+                for j in range(precision):
+                    self.electricFieldArrows[i][j] = vpython.arrow(axis = vpython.vec(0, 0, 0), color = vpython.color.black)
         
         # select display
         self.selectDisplay = []
@@ -353,7 +377,8 @@ startText.length = 2.5
 startButton = vpython.button(text = "Start", bind = start)
 
 def createInstruction():
-    vpython.scene.append_to_caption("""  
+    vpython.scene.append_to_caption(""" 
+
 Instruction: 
 
 Controls:
@@ -384,13 +409,16 @@ def createButtons():
     
     vpython.scene.caption = ""
     
-    spawnChargeSlider = vpython.slider(bind = spawnChargeShift, min = -5, max = 5, value = 1, step = 0.1)
-    spawnChargeText = vpython.wtext(text = 'Charge (nC):'+'{:1.2f}'.format(spawnChargeSlider.value))
+    spawnChargeSlider = vpython.slider(bind = spawnChargeShift, min = -5, max = 5, value = 1, step = 0.1, length = 450)
+    vpython.scene.append_to_caption("\n")
+    spawnChargeText = vpython.wtext(text = '<center>Charge (nC):'+'{:1.2f}'.format(spawnChargeSlider.value) + "</center>")
 
-    massSlider = vpython.slider(bind=massShift, min = 1, max =2, value =1, step = 0.1) 
+    vpython.scene.append_to_caption("\n")
+    massSlider = vpython.slider(bind=massShift, min = 1, max =2, value =1, step = 0.1, length = 300) 
+    vpython.scene.append_to_caption("\n             ")
     massText = vpython.wtext(text = 'Mass: '+'{:1.2f}'.format(massSlider.value))
 
-    vpython.scene.append_to_caption("\n   ")
+    vpython.scene.append_to_caption("\n\n   ")
     playButton = vpython.button(text="Play", bind=changePlay)
 
     vpython.scene.append_to_caption("   ")
@@ -517,7 +545,6 @@ def resetScene():
     rulerText.visible = False
 
     # caption
-    vpython.scene.caption = ""
     createButtons()
 
     # reset zoom
