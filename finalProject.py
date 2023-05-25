@@ -24,48 +24,7 @@ precision = 10
 
 ####################################################################################################
 
-# Intro Screen
-simulationStarted = False
-
-def start():
-    global simulationStarted
-    simulationStarted = True
-    vpython.scene.userzoom = True
-    startText.visible = False
-    createButtons()
-
-startText = vpython.text(pos = vpython.vec(0, -0.3, 0), text="JackXiang", align='center', color = vpython.color.cyan)
-startText.height = 1
-startText.length = 2.5
-    
-startButton = vpython.button(text = "Start", bind = start)
-
-def createInstruction():
-    vpython.scene.append_to_caption("""  
-Instruction: 
-
-Controls:
-    Not Playing:
-        Click:
-            Charge not selected:
-                Empty Space = Spawn
-                On a charge = Select
-            Charge selected:
-                Empty Space = Deselect
-        Drag:
-            Start on a charge:
-                Charge not selected = Position
-                Charge selected = Velocity
-            Start on empty space = Ruler
-    Playing:
-        Click & Drag = Force vector for selected charge
-""")
-
-createInstruction()
-
 # Initilization
-
-####################################################################################################
 
 # electric field arrows for mode 2
 electricFieldArrowsAll = [ [0]*precision for i in range(precision)]
@@ -101,6 +60,7 @@ def createRulerText():
         ruler.modify(1, vpython.vec(0, 0, 0))
     else:   
         # create new ruler text at the point
+        rulerText.visible = False
         rulerText = vpython.text(text="{0:.3f}".format(vpython.mag(ruler.point(1)['pos'] - ruler.point(0)['pos'])) + "m",
         align='center', axis = ruler.point(1)['pos'] - ruler.point(0)['pos'], pos = ruler.point(1)['pos'], color = vpython.color.cyan,
         visible = False)
@@ -287,7 +247,7 @@ def clicked():
         # When no charge is selected, try spawn or select charge 
         if (chargedObjSelected == None):
             chargedObjSelected = chargedObjOnMouse()
-            # select the charge
+            # select the charge when the click is on a charged object
             if (chargedObjSelected != None):
                 chargedObjSelected.displaySelect()
             # spawn when the click is not on a charged object
@@ -303,6 +263,7 @@ def clicked():
 
 vpython.scene.bind('click', clicked)
 
+# helper methods for click
 def makeChargeObj():
     allChargedObjs.append(ChargedObj(spawnMass, spawnCharge, getMousePos(), vpython.vec(0, 0, 0)))
 
@@ -321,13 +282,15 @@ mouseDown = False
 
 def on_mouse_down():
     global chargedObjToDrag, mouseDown, ruler
+    # assign charged object to drag
     chargedObjToDrag = chargedObjOnMouse()
     mouseDown = True
+
     # initial pos of ruler
     if (chargedObjToDrag == None and not playing):
         ruler.modify(0, getMousePos())
         ruler.modify(1, getMousePos())
-    rulerText.visible = False
+        rulerText.visible = False
 
 def on_mouse_up():
     global chargedObjToDrag, mouseDown
@@ -336,19 +299,24 @@ def on_mouse_up():
         if (chargedObjSelected.forceVec.axis != vpython.vec(0, 0, 0)):
             chargedObjSelected.vel += chargedObjSelected.forceVec.axis / vectorAxisFactor / chargedObjSelected.mass 
             chargedObjSelected.forceVec.axis = vpython.vec(0, 0, 0)
+
+    if (chargedObjToDrag == None):
+        # create new ruler text
+        createRulerText()    
+    
+    # reset variables
     chargedObjToDrag = None
     mouseDown = False
 
-    createRulerText()
-
 def on_mouse_move():
     global ruler
-    # ruler
+    # ruler when no object to drag and not playing
     if chargedObjToDrag == None and not playing:
+        # avoid mouse move after mouse up
         if (mouseDown):
             ruler.modify(1, getMousePos())
     else: 
-        # Charge selected is not the charge you are draging
+        # when charge selected is not the charge you are draging
         if (chargedObjSelected != chargedObjToDrag):
             # set position
             if (chargedObjToDrag != None):
@@ -374,6 +342,47 @@ vpython.scene.bind('mousemove', on_mouse_move)
 
 ####################################################################################################
 
+# Intro Screen
+simulationStarted = False
+
+def start():
+    global simulationStarted
+    simulationStarted = True
+    vpython.scene.userzoom = True
+    startText.visible = False
+    createButtons()
+
+startText = vpython.text(pos = vpython.vec(0, -0.3, 0), text="JackXiang", align='center', color = vpython.color.cyan)
+startText.height = 1
+startText.length = 2.5
+    
+startButton = vpython.button(text = "Start", bind = start)
+
+def createInstruction():
+    vpython.scene.append_to_caption("""  
+Instruction: 
+
+Controls:
+    Not Playing:
+        Click:
+            Charge not selected:
+                Empty Space = Spawn
+                On a charge = Select
+            Charge selected:
+                Empty Space = Deselect
+        Drag:
+            Start on a charge:
+                Charge not selected = Position
+                Charge selected = Velocity
+            Start on empty space = Ruler
+    Playing:
+        Click & Drag = Force vector for selected charge
+""")
+
+createInstruction()
+
+####################################################################################################
+
 # Button and Sliders
 
 def createButtons():
@@ -384,7 +393,7 @@ def createButtons():
     spawnChargeSlider = vpython.slider(bind = spawnChargeShift, min = -5, max = 5, value = 1, step = 0.1)
     spawnChargeText = vpython.wtext(text = 'Charge (nC):'+'{:1.2f}'.format(spawnChargeSlider.value))
 
-    massSlider = vpython.slider(bind=mShift, min = 1, max =2, value =1, step = 0.1) 
+    massSlider = vpython.slider(bind=massShift, min = 1, max =2, value =1, step = 0.1) 
     massText = vpython.wtext(text = 'Mass: '+'{:1.2f}'.format(massSlider.value))
 
     vpython.scene.append_to_caption("\n   ")
@@ -416,7 +425,7 @@ spawnChargeText = None
 # mass slider
 spawnMass = 1
 
-def mShift():
+def massShift():
     global spawnMass
     spawnMass = massSlider.value
     massText.text = 'Mass: '+'{:1.2f}'.format(massSlider.value)
