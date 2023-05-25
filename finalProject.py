@@ -1,12 +1,12 @@
 import vpython
 
 vpython.scene.background = vpython.color.white
-vpython.scene.width = 1000
-vpython.scene.height = 650
+vpython.scene.width = 900
+vpython.scene.height = 600
 vpython.scene.range = 1
 vpython.scene.userzoom = False
 # vpython.scene.userspin = False
-vpython.scene.fov = vpython.pi / 1000
+vpython.scene.fov = vpython.pi / 50
 
 #constants
 K = 9E9
@@ -391,18 +391,18 @@ def createButtons():
     massText = vpython.wtext(text = 'Mass: '+'{:1.2f}'.format(massSlider.value))
 
     vpython.scene.append_to_caption("\n   ")
-    deleteButton = vpython.button(text="Delete", bind=deleteChargedObj)
-
-    vpython.scene.append_to_caption("   ")
-    fixButton = vpython.button(text="Fix", bind=fixChargedObj)
+    playButton = vpython.button(text="Play", bind=changePlay)
 
     vpython.scene.append_to_caption("   ")
     electricFieldButton = vpython.button(text="Electric Field: Mode 0", bind=changeElectricField)
 
     vpython.scene.append_to_caption("   ")
-    playButton = vpython.button(text="Play", bind=changePlay)
+    fixButton = vpython.button(text="Fix", bind=fixChargedObj)
 
     vpython.scene.append_to_caption("   ")
+    deleteButton = vpython.button(text="Delete", bind=deleteChargedObj)
+
+    vpython.scene.append_to_caption("\n   ")
     instructionButton = vpython.button(text="Instructions", bind=displayInstructionPage)
 
     vpython.scene.append_to_caption("   ")
@@ -501,12 +501,16 @@ backButton = None
 # reset button
 
 def resetScene():
-    global chargedObjSelected, ruler, rulerText
+    global chargedObjSelected, ruler, rulerText, playing, electricFieldMode
     # delete every charge
     while len(allChargedObjs) > 0:
         chargedObjSelected = allChargedObjs[0]
         deleteChargedObj()
     
+    # reset variables
+    playing = False
+    electricFieldMode = 0
+
     # ruler
     ruler.modify(0, vpython.vec(0, 0, 0))
     ruler.modify(1, vpython.vec(0, 0, 0))
@@ -515,6 +519,9 @@ def resetScene():
     # caption
     vpython.scene.caption = ""
     createButtons()
+
+    # reset zoom
+    vpython.scene.range = 1
 
 resetButton = None
 
