@@ -7,9 +7,7 @@ vpython.scene.height = 650
 vpython.scene.range = 1
 vpython.scene.userzoom = False
 # vpython.scene.userspin = False
-
-# Use it to make it seem 2D
-# vpython.scene.fov = vpython.pi / 1000
+vpython.scene.fov = vpython.pi / 1000
 
 #constants
 K = 9E9
@@ -34,8 +32,6 @@ def start():
     simulationStarted = True
     vpython.scene.userzoom = True
     startText.visible = False
-    startButton.delete()
-    vpython.scene.caption = ""
     createButtons()
 
 startText = vpython.text(pos = vpython.vec(0, -0.3, 0), text="JackXiang", align='center', color = vpython.color.cyan)
@@ -381,7 +377,9 @@ vpython.scene.bind('mousemove', on_mouse_move)
 # Button and Sliders
 
 def createButtons():
-    global spawnChargeSlider, spawnChargeText, massSlider, massText, deleteButton, fixButton, electricFieldButton
+    global spawnChargeSlider, spawnChargeText, massSlider, massText, deleteButton, fixButton, electricFieldButton, playButton, instructionButton
+    
+    vpython.scene.caption = ""
     
     spawnChargeSlider = vpython.slider(bind = spawnChargeShift, min = -5, max = 5, value = 1, step = 0.1)
     spawnChargeText = vpython.wtext(text = 'Charge (nC):'+'{:1.2f}'.format(spawnChargeSlider.value))
@@ -400,6 +398,9 @@ def createButtons():
 
     vpython.scene.append_to_caption("   ")
     playButton = vpython.button(text="Play", bind=changePlay)
+
+    vpython.scene.append_to_caption("   ")
+    instructionButton = vpython.button(text="Instructions", bind=displayInstructionPage)
 
 # spawn slider
 spawnCharge = 10E-9
@@ -480,6 +481,16 @@ def changePlay():
             co.velVec.axis = co.vel * vectorAxisFactor
 
 playButton = None
+
+# instruction and back buttons
+def displayInstructionPage():
+    global startButton
+    vpython.scene.caption = ""
+    startButton = vpython.button(text = "Back", bind = createButtons)
+    createInstruction()
+
+instructionButton = None
+backButton = None
 
 # program runs
 curRange = vpython.scene.range
