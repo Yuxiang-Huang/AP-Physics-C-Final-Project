@@ -1,6 +1,5 @@
 import vpython
 
-# set scene
 vpython.scene.background = vpython.color.white
 vpython.scene.width = 1000
 vpython.scene.height = 650
@@ -261,8 +260,6 @@ def clicked():
             if (chargedObjSelected != None):
                 chargedObjSelected.displaySelect()
 
-vpython.scene.bind('click', clicked)
-
 # helper methods for click
 def makeChargeObj():
     allChargedObjs.append(ChargedObj(spawnMass, spawnCharge, getMousePos(), vpython.vec(0, 0, 0)))
@@ -335,22 +332,19 @@ def on_mouse_move():
                         chargedObjToDrag.velVec.axis = vpython.vec(0, 0, 0)
                     chargedObjToDrag.vel = chargedObjToDrag.velVec.axis / vectorAxisFactor
 
-# Bind event handlers to the box
-vpython.scene.bind('mousedown', on_mouse_down)
-vpython.scene.bind('mouseup', on_mouse_up)
-vpython.scene.bind('mousemove', on_mouse_move)
-
 ####################################################################################################
 
 # Intro Screen
-simulationStarted = False
-
 def start():
-    global simulationStarted
-    simulationStarted = True
     vpython.scene.userzoom = True
     startText.visible = False
     createButtons()
+
+    # bind events
+    vpython.scene.bind('click', clicked)
+    vpython.scene.bind('mousedown', on_mouse_down)
+    vpython.scene.bind('mouseup', on_mouse_up)
+    vpython.scene.bind('mousemove', on_mouse_move)
 
 startText = vpython.text(pos = vpython.vec(0, -0.3, 0), text="JackXiang", align='center', color = vpython.color.cyan)
 startText.height = 1
@@ -386,7 +380,7 @@ createInstruction()
 # Button and Sliders
 
 def createButtons():
-    global spawnChargeSlider, spawnChargeText, massSlider, massText, deleteButton, fixButton, electricFieldButton, playButton, instructionButton
+    global spawnChargeSlider, spawnChargeText, massSlider, massText, deleteButton, fixButton, electricFieldButton, playButton, instructionButton, resetButton
     
     vpython.scene.caption = ""
     
@@ -410,6 +404,9 @@ def createButtons():
 
     vpython.scene.append_to_caption("   ")
     instructionButton = vpython.button(text="Instructions", bind=displayInstructionPage)
+
+    vpython.scene.append_to_caption("   ")
+    resetButton = vpython.button(text="Reset", bind=resetScene)    
 
 # spawn slider
 spawnCharge = 10E-9
@@ -500,6 +497,26 @@ def displayInstructionPage():
 
 instructionButton = None
 backButton = None
+
+# reset button
+
+def resetScene():
+    global chargedObjSelected, ruler, rulerText
+    # delete every charge
+    while len(allChargedObjs) > 0:
+        chargedObjSelected = allChargedObjs[0]
+        deleteChargedObj()
+    
+    # ruler
+    ruler.modify(0, vpython.vec(0, 0, 0))
+    ruler.modify(1, vpython.vec(0, 0, 0))
+    rulerText.visible = False
+
+    # caption
+    vpython.scene.caption = ""
+    createButtons()
+
+resetButton = None
 
 # program runs
 curRange = vpython.scene.range
