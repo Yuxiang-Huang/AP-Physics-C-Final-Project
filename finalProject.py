@@ -5,8 +5,11 @@ vpython.scene.background = vpython.color.white
 vpython.scene.width = 1000
 vpython.scene.height = 650
 vpython.scene.range = 1
+vpython.scene.userzoom = False
+# vpython.scene.userspin = False
+
 # Use it to make it seem 2D
-# vpython.scene.fov = vpython.pi / 6
+# vpython.scene.fov = vpython.pi / 1000
 
 #constants
 K = 9E9
@@ -21,7 +24,52 @@ precision = 10
 
 # Test place
 
+####################################################################################################
+
+# Intro Screen
+simulationStarted = False
+
+def start():
+    global simulationStarted
+    simulationStarted = True
+    vpython.scene.userzoom = True
+    startText.visible = False
+    startButton.delete()
+    vpython.scene.caption = ""
+    createButtons()
+
+startText = vpython.text(pos = vpython.vec(0, -0.3, 0), text="JackXiang", align='center', color = vpython.color.cyan)
+startText.height = 1
+startText.length = 2.5
+    
+startButton = vpython.button(text = "Start", bind = start)
+
+def createInstruction():
+    vpython.scene.append_to_caption("""  
+Instruction: 
+
+Controls:
+    Not Playing:
+        Click:
+            Charge not selected:
+                Empty Space = Spawn
+                On a charge = Select
+            Charge selected:
+                Empty Space = Deselect
+        Drag:
+            Start on a charge:
+                Charge not selected = Position
+                Charge selected = Velocity
+            Start on empty space = Ruler
+    Playing:
+        Click & Drag = Force vector for selected charge
+""")
+
+createInstruction()
+
 # Initilization
+
+####################################################################################################
 
 # electric field arrows for mode 2
 electricFieldArrowsAll = [ [0]*precision for i in range(precision)]
@@ -330,70 +378,50 @@ vpython.scene.bind('mousemove', on_mouse_move)
 
 ####################################################################################################
 
-# Intro Screen
-simulationStarted = False
-
-def start():
-    global simulationStarted
-    simulationStarted = True
-
-startText = vpython.text(pos = vpython.vec(0, -0.3, 0), text="JackXiang", align='center', color = vpython.color.cyan)
-startText.height = 1
-startText.length = 2.5
-    
-startButton = vpython.button(bind = start(), text = "Start")
-
-def createInstruction():
-    vpython.scene.append_to_caption("""  
-Instruction: 
-
-Controls:
-    Not Playing:
-        Click:
-            Charge not selected:
-                Empty Space = Spawn
-                On a charge = Select
-            Charge selected:
-                Empty Space = Deselect
-        Drag:
-            Start on a charge:
-                Charge not selected = Position
-                Charge selected = Velocity
-            Start on empty space = Ruler
-    Playing:
-        Click & Drag = Force vector for selected charge
-""")
-
-createInstruction()
-
-####################################################################################################
-
 # Button and Sliders
+
+def createButtons():
+    global spawnChargeSlider, spawnChargeText, massSlider, massText, deleteButton, fixButton, electricFieldButton
+    
+    spawnChargeSlider = vpython.slider(bind = spawnChargeShift, min = -5, max = 5, value = 1, step = 0.1)
+    spawnChargeText = vpython.wtext(text = 'Charge (nC):'+'{:1.2f}'.format(spawnChargeSlider.value))
+
+    massSlider = vpython.slider(bind=mShift, min = 1, max =2, value =1, step = 0.1) 
+    massText = vpython.wtext(text = 'Mass: '+'{:1.2f}'.format(massSlider.value))
+
+    vpython.scene.append_to_caption("\n   ")
+    deleteButton = vpython.button(text="Delete", bind=deleteChargedObj)
+
+    vpython.scene.append_to_caption("   ")
+    fixButton = vpython.button(text="Fix", bind=fixChargedObj)
+
+    vpython.scene.append_to_caption("   ")
+    electricFieldButton = vpython.button(text="Electric Field: Mode 0", bind=changeElectricField)
+
+    vpython.scene.append_to_caption("   ")
+    playButton = vpython.button(text="Play", bind=changePlay)
 
 # spawn slider
 spawnCharge = 10E-9
 
 def spawnChargeShift():
     global spawnCharge, spawnChargeText
-    spawnCharge = s.value * 10E-9
-    spawnChargeText.text = 'Charge (nC):'+'{:1.2f}'.format(s.value)
+    spawnCharge = spawnChargeSlider.value * 10E-9
+    spawnChargeText.text = 'Charge (nC):'+'{:1.2f}'.format(spawnChargeSlider.value)
     
-s = vpython.slider(bind = spawnChargeShift, min = -5, max = 5, value = 1, step = 0.1)
-spawnChargeText = vpython.wtext(text = 'Charge (nC):'+'{:1.2f}'.format(s.value))
-s.delete()
-spawnChargeText.text = ""
+spawnChargeSlider = None
+spawnChargeText = None
 
 # mass slider
 spawnMass = 1
 
 def mShift():
     global spawnMass
-    spawnMass = m.value
-    mShiftText.text = 'Mass: '+'{:1.2f}'.format(m.value)
-m = vpython.slider(bind=mShift, min = 1, max =2, value =1, step = 0.1) 
-mShiftText = vpython.wtext(text = 'Mass: '+'{:1.2f}'.format(m.value))
-m.delete()
-mShiftText.text = ""
+    spawnMass = massSlider.value
+    massText.text = 'Mass: '+'{:1.2f}'.format(massSlider.value)
+
+massSlider = None
+massText = None
 
 # delete button
 def deleteChargedObj():
@@ -410,18 +438,14 @@ def deleteChargedObj():
         allChargedObjs.remove(chargedObjSelected)
         chargedObjSelected = None
 
-vpython.scene.append_to_caption("   ")
-deleteButton = vpython.button(text="Delete", bind=deleteChargedObj)
-deleteButton.delete()
+deleteButton = None
 
 # fix button
 def fixChargedObj():
     if (chargedObjSelected != None):
         chargedObjSelected.fixed = not chargedObjSelected.fixed
 
-vpython.scene.append_to_caption("   ")
-fixButton = vpython.button(text="Fix", bind=fixChargedObj)
-fixButton.delete()
+fixButton = None
 
 # electic field button
 electricFieldMode = 0
@@ -433,9 +457,7 @@ def changeElectricField():
         electricFieldMode = 0
     electricFieldButton.text = "Electric Field: Mode " + str(electricFieldMode)
 
-vpython.scene.append_to_caption("   ")
-electricFieldButton = vpython.button(text="Electric Field: Mode 0", bind=changeElectricField)
-electricFieldButton.delete()
+electricFieldButton = None
 
 # playing button
 playing = False
@@ -457,9 +479,7 @@ def changePlay():
             co.velVec.pos = co.pos
             co.velVec.axis = co.vel * vectorAxisFactor
 
-vpython.scene.append_to_caption("   ")
-playButton = vpython.button(text="Play", bind=changePlay)
-playButton.delete()
+playButton = None
 
 # program runs
 curRange = vpython.scene.range
