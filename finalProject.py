@@ -70,19 +70,16 @@ def setElectricPotentialGrid():
                                                            thickness, thickness)
         potentialGridRows[i].pos = vpython.vec(0, (i - precision / 2) * 2 * vpython.scene.range / precision, 0)
         potentialGridRows[i].pos += vpython.vec(0, vpython.scene.range / precision, 0)
-        potentialGridRows[i].visible = True
 
         # cols
         potentialGridCols[i].size = vpython.vec(thickness, 2 * vpython.scene.range, thickness)
         potentialGridCols[i].pos = vpython.vec((i - precision / 2) * 2 * 
                                                vpython.scene.width / vpython.scene.height * vpython.scene.range / precision, 0, 0)
         potentialGridCols[i].pos += vpython.vec(vpython.scene.width / vpython.scene.height * vpython.scene.range / precision, 0, 0)
-        potentialGridCols[i].visible = True
 
     # labels
     for i in range(precision-1):
         for j in range(precision-1):
-            electricPotentialLabels[i][j].visible = True
             # assume height > width
             electricPotentialLabels[i][j].pos = vpython.vec(
                         (i - precision / 2 + 1) * 2 * vpython.scene.width / vpython.scene.height * vpython.scene.range / precision, 
@@ -277,17 +274,12 @@ def calculateForce(q1, q2):
 # Electric Field
 
 def displayElectricFieldAll():
+    # calculate electric field for each arrow
     if (electricFieldMode == 2):
         size = vpython.scene.range / 10
         for i in range(precision):
             for j in range(precision):
-                electricFieldArrowsAll[i][j].visible = True
                 electricFieldArrowsAll[i][j].axis = vpython.norm(calculateElectricField(electricFieldArrowsAll[i][j].pos)) * size
-    else:
-        # hide all electric field
-        for i in range(precision):
-            for j in range(precision):
-                electricFieldArrowsAll[i][j].visible = False
     
 def calculateElectricField(pos):
     electricField = vpython.vec(0, 0, 0)
@@ -310,10 +302,11 @@ def tooClose(owner, pos, size):
 # Electric Potential
 
 def displayElectricPotential():
-    for i in range(precision-1):
-        for j in range(precision-1):
-            electricPotentialLabels[i][j].visible = True
-            electricPotentialLabels[i][j].text = '{:1.2f}'.format(calculateElectricPotential(electricPotentialLabels[i][j].pos))
+    # calculate electric potential for each label
+    if (electricPotentialMode):
+        for i in range(precision-1):
+            for j in range(precision-1):
+                electricPotentialLabels[i][j].text = '{:1.2f}'.format(calculateElectricPotential(electricPotentialLabels[i][j].pos))
 
 def calculateElectricPotential(pos):
     electricPotential = 0
@@ -567,10 +560,21 @@ fixButton = None
 electricFieldMode = 0
 
 def changeElectricField():
-    global electricFieldMode, electricFieldButton
+    global electricFieldMode, electricFieldButton, electricFieldArrowsAll
     electricFieldMode += 1
     if electricFieldMode == 3:
         electricFieldMode = 0
+    
+    # set visibility
+    if (electricFieldMode == 2):
+        for i in range(precision):
+            for j in range(precision):
+                electricFieldArrowsAll[i][j].visible = True
+    else:
+        for i in range(precision):
+            for j in range(precision):
+                electricFieldArrowsAll[i][j].visible = False
+
     electricFieldButton.text = "Electric Field: Mode " + str(electricFieldMode)
 
 electricFieldButton = None
@@ -581,6 +585,22 @@ electricPotentialMode = False
 def changeElectricPotential():
     global electricPotentialMode, electricPotentialButton
     electricPotentialMode = not electricPotentialMode
+    # set visibility 
+    if (electricPotentialMode):
+        for i in range(precision-1):
+            for j in range(precision-1):
+                electricPotentialLabels[i][j].visible = True
+        for i in range(precision):
+            potentialGridRows[i].visible = True
+            potentialGridCols[i].visible = True
+    else: 
+        for i in range(precision-1):
+            for j in range(precision-1):
+                electricPotentialLabels[i][j].visible = False
+        for i in range(precision):
+            potentialGridRows[i].visible = False
+            potentialGridCols[i].visible = False
+        
     electricPotentialButton.text = "Electric Potential: " + str(electricPotentialMode)
 
 electricPotentialButton = None
