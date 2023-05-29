@@ -12,7 +12,6 @@ vpython.scene.align = "left"
 
 #constants
 K = 9E9
-vectorAxisFactor = 300
 spawnDensity = 2500 
 steps = 10
 epsilon = 0.01
@@ -218,7 +217,7 @@ class ChargedObj:
 
     def applyVel(self):
         if (not self.fixed):
-            self.pos += self.vel
+            self.pos += self.vel / rate
             self.display.pos = self.pos
             if (self == chargedObjSelected):
                 self.displaySelect()
@@ -383,7 +382,7 @@ def on_mouse_up():
     # apply force vector if necessary
     if (chargedObjSelected != None):
         if (chargedObjSelected.forceVec.axis != vpython.vec(0, 0, 0)):
-            chargedObjSelected.vel += chargedObjSelected.forceVec.axis / vectorAxisFactor / chargedObjSelected.mass 
+            chargedObjSelected.vel += chargedObjSelected.forceVec.axis / chargedObjSelected.mass 
             chargedObjSelected.forceVec.axis = vpython.vec(0, 0, 0)
             chargedObjSelected.forceLabel.visible = False
 
@@ -428,7 +427,7 @@ def on_mouse_move():
                     if (vpython.mag(chargedObjToDrag.velVec.axis) < chargedObjToDrag.display.radius):
                         chargedObjToDrag.velVec.axis = vpython.vec(0, 0, 0)
                         chargedObjToDrag.velLabel.visible = False
-                    chargedObjToDrag.vel = chargedObjToDrag.velVec.axis / vectorAxisFactor
+                    chargedObjToDrag.vel = chargedObjToDrag.velVec.axis
 
 
 ####################################################################################################
@@ -480,7 +479,7 @@ createInstruction()
 # Button and Sliders
 
 def createButtons():
-    global spawnChargeSlider, spawnChargeText, massSlider, massText, deleteButton, fixButton, electricFieldButton, electricPotentialButton, playButton, instructionButton, resetButton
+    global spawnChargeSlider, spawnChargeText, massSlider, massText, deleteButton, fixButton, electricFieldButton, electricPotentialButton, playButton, instructionButton, resetButton, rateSlider, rateText
     
     vpython.scene.caption = ""
     
@@ -489,7 +488,7 @@ def createButtons():
     spawnChargeText = vpython.wtext(text = '<center>Charge (nC):'+'{:1.2f}'.format(spawnChargeSlider.value) + "</center>")
 
     vpython.scene.append_to_caption("\n")
-    massSlider = vpython.slider(bind=massShift, min = 1, max =2, value =1, step = 0.1, length = 300) 
+    massSlider = vpython.slider(bind=massShift, min = 1, max =2, value =1, step = 0.1, length = 450) 
     vpython.scene.append_to_caption("\n             ")
     massText = vpython.wtext(text = 'Mass: '+'{:1.2f}'.format(massSlider.value))
 
@@ -514,12 +513,17 @@ def createButtons():
     vpython.scene.append_to_caption("   ")
     resetButton = vpython.button(text="Reset", bind=resetScene)    
 
+    vpython.scene.append_to_caption("\n\n")
+    rateSlider = vpython.slider(bind=rateShift, min = 100, max =1000, value =1000, step = 10, length = 450) 
+    vpython.scene.append_to_caption("\n             ")
+    rateText = vpython.wtext(text = 'Rate: ' + str(rate))
+
 # spawn slider
-spawnCharge = 10E-9
+spawnCharge = 10E-7
 
 def spawnChargeShift():
     global spawnCharge, spawnChargeText
-    spawnCharge = spawnChargeSlider.value * 10E-9
+    spawnCharge = spawnChargeSlider.value * 10E-7
     spawnChargeText.text = 'Charge (nC):'+'{:1.2f}'.format(spawnChargeSlider.value)
     
 spawnChargeSlider = None
@@ -631,7 +635,7 @@ def changePlay():
         for co in allChargedObjs:
             co.velVec.visible = True
             co.velVec.pos = co.pos
-            co.velVec.axis = co.vel * vectorAxisFactor
+            co.velVec.axis = co.vel
             co.createVelLabel()
 
 playButton = None
@@ -647,7 +651,6 @@ instructionButton = None
 backButton = None
 
 # reset button
-
 def resetScene():
     global chargedObjSelected, ruler, rulerLabel, playing, electricFieldMode
     # delete every charge
@@ -672,11 +675,22 @@ def resetScene():
 
 resetButton = None
 
+# rate slider
+rate = 1
+
+def rateShift():
+    global rate, rateText
+    rate = rateSlider.value
+    rateText.text = "Rate: " + str(rate)
+
+rateSlider = None
+rateText = None
+
 # program runs
 curRange = vpython.scene.range
 
 while True:
-    vpython.rate(1000)
+    vpython.rate(rate)
     if (playing):
         for chargedObj in allChargedObjs:
             chargedObj.applyForce()
