@@ -458,7 +458,7 @@ startText.length = 25
 # Start Button
 def start():
     vpython.scene.userzoom = True
-    createButtons()
+    createCaptionSpawnScreen()
 
     # bind events
     vpython.scene.bind('click', clicked)
@@ -516,9 +516,11 @@ createInstruction()
 
 # Buttons and Sliders
 
-def createButtons():
-    global spawnChargeSlider, spawnChargeText, massSlider, massText, deleteButton, fixButton, electricFieldButton, electricOpacityButton, electricPotentialButton, playButton, trailButton, instructionButton, resetButton, chargeMenu
-    global spawnCharge, spawnMass, playing, electricFieldMode, electricOpacity, electricPotentialMode
+def createCaptionSpawnScreen():
+    global spawnCharge, spawnChargeSlider, spawnChargeText, spawnMass, massSlider, massText, time, timeSlider, timeText
+    global electricFieldButton, electricOpacityButton, electricPotentialButton
+    global chargeMenu, playButton, trailButton, instructionButton, resetButton
+    global playing, electricFieldMode, electricOpacity, electricPotentialMode
 
     vpython.scene.caption = ""
 
@@ -544,25 +546,28 @@ def createButtons():
     vpython.scene.append_to_caption("   ")
     trailButton = vpython.button (text = "Trail: False", bind = changePlay)
 
+    vpython.scene.append_to_caption("   ")
+    trailButton = vpython.button (text = "Camera Follow: False", bind = changePlay)
+
+    time = 1
+    vpython.scene.append_to_caption("\n\n")
+    timeSlider = vpython.slider(bind=timeShift, min = 0.1, max = 5, value = 1, step = 0.1, length = sliderLength) 
+    vpython.scene.append_to_caption("\n")
+    massText = vpython.wtext(text = '<center>Time in program for every second in real life: 1s</center>')
+
     electricFieldMode = 0
-    vpython.scene.append_to_caption("\n   ")
+    vpython.scene.append_to_caption("\n\n   ")
     electricFieldButton = vpython.button(text="Electric Field: Mode 0", bind=changeElectricField)
 
     electricOpacity = False
-    vpython.scene.append_to_caption("   ")
+    vpython.scene.append_to_caption("\n\n   ")
     electricOpacityButton = vpython.button(text = "Electric Field Opacity: Off", bind=chanageElectricOpacityMode)
 
     electricPotentialMode = False
-    vpython.scene.append_to_caption("\n   ")
+    vpython.scene.append_to_caption("\n\n   ")
     electricPotentialButton = vpython.button(text="Electric Potential: False", bind=changeElectricPotential)
 
-    vpython.scene.append_to_caption("\n   ")
-    fixButton = vpython.button(text="Fix", bind=fixChargedObj)
-
-    vpython.scene.append_to_caption("   ")
-    deleteButton = vpython.button(text="Delete", bind=deleteChargedObj)
-
-    vpython.scene.append_to_caption("\n   ")
+    vpython.scene.append_to_caption("\n\n   ")
     instructionButton = vpython.button(text="Instructions", bind=displayInstructionPage)
 
     vpython.scene.append_to_caption("   ")
@@ -597,31 +602,14 @@ def massShift():
 massSlider = None
 massText = None
 
-# delete button
-def deleteChargedObj():
-    global chargedObjSelected
-    if (chargedObjSelected != None):
-        # hide everything, remove from list, reset chargedObjSelected
-        chargedObjSelected.display.visible = False
-        chargedObjSelected.velVec.visible = False
-        chargedObjSelected.forceVec.visible = False
-        chargedObjSelected.velLabel.visible = False
-        chargedObjSelected.forceLabel.visible = False
-        chargedObjSelected.hideSelect()
-        for i in range(chargedObjSelected.numOfLine):   
-                for j in range(precision):
-                    chargedObjSelected.electricFieldArrows[i][j].visible = False
-        allChargedObjs.remove(chargedObjSelected)
-        chargedObjSelected = None
+# time slider
+time = 1
 
-deleteButton = None
+def timeShift():
+    global timeSlider, timeText
 
-# fix button
-def fixChargedObj():
-    if (chargedObjSelected != None):
-        chargedObjSelected.fixed = not chargedObjSelected.fixed
-
-fixButton = None
+timeSlider = None
+timeText = None
 
 # electic field mode button
 electricFieldMode = 0
@@ -714,7 +702,7 @@ playButton = None
 def displayInstructionPage():
     global startButton
     vpython.scene.caption = ""
-    startButton = vpython.button(text = "Back", bind = createButtons)
+    startButton = vpython.button(text = "Back", bind = createCaptionSpawnScreen)
     vpython.scene.append_to_caption("\n")
     createInstruction()
 
@@ -736,7 +724,7 @@ def resetScene():
     rulerLabel.visible = False
 
     # caption
-    createButtons()
+    createCaptionSpawnScreen()
 
     # electric field and potential reset
     for i in range(precision):
@@ -757,6 +745,44 @@ resetButton = None
 
 # trail button
 trailButton = None
+
+# Create caption when a charge is selected 
+
+def createCaptionSelectCharge():
+    global deleteButton, fixButton
+
+    vpython.scene.caption = ""
+
+    vpython.scene.append_to_caption("\n   ")
+    fixButton = vpython.button(text="Fix", bind=fixChargedObj)
+
+    vpython.scene.append_to_caption("   ")
+    deleteButton = vpython.button(text="Delete", bind=deleteChargedObj)
+    
+# delete button
+def deleteChargedObj():
+    global chargedObjSelected
+
+    # hide everything, remove from list, reset chargedObjSelected
+    chargedObjSelected.display.visible = False
+    chargedObjSelected.velVec.visible = False
+    chargedObjSelected.forceVec.visible = False
+    chargedObjSelected.velLabel.visible = False
+    chargedObjSelected.forceLabel.visible = False
+    chargedObjSelected.hideSelect()
+    for i in range(chargedObjSelected.numOfLine):   
+            for j in range(precision):
+                chargedObjSelected.electricFieldArrows[i][j].visible = False
+    allChargedObjs.remove(chargedObjSelected)
+    chargedObjSelected = None
+
+deleteButton = None
+
+# fix button
+def fixChargedObj():
+    chargedObjSelected.fixed = not chargedObjSelected.fixed
+
+fixButton = None
 
 # program runs
 curRange = vpython.scene.range
