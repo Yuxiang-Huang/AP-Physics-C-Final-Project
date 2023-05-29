@@ -12,10 +12,10 @@ vpython.scene.align = "left"
 
 #constants
 K = 9E9
-spawnDensity = 2.5
+spawnDensity = 2.5E-6
 steps = 10
 epsilon = 0.01
-rate = 1000
+numOfRate = 1000
 
 # electric field stuff
 electricFieldOpacitySetter = 1E4
@@ -125,7 +125,7 @@ class ChargedObj:
         self.velLabel = vpython.label(text="0", visible = False)
         self.forceLabel = vpython.label(text="0", visible = False)
         # Displays
-        spawnRadius = ((spawnMass) / (((4/3)* vpython.pi*spawnDensity)))**(1/3)
+        spawnRadius = ((mass) / (((4/3)* vpython.pi*spawnDensity)))**(1/3)
 
         # spheres for now
         if (charge > 0):
@@ -218,7 +218,7 @@ class ChargedObj:
 
     def applyVel(self):
         if (not self.fixed):
-            self.pos += self.vel / rate
+            self.pos += self.vel / numOfRate
             self.display.pos = self.pos
             if (self == chargedObjSelected):
                 self.displaySelect()
@@ -492,24 +492,24 @@ createInstruction()
 # Button and Sliders
 
 def createButtons():
-    global spawnChargeSlider, spawnChargeText, massSlider, massText, deleteButton, fixButton, electricFieldButton, electricOpacityButton, electricPotentialButton, playButton, instructionButton, resetButton, rateSlider, rateText
+    global spawnChargeSlider, spawnChargeText, massSlider, massText, deleteButton, fixButton, electricFieldButton, electricOpacityButton, electricPotentialButton, playButton, instructionButton, resetButton
     global spawnCharge, spawnMass, playing, electricFieldMode, electricOpacity, electricPotentialMode
 
     vpython.scene.caption = ""
     
-    # spawnCharge = 1E-9
+    spawnCharge = 1E-9
     spawnChargeSlider = vpython.slider(bind = spawnChargeShift, min = -5, max = 5, value = 1, step = 0.1, length = 450)
     vpython.scene.append_to_caption("\n")
-    spawnChargeText = vpython.wtext(text = '<center>Charge (nC):'+'{:1.2f}'.format(spawnChargeSlider.value) + "</center>")
+    spawnChargeText = vpython.wtext(text = '<center>Charge:'+'{:1.2f}'.format(spawnChargeSlider.value) + " nC </center>")
 
     spawnMass = 1E-6
     vpython.scene.append_to_caption("\n")
-    massSlider = vpython.slider(bind=massShift, min = 1, max =2, value = 1, step = 0.1, length = 450) 
-    vpython.scene.append_to_caption("\n             ")
-    massText = vpython.wtext(text = 'Mass: '+'{:1.2f}'.format(massSlider.value) + " * 10^-6 Kg")
+    massSlider = vpython.slider(bind=massShift, min = 1, max = 2, value = 1, step = 0.1, length = 450) 
+    vpython.scene.append_to_caption("\n")
+    massText = vpython.wtext(text = '<center>Mass: '+'{:1.2f}'.format(massSlider.value) + " * 10^-6 Kg<center>")
 
     playing = False
-    vpython.scene.append_to_caption("\n\n   ")
+    vpython.scene.append_to_caption("\n   ")
     playButton = vpython.button(text="Play", bind=changePlay)
 
     electricFieldMode = 0
@@ -518,7 +518,7 @@ def createButtons():
 
     electricOpacity = False
     vpython.scene.append_to_caption("   ")
-    electricOpacityButton = vpython.button(text = "Electric Field Opacity: Off", bind = chanageElectricOpacityMode)
+    electricOpacityButton = vpython.button(text = "Electric Field Opacity: Off", bind=chanageElectricOpacityMode)
 
     electricPotentialMode = False
     vpython.scene.append_to_caption("\n   ")
@@ -542,7 +542,7 @@ spawnCharge = 1E-9
 def spawnChargeShift():
     global spawnCharge, spawnChargeText
     spawnCharge = spawnChargeSlider.value * 1E-9
-    spawnChargeText.text = 'Charge (nC):'+'{:1.2f}'.format(spawnChargeSlider.value)
+    spawnChargeText.text = '<center>Charge:'+'{:1.2f}'.format(spawnChargeSlider.value) + " nC </center>"
     
 spawnChargeSlider = None
 spawnChargeText = None
@@ -551,9 +551,9 @@ spawnChargeText = None
 spawnMass = 1E-6
 
 def massShift():
-    global spawnMass
+    global spawnMass, massText
     spawnMass = massSlider.value * 1E-6
-    massText.text = 'Mass: '+'{:1.2f}'.format(massSlider.value)
+    massText.text = '<center>Mass: '+'{:1.2f}'.format(massSlider.value) + " * 10^-6 Kg <center>"
 
 massSlider = None
 massText = None
@@ -684,6 +684,7 @@ backButton = None
 # reset button
 def resetScene():
     global chargedObjSelected, ruler, rulerLabel, playing, electricFieldMode
+    global electricFieldArrowsAll, potentialGridRows, potentialGridCols, electricPotentialLabels
     # delete every charge
     while len(allChargedObjs) > 0:
         chargedObjSelected = allChargedObjs[0]
@@ -697,27 +698,28 @@ def resetScene():
     # caption
     createButtons()
 
+    # electric field and potential reset
+    for i in range(precision):
+        for j in range(precision):
+            electricFieldArrowsAll[i][j].visible = False
+
+    for i in range(precision-1):
+        for j in range(precision-1):
+            electricPotentialLabels[i][j].visible = False
+    for i in range(precision):
+        potentialGridRows[i].visible = False
+        potentialGridCols[i].visible = False
+
     # reset zoom
-    vpython.scene.range = 1
+    vpython.scene.range = 10
 
 resetButton = None
-
-# rate slider
-rate = 1000
-
-def rateShift():
-    global rate, rateText
-    rate = rateSlider.value
-    rateText.text = "Rate: " + str(rate)
-
-rateSlider = None
-rateText = None
 
 # program runs
 curRange = vpython.scene.range
 
 while True:
-    vpython.rate(rate)
+    vpython.rate(numOfRate)
     if (playing):
         for chargedObj in allChargedObjs:
             chargedObj.applyForce()

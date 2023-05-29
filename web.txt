@@ -4,7 +4,7 @@ Web VPython 3.2
 scene.background = color.white
 scene.width = 1000
 scene.height = 650
-scene.range = 1
+scene.range = 10
 scene.userzoom = False
 scene.userspin = False
 scene.fov = pi / 50
@@ -12,10 +12,10 @@ scene.align = "left"
 
 #constants
 K = 9E9
-vectorAxisFactor = 300
-spawnDensity = 2500 
+spawnDensity = 2.5E-6
 steps = 10
 epsilon = 0.01
+numOfRate = 1000
 
 # electric field stuff
 electricFieldOpacitySetter = 1E4
@@ -114,7 +114,7 @@ allChargedObjs = []
 # Classes
 
 # Sphere of Charge
-class ChargedObj:
+class ChargedObj:       
     def __init__(self, mass, charge, spawnPos, spawnVel):
         # physics variables
         self.charge = charge
@@ -218,7 +218,7 @@ class ChargedObj:
 
     def applyVel(self):
         if (not self.fixed):
-            self.pos += self.vel
+            self.pos += self.vel / numOfRate
             self.display.pos = self.pos
             if (self == chargedObjSelected):
                 self.displaySelect()
@@ -254,7 +254,7 @@ class ChargedObj:
                     if (tooClose(self, curPos, size)):
                         self.electricFieldArrows[i][j].visible = False
                     else:
-                        # determine the arrow and the next position
+                        # determine the arrow 
                         electricField = calculateElectricField(curPos)
                         arrowLength = norm(electricField) * size
                         self.electricFieldArrows[i][j].visible = True
@@ -262,7 +262,14 @@ class ChargedObj:
                         if (self.charge < 0):
                             self.electricFieldArrows[i][j].pos -= arrowLength
                         self.electricFieldArrows[i][j].axis = arrowLength
-                        self.electricFieldArrows[i][j].opacity = mag(electricField) / electricFieldOpacitySetter
+
+                        # opacity
+                        if (electricOpacity):
+                            self.electricFieldArrows[i][j].opacity = mag(electricField) / electricFieldOpacitySetter
+                        else:
+                            self.electricFieldArrows[i][j].opacity = 1
+
+                        # next position
                         curPos += arrowLength * self.charge / abs(self.charge)
         else: 
             # hide all electric field arrows
@@ -285,7 +292,12 @@ def displayElectricFieldAll():
         size = scene.range / 10
         for i in range(precision):
             for j in range(precision):
-                electricFieldArrowsAll[i][j].axis = norm(calculateElectricField(electricFieldArrowsAll[i][j].pos)) * size
+                electricField = calculateElectricField(electricFieldArrowsAll[i][j].pos)
+                electricFieldArrowsAll[i][j].axis = norm(electricField) * size
+                if (electricOpacity):
+                    electricFieldArrowsAll[i][j].opacity = mag(electricField) / electricFieldOpacitySetter
+                else:
+                    electricFieldArrowsAll[i][j].opacity = 1
     
 def calculateElectricField(pos):
     electricField = vec(0, 0, 0)
@@ -383,7 +395,7 @@ def on_mouse_up():
     # apply force vector if necessary
     if (chargedObjSelected != undefined):
         if (chargedObjSelected.forceVec.axis != vec(0, 0, 0)):
-            chargedObjSelected.vel += chargedObjSelected.forceVec.axis / vectorAxisFactor / chargedObjSelected.mass 
+            chargedObjSelected.vel += chargedObjSelected.forceVec.axis / chargedObjSelected.mass 
             chargedObjSelected.forceVec.axis = vec(0, 0, 0)
             chargedObjSelected.forceLabel.visible = False
 
@@ -428,7 +440,7 @@ def on_mouse_move():
                     if (mag(chargedObjToDrag.velVec.axis) < chargedObjToDrag.display.radius):
                         chargedObjToDrag.velVec.axis = vec(0, 0, 0)
                         chargedObjToDrag.velLabel.visible = False
-                    chargedObjToDrag.vel = chargedObjToDrag.velVec.axis / vectorAxisFactor
+                    chargedObjToDrag.vel = chargedObjToDrag.velVec.axis
 
 
 ####################################################################################################
@@ -445,9 +457,9 @@ def start():
     scene.bind('mouseup', on_mouse_up)
     scene.bind('mousemove', on_mouse_move)
 
-startText = text(pos = vec(0, -0.3, 0), text="JackXiang", align='center', color = color.cyan)
-startText.height = 1
-startText.length = 2.5
+startText = text(pos = vec(0, -3, 0), text="JackXiang", align='center', color = color.cyan)
+startText.height = 10
+startText.length = 25
     
 startButton = button(text = "Start", bind = start)
 
@@ -480,26 +492,36 @@ createInstruction()
 # Button and Sliders
 
 def createButtons():
-    global spawnChargeSlider, spawnChargeText, massSlider, massText, deleteButton, fixButton, electricFieldButton, electricPotentialButton, playButton, instructionButton, resetButton
-    
+    global spawnChargeSlider, spawnChargeText, massSlider, massText, deleteButton, fixButton, electricFieldButton, electricOpacityButton, electricPotentialButton, playButton, instructionButton, resetButton
+    global spawnCharge, spawnMass, playing, electricFieldMode, electricOpacity, electricPotentialMode
+
     scene.caption = ""
     
+    spawnCharge = 1E-9
     spawnChargeSlider = slider(bind = spawnChargeShift, min = -5, max = 5, value = 1, step = 0.1, length = 450)
     scene.append_to_caption("\n")
-    spawnChargeText = wtext(text = '<center>Charge (nC):'+'{:1.2f}'.format(spawnChargeSlider.value) + "</center>")
+    spawnChargeText = wtext(text = '<center>Charge:'+'{:1.2f}'.format(spawnChargeSlider.value) + " nC </center>")
 
+    spawnMass = 1E-6
     scene.append_to_caption("\n")
-    massSlider = slider(bind=massShift, min = 1, max =2, value =1, step = 0.1, length = 300) 
-    scene.append_to_caption("\n             ")
-    massText = wtext(text = 'Mass: '+'{:1.2f}'.format(massSlider.value))
+    massSlider = slider(bind=massShift, min = 1, max = 2, value = 1, step = 0.1, length = 450) 
+    scene.append_to_caption("\n")
+    massText = wtext(text = '<center>Mass: '+'{:1.2f}'.format(massSlider.value) + " * 10^-6 Kg<center>")
 
-    scene.append_to_caption("\n\n   ")
+    playing = False
+    scene.append_to_caption("\n   ")
     playButton = button(text="Play", bind=changePlay)
 
+    electricFieldMode = 0
     scene.append_to_caption("   ")
     electricFieldButton = button(text="Electric Field: Mode 0", bind=changeElectricField)
 
+    electricOpacity = False
     scene.append_to_caption("   ")
+    electricOpacityButton = button(text = "Electric Field Opacity: Off", bind = chanageElectricOpacityMode)
+
+    electricPotentialMode = False
+    scene.append_to_caption("\n   ")
     electricPotentialButton = button(text="Electric Potential: False", bind=changeElectricPotential)
 
     scene.append_to_caption("\n   ")
@@ -515,23 +537,23 @@ def createButtons():
     resetButton = button(text="Reset", bind=resetScene)    
 
 # spawn slider
-spawnCharge = 10E-9
+spawnCharge = 1E-9
 
 def spawnChargeShift():
     global spawnCharge, spawnChargeText
-    spawnCharge = spawnChargeSlider.value * 10E-9
-    spawnChargeText.text = 'Charge (nC):'+'{:1.2f}'.format(spawnChargeSlider.value)
+    spawnCharge = spawnChargeSlider.value * 1E-9
+    spawnChargeText.text = '<center>Charge:'+'{:1.2f}'.format(spawnChargeSlider.value) + " nC </center>"
     
 spawnChargeSlider = undefined
 spawnChargeText = undefined
 
 # mass slider
-spawnMass = 1
+spawnMass = 1E-6
 
 def massShift():
-    global spawnMass
-    spawnMass = massSlider.value
-    massText.text = 'Mass: '+'{:1.2f}'.format(massSlider.value)
+    global spawnMass, massText
+    spawnMass = massSlider.value * 1E-6
+    massText.text = '<center>Mass: '+'{:1.2f}'.format(massSlider.value) + " * 10^-6 Kg <center>"
 
 massSlider = undefined
 massText = undefined
@@ -562,7 +584,7 @@ def fixChargedObj():
 
 fixButton = undefined
 
-# electic field button
+# electic field mode button
 electricFieldMode = 0
 
 def changeElectricField():
@@ -584,6 +606,19 @@ def changeElectricField():
     electricFieldButton.text = "Electric Field: Mode " + str(electricFieldMode)
 
 electricFieldButton = undefined
+
+# electric field opacity button
+electricOpacity = False
+
+def chanageElectricOpacityMode():
+    global electricOpacity, electricFieldButton
+    electricOpacity = not electricOpacity
+    if (electricOpacity):
+        electricOpacityButton.text = "Electric Field Opacity: On"
+    else:
+        electricOpacityButton.text = "Electric Field Opacity: Off"
+
+electricOpacityButton = undefined
 
 # electric potential grid button
 electricPotentialMode = False
@@ -631,7 +666,7 @@ def changePlay():
         for co in allChargedObjs:
             co.velVec.visible = True
             co.velVec.pos = co.pos
-            co.velVec.axis = co.vel * vectorAxisFactor
+            co.velVec.axis = co.vel
             co.createVelLabel()
 
 playButton = undefined
@@ -647,17 +682,13 @@ instructionButton = undefined
 backButton = undefined
 
 # reset button
-
 def resetScene():
     global chargedObjSelected, ruler, rulerLabel, playing, electricFieldMode
+    global electricFieldArrowsAll, potentialGridRows, potentialGridCols, electricPotentialLabels
     # delete every charge
     while len(allChargedObjs) > 0:
         chargedObjSelected = allChargedObjs[0]
         deleteChargedObj()
-    
-    # reset variables
-    playing = False
-    electricFieldMode = 0
 
     # ruler
     ruler.modify(0, vec(0, 0, 0))
@@ -666,6 +697,18 @@ def resetScene():
 
     # caption
     createButtons()
+
+    # electric field and potential reset
+    for i in range(precision):
+        for j in range(precision):
+            electricFieldArrowsAll[i][j].visible = False
+
+    for i in range(precision-1):
+        for j in range(precision-1):
+            electricPotentialLabels[i][j].visible = False
+    for i in range(precision):
+        potentialGridRows[i].visible = False
+        potentialGridCols[i].visible = False
 
     # reset zoom
     scene.range = 1
@@ -676,7 +719,7 @@ resetButton = undefined
 curRange = scene.range
 
 while True:
-    rate(1000)
+    rate(numOfRate)
     if (playing):
         for chargedObj in allChargedObjs:
             chargedObj.applyForce()
