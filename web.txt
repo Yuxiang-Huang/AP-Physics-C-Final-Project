@@ -1,12 +1,13 @@
 Web VPython 3.2
 
 scene.background = color.white
-scene.width = 900
-scene.height = 600
+scene.width = 1000
+scene.height = 650
 scene.range = 1
 scene.userzoom = False
 # scene.userspin = False
 scene.fov = pi / 50
+scene.align = "left"
 
 #constants
 K = 9E9
@@ -50,6 +51,12 @@ setElectricFieldArrowsAll()
 ruler = curve({"pos": vector(0, 0, 0), "color": color.cyan},
                       {"pos": vector(0, 0, 0), "color": color.cyan})
 
+def createText(inputText):
+    inputText.height = 0.06 * scene.range
+    inputText.length = 0.2 * scene.range
+    inputText.depth = 0.01 * scene.range
+    inputText.visible = True
+
 def createRulerText():
     global rulerText, ruler
     # minimum length check
@@ -63,10 +70,7 @@ def createRulerText():
         rulerText = text(text="{0:.3f}".format(mag(ruler.point(1)['pos'] - ruler.point(0)['pos'])) + "m",
         align='center', axis = ruler.point(1)['pos'] - ruler.point(0)['pos'], pos = ruler.point(1)['pos'], color = color.cyan,
         visible = False)
-        rulerText.height = 0.06 * scene.range
-        rulerText.length = 0.2 * scene.range
-        rulerText.depth = 0.01 * scene.range
-        rulerText.visible = True
+        createText(rulerText)
 
 # place holder
 rulerText = text(text="0", visible = False)
@@ -83,26 +87,50 @@ class ChargedObj:
         self.pos = spawnPos
         self.vel = spawnVel
         self.fixed = False
+        self.velText = text(text="0", visible = False)
         # Displays
         spawnRadius = ((spawnMass) / (((4/3)* pi*spawnDensity)))**(1/3)
+
         # spheres for now
         if (charge > 0):
-            self.display = sphere(pos=spawnPos, radius=spawnRadius, color = color.red)
-        if (charge < 0):
-            self.display = sphere(pos=spawnPos, radius=spawnRadius, color = color.blue)
-        if (charge == 0):
+            self.display = sphere(pos=spawnPos, radius=spawnRadius, texture = "https://i.imgur.com/Id1Q11U.png")
+            self.velVec = arrow(axis = vec(0, 0, 0), color = color.red)
+            self.forceVec = arrow(axis = vec(0, 0, 0), color = color.red)
+
+            # electric field
+            # possibly sliders for more variables
+            self.numOfLine = 8
+            # initialize all the arrows
+            self.electricFieldArrows = [ [0]*precision for i in range(self.numOfLine)]
+            for i in range(self.numOfLine):
+                for j in range(precision):
+                    self.electricFieldArrows[i][j] = arrow(axis = vec(0, 0, 0), color = color.red)
+        elif (charge < 0):
+            self.display = sphere(pos=spawnPos, radius=spawnRadius, texture="https://i.imgur.com/r6loarb.png")
+            self.velVec = arrow(axis = vec(0, 0, 0), color = color.blue)
+            self.forceVec = arrow(axis = vec(0, 0, 0), color = color.blue)
+
+            # electric field
+            # possibly sliders for more variables
+            self.numOfLine = 8
+            # initialize all the arrows
+            self.electricFieldArrows = [ [0]*precision for i in range(self.numOfLine)]
+            for i in range(self.numOfLine):
+                for j in range(precision):
+                    self.electricFieldArrows[i][j] = arrow(axis = vec(0, 0, 0), color = color.blue)
+        else:
             self.display = sphere(pos=spawnPos, radius=spawnRadius, color = color.black)
-        self.velVec = arrow(axis = vec(0, 0, 0), color = self.display.color)
-        self.forceVec = arrow(axis = vec(0, 0, 0), color = self.display.color)
-        
-        # electric field
-        # possibly sliders for more variables
-        self.numOfLine = 8
-        # initialize all the arrows
-        self.electricFieldArrows = [ [0]*precision for i in range(self.numOfLine)]
-        for i in range(self.numOfLine):
-            for j in range(precision):
-                self.electricFieldArrows[i][j] = arrow(axis = vec(0, 0, 0), color = self.display.color)
+            self.velVec = arrow(axis = vec(0, 0, 0), color = color.black)
+            self.forceVec = arrow(axis = vec(0, 0, 0), color = color.black)
+
+            # electric field
+            # possibly sliders for more variables
+            self.numOfLine = 8
+            # initialize all the arrows
+            self.electricFieldArrows = [ [0]*precision for i in range(self.numOfLine)]
+            for i in range(self.numOfLine):
+                for j in range(precision):
+                    self.electricFieldArrows[i][j] = arrow(axis = vec(0, 0, 0), color = color.black)
         
         # select display
         self.selectDisplay = []
@@ -158,7 +186,14 @@ class ChargedObj:
             self.display.pos = self.pos
             if (self == chargedObjSelected):
                 self.displaySelect()
-    
+
+    def createVelText(self):
+        self.velText.visible = False
+        self.velText = text(text="{0:.3f}".format(mag(self.velVec)) + "m/s",
+        align='center', axis = self.velVec.axis, pos = self.velVec.pos + self.velVec.axis, color = color.cyan,
+        visible = False)
+        createText(self.velText)
+
     def checkCollision(self):
         for chargedObj in allChargedObjs:
             if (mag(self.pos - chargedObj.pos) <= 2 * self.display.radius):
@@ -327,10 +362,13 @@ def on_mouse_move():
                 if (not playing):
                     chargedObjToDrag.velVec.pos = chargedObjToDrag.pos
                     chargedObjToDrag.velVec.axis = getMousePos() - chargedObjToDrag.pos
+                    chargedObjToDrag.createVelText()
                     # too small reset
                     if (mag(chargedObjToDrag.velVec.axis) < chargedObjToDrag.display.radius):
                         chargedObjToDrag.velVec.axis = vec(0, 0, 0)
+                        chargedObjToDrag.velText.visible = False
                     chargedObjToDrag.vel = chargedObjToDrag.velVec.axis / vectorAxisFactor
+
 
 ####################################################################################################
 
@@ -353,7 +391,8 @@ startText.length = 2.5
 startButton = button(text = "Start", bind = start)
 
 def createInstruction():
-    scene.append_to_caption("""  
+    scene.append_to_caption(""" 
+
 Instruction: 
 
 Controls:
@@ -384,13 +423,16 @@ def createButtons():
     
     scene.caption = ""
     
-    spawnChargeSlider = slider(bind = spawnChargeShift, min = -5, max = 5, value = 1, step = 0.1)
-    spawnChargeText = wtext(text = 'Charge (nC):'+'{:1.2f}'.format(spawnChargeSlider.value))
+    spawnChargeSlider = slider(bind = spawnChargeShift, min = -5, max = 5, value = 1, step = 0.1, length = 450)
+    scene.append_to_caption("\n")
+    spawnChargeText = wtext(text = '<center>Charge (nC):'+'{:1.2f}'.format(spawnChargeSlider.value) + "</center>")
 
-    massSlider = slider(bind=massShift, min = 1, max =2, value =1, step = 0.1) 
+    scene.append_to_caption("\n")
+    massSlider = slider(bind=massShift, min = 1, max =2, value =1, step = 0.1, length = 300) 
+    scene.append_to_caption("\n             ")
     massText = wtext(text = 'Mass: '+'{:1.2f}'.format(massSlider.value))
 
-    scene.append_to_caption("\n   ")
+    scene.append_to_caption("\n\n   ")
     playButton = button(text="Play", bind=changePlay)
 
     scene.append_to_caption("   ")
@@ -480,11 +522,13 @@ def changePlay():
     if (playing):
         for co in allChargedObjs:
             co.velVec.visible = False
+            co.velText.visible = False
     else:
         for co in allChargedObjs:
             co.velVec.visible = True
             co.velVec.pos = co.pos
             co.velVec.axis = co.vel * vectorAxisFactor
+            co.createVelText()
 
 playButton = undefined
 
@@ -517,7 +561,6 @@ def resetScene():
     rulerText.visible = False
 
     # caption
-    scene.caption = ""
     createButtons()
 
     # reset zoom

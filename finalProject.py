@@ -51,6 +51,12 @@ setElectricFieldArrowsAll()
 ruler = vpython.curve({"pos": vpython.vector(0, 0, 0), "color": vpython.color.cyan},
                       {"pos": vpython.vector(0, 0, 0), "color": vpython.color.cyan})
 
+def createText(inputText):
+    inputText.height = 0.06 * vpython.scene.range
+    inputText.length = 0.2 * vpython.scene.range
+    inputText.depth = 0.01 * vpython.scene.range
+    inputText.visible = True
+
 def createRulerText():
     global rulerText, ruler
     # minimum length check
@@ -64,10 +70,7 @@ def createRulerText():
         rulerText = vpython.text(text="{0:.3f}".format(vpython.mag(ruler.point(1)['pos'] - ruler.point(0)['pos'])) + "m",
         align='center', axis = ruler.point(1)['pos'] - ruler.point(0)['pos'], pos = ruler.point(1)['pos'], color = vpython.color.cyan,
         visible = False)
-        rulerText.height = 0.06 * vpython.scene.range
-        rulerText.length = 0.2 * vpython.scene.range
-        rulerText.depth = 0.01 * vpython.scene.range
-        rulerText.visible = True
+        createText(rulerText)
 
 # place holder
 rulerText = vpython.text(text="0", visible = False)
@@ -84,6 +87,7 @@ class ChargedObj:
         self.pos = spawnPos
         self.vel = spawnVel
         self.fixed = False
+        self.velText = vpython.text(text="0", visible = False)
         # Displays
         spawnRadius = ((spawnMass) / (((4/3)* vpython.pi*spawnDensity)))**(1/3)
 
@@ -182,7 +186,14 @@ class ChargedObj:
             self.display.pos = self.pos
             if (self == chargedObjSelected):
                 self.displaySelect()
-    
+
+    def createVelText(self):
+        self.velText.visible = False
+        self.velText = vpython.text(text="{0:.3f}".format(vpython.mag(self.velVec.axis)) + "m/s",
+        align='center', axis = self.velVec.axis, pos = self.velVec.pos + self.velVec.axis, color = vpython.color.cyan,
+        visible = False)
+        createText(self.velText)
+
     def checkCollision(self):
         for chargedObj in allChargedObjs:
             if (vpython.mag(self.pos - chargedObj.pos) <= 2 * self.display.radius):
@@ -313,6 +324,10 @@ def on_mouse_down():
         ruler.modify(1, getMousePos())
         rulerText.visible = False
 
+    # hide velocity text
+    if (chargedObjToDrag != None):
+        chargedObjToDrag.velText.visible = False
+
 def on_mouse_up():
     global chargedObjToDrag, mouseDown
     # apply force vector if necessary
@@ -324,6 +339,9 @@ def on_mouse_up():
     if (chargedObjToDrag == None):
         # create new ruler text
         createRulerText()    
+    else:
+        # create velocity text
+        chargedObjToDrag.createVelText()
     
     # reset variables
     chargedObjToDrag = None
@@ -354,7 +372,9 @@ def on_mouse_move():
                     # too small reset
                     if (vpython.mag(chargedObjToDrag.velVec.axis) < chargedObjToDrag.display.radius):
                         chargedObjToDrag.velVec.axis = vpython.vec(0, 0, 0)
+                        chargedObjToDrag.velText.visible = False
                     chargedObjToDrag.vel = chargedObjToDrag.velVec.axis / vectorAxisFactor
+
 
 ####################################################################################################
 
@@ -508,11 +528,13 @@ def changePlay():
     if (playing):
         for co in allChargedObjs:
             co.velVec.visible = False
+            co.velText.visible = False
     else:
         for co in allChargedObjs:
             co.velVec.visible = True
             co.velVec.pos = co.pos
             co.velVec.axis = co.vel * vectorAxisFactor
+            co.createVelText()
 
 playButton = None
 
