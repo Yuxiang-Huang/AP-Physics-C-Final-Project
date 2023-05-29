@@ -73,6 +73,7 @@ class ChargedObj:
         self.vel = spawnVel
         self.fixed = False
         self.velLabel = vpython.label(text="0", visible = False)
+        self.forceLabel = vpython.label(text="0", visible = False)
         # Displays
         spawnRadius = ((spawnMass) / (((4/3)* vpython.pi*spawnDensity)))**(1/3)
 
@@ -176,6 +177,11 @@ class ChargedObj:
         self.velLabel.text = "{0:.3f}".format(vpython.mag(self.velVec.axis)) + "m/s"
         self.velLabel.pos = self.velVec.pos + self.velVec.axis
         self.velLabel.visible = True
+
+    def createForceLabel(self):
+        self.forceLabel.text = "{0:.3f}".format(vpython.mag(self.forceVec.axis)) + "N"
+        self.forceLabel.pos = self.forceVec.pos + self.forceVec.axis
+        self.forceLabel.visible = True
 
     def checkCollision(self):
         for chargedObj in allChargedObjs:
@@ -314,6 +320,7 @@ def on_mouse_up():
         if (chargedObjSelected.forceVec.axis != vpython.vec(0, 0, 0)):
             chargedObjSelected.vel += chargedObjSelected.forceVec.axis / vectorAxisFactor / chargedObjSelected.mass 
             chargedObjSelected.forceVec.axis = vpython.vec(0, 0, 0)
+            chargedObjSelected.forceLabel.visible = False
 
     # minimum length check for the ruler
     if (vpython.mag(ruler.point(1)['pos'] - ruler.point(0)['pos']) < epsilon * vpython.scene.range):
@@ -467,6 +474,8 @@ def deleteChargedObj():
         chargedObjSelected.display.visible = False
         chargedObjSelected.velVec.visible = False
         chargedObjSelected.forceVec.visible = False
+        chargedObjSelected.velLabel.visible = False
+        chargedObjSelected.forceLabel.visible = False
         chargedObjSelected.hideSelect()
         for i in range(chargedObjSelected.numOfLine):   
                 for j in range(precision):
@@ -581,5 +590,6 @@ while True:
     if (playing and mouseDown and chargedObjSelected != None):
         chargedObjSelected.forceVec.pos = chargedObjSelected.pos
         chargedObjSelected.forceVec.axis = getMousePos() - chargedObjSelected.pos 
+        chargedObjSelected.createForceLabel()
 
         
