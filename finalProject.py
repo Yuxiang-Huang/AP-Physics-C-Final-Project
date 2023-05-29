@@ -87,7 +87,7 @@ class ChargedObj:
         self.pos = spawnPos
         self.vel = spawnVel
         self.fixed = False
-        self.velText = vpython.text(text="0", visible = False)
+        self.velLabel = vpython.label(text="0", visible = False)
         # Displays
         spawnRadius = ((spawnMass) / (((4/3)* vpython.pi*spawnDensity)))**(1/3)
 
@@ -187,18 +187,10 @@ class ChargedObj:
             if (self == chargedObjSelected):
                 self.displaySelect()
 
-    def createVelText(self):
-        self.velText.visible = False
-        # self.velText = vpython.text(text="{0:.3f}".format(vpython.mag(self.velVec.axis)) + "m/s",
-        #     align='center', axis = self.velVec.axis, pos = self.velVec.pos + self.velVec.axis, color = vpython.color.cyan,
-        #     visible = False)
-        # if (self.velVec.axis.x < 0):
-        #     # flip if arrow points to the left
-        #     self.velText.axis = - self.velText.axis
-        # createText(self.velText)
-
-        self.velText = vpython.label(text = "{0:.3f}".format(vpython.mag(self.velVec.axis)) + "m/s",
-                                      pos = self.velVec.pos + self.velVec.axis, visible = True)
+    def createVelLabel(self):    
+        self.velLabel.text = "{0:.3f}".format(vpython.mag(self.velVec.axis)) + "m/s"
+        self.velLabel.pos = self.velVec.pos + self.velVec.axis
+        self.velLabel.visible = True
 
     def checkCollision(self):
         for chargedObj in allChargedObjs:
@@ -330,10 +322,6 @@ def on_mouse_down():
         ruler.modify(1, getMousePos())
         rulerText.visible = False
 
-    # # hide velocity text
-    # if (chargedObjToDrag != None):
-    #     chargedObjToDrag.velText.visible = False
-
 def on_mouse_up():
     global chargedObjToDrag, mouseDown
     # apply force vector if necessary
@@ -345,9 +333,6 @@ def on_mouse_up():
     if (chargedObjToDrag == None):
         # create new ruler text
         createRulerText()    
-    else:
-        # create velocity text
-        chargedObjToDrag.createVelText()
     
     # reset variables
     chargedObjToDrag = None
@@ -369,17 +354,18 @@ def on_mouse_move():
                 chargedObjToDrag.pos = mousePos
                 chargedObjToDrag.display.pos = chargedObjToDrag.pos
                 chargedObjToDrag.velVec.pos = chargedObjToDrag.pos
+                chargedObjToDrag.createVelLabel()
         else:
             if chargedObjToDrag != None:
                 # velocity vector
                 if (not playing):
                     chargedObjToDrag.velVec.pos = chargedObjToDrag.pos
                     chargedObjToDrag.velVec.axis = getMousePos() - chargedObjToDrag.pos
-                    chargedObjToDrag.createVelText()
+                    chargedObjToDrag.createVelLabel()
                     # too small reset
                     if (vpython.mag(chargedObjToDrag.velVec.axis) < chargedObjToDrag.display.radius):
                         chargedObjToDrag.velVec.axis = vpython.vec(0, 0, 0)
-                        chargedObjToDrag.velText.visible = False
+                        chargedObjToDrag.velLabel.visible = False
                     chargedObjToDrag.vel = chargedObjToDrag.velVec.axis / vectorAxisFactor
 
 
@@ -535,7 +521,7 @@ def changePlay():
     if (playing):
         for co in allChargedObjs:
             co.velVec.visible = False
-            co.velText.visible = False
+            co.velLabel.visible = False
     else:
         for co in allChargedObjs:
             co.velVec.visible = True
