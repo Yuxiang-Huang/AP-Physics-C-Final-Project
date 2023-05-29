@@ -253,7 +253,7 @@ class ChargedObj:
                     if (tooClose(self, curPos, size)):
                         self.electricFieldArrows[i][j].visible = False
                     else:
-                        # determine the arrow and the next position
+                        # determine the arrow 
                         electricField = calculateElectricField(curPos)
                         arrowLength = vpython.norm(electricField) * size
                         self.electricFieldArrows[i][j].visible = True
@@ -261,7 +261,14 @@ class ChargedObj:
                         if (self.charge < 0):
                             self.electricFieldArrows[i][j].pos -= arrowLength
                         self.electricFieldArrows[i][j].axis = arrowLength
-                        self.electricFieldArrows[i][j].opacity = vpython.mag(electricField) / electricFieldOpacitySetter
+
+                        # opacity
+                        if (electricOpacity):
+                            self.electricFieldArrows[i][j].opacity = vpython.mag(electricField) / electricFieldOpacitySetter
+                        else:
+                            self.electricFieldArrows[i][j].opacity = 1
+
+                        # next position
                         curPos += arrowLength * self.charge / abs(self.charge)
         else: 
             # hide all electric field arrows
@@ -284,7 +291,12 @@ def displayElectricFieldAll():
         size = vpython.scene.range / 10
         for i in range(precision):
             for j in range(precision):
-                electricFieldArrowsAll[i][j].axis = vpython.norm(calculateElectricField(electricFieldArrowsAll[i][j].pos)) * size
+                electricField = calculateElectricField(electricFieldArrowsAll[i][j].pos)
+                electricFieldArrowsAll[i][j].axis = vpython.norm(electricField) * size
+                if (electricOpacity):
+                    electricFieldArrowsAll[i][j].opacity = vpython.mag(electricField) / electricFieldOpacitySetter
+                else:
+                    electricFieldArrowsAll[i][j].opacity = 1
     
 def calculateElectricField(pos):
     electricField = vpython.vec(0, 0, 0)
@@ -479,8 +491,8 @@ createInstruction()
 # Button and Sliders
 
 def createButtons():
-    global spawnChargeSlider, spawnChargeText, massSlider, massText, deleteButton, fixButton, electricFieldButton, electricPotentialButton, playButton, instructionButton, resetButton, rateSlider, rateText
-    global spawnCharge, spawnMass, playing, electricFieldMode, electricPotentialMode
+    global spawnChargeSlider, spawnChargeText, massSlider, massText, deleteButton, fixButton, electricFieldButton, electricOpacityButton, electricPotentialButton, playButton, instructionButton, resetButton, rateSlider, rateText
+    global spawnCharge, spawnMass, playing, electricFieldMode, electricOpacity, electricPotentialMode
 
     vpython.scene.caption = ""
     
@@ -503,8 +515,12 @@ def createButtons():
     vpython.scene.append_to_caption("   ")
     electricFieldButton = vpython.button(text="Electric Field: Mode 0", bind=changeElectricField)
 
-    electricPotentialMode = False
+    electricOpacity = False
     vpython.scene.append_to_caption("   ")
+    electricOpacityButton = vpython.button(text = "Electric Field Opacity: Off", bind = chanageElectricOpacityMode)
+
+    electricPotentialMode = False
+    vpython.scene.append_to_caption("\n   ")
     electricPotentialButton = vpython.button(text="Electric Potential: False", bind=changeElectricPotential)
 
     vpython.scene.append_to_caption("\n   ")
@@ -572,7 +588,7 @@ def fixChargedObj():
 
 fixButton = None
 
-# electic field button
+# electic field mode button
 electricFieldMode = 0
 
 def changeElectricField():
@@ -594,6 +610,19 @@ def changeElectricField():
     electricFieldButton.text = "Electric Field: Mode " + str(electricFieldMode)
 
 electricFieldButton = None
+
+# electric field opacity button
+electricOpacity = False
+
+def chanageElectricOpacityMode():
+    global electricOpacity, electricFieldButton
+    electricOpacity = not electricOpacity
+    if (electricOpacity):
+        electricOpacityButton.text = "Electric Field Opacity: On"
+    else:
+        electricOpacityButton.text = "Electric Field Opacity: Off"
+
+electricOpacityButton = None
 
 # electric potential grid button
 electricPotentialMode = False
@@ -692,7 +721,7 @@ rateText = None
 curRange = vpython.scene.range
 
 while True:
-    vpython.rate(rate)
+    vpython.rate(1000)
     if (playing):
         for chargedObj in allChargedObjs:
             chargedObj.applyForce()
