@@ -55,6 +55,11 @@ for i in range(precision):
     potentialGridRows.append(vpython.box(axis=vpython.vec(1, 0, 0), color = vpython.color.black, visible = False))
     potentialGridCols.append(vpython.box(axis=vpython.vec(0, 0, 1), color = vpython.color.black, visible = False))
 
+electricPotentialLabels = [ [0]* (precision - 1) for i in range(precision - 1)]
+for i in range(precision-1):
+    for j in range(precision-1):
+        electricPotentialLabels[i][j] = vpython.label(text = "0", visible = False)
+
 # method for rescaling
 def setElectricPotentialGrid():
     # determine thickness
@@ -73,6 +78,15 @@ def setElectricPotentialGrid():
                                                vpython.scene.width / vpython.scene.height * vpython.scene.range / precision, 0, 0)
         potentialGridCols[i].pos += vpython.vec(vpython.scene.width / vpython.scene.height * vpython.scene.range / precision, 0, 0)
         potentialGridCols[i].visible = True
+
+    # labels
+    for i in range(precision-1):
+        for j in range(precision-1):
+            electricPotentialLabels[i][j].visible = True
+            # assume height > width
+            electricPotentialLabels[i][j].pos = vpython.vec(
+                        (i - precision / 2 + 1) * 2 * vpython.scene.width / vpython.scene.height * vpython.scene.range / precision, 
+                        (j - precision / 2 + 1) * 2 * vpython.scene.range / precision, 0)
 
 setElectricPotentialGrid()
 
@@ -264,7 +278,7 @@ def calculateForce(q1, q2):
 
 def displayElectricFieldAll():
     if (electricFieldMode == 2):
-        size = vpython.scene.range / 20
+        size = vpython.scene.range / 10
         for i in range(precision):
             for j in range(precision):
                 electricFieldArrowsAll[i][j].visible = True
@@ -290,6 +304,22 @@ def tooClose(owner, pos, size):
                 if vpython.mag(pos - chargedObj.pos) < chargedObj.display.radius + size:
                     return True
     return False
+
+####################################################################################################
+
+# Electric Potential
+
+def displayElectricPotential():
+    print("wait")
+
+def calculateElectricPotential(pos):
+    electricPotential = 0
+    for chargedObj in allChargedObjs:
+        r = pos - chargedObj.pos
+        # just check for now before I figure out what to do in this case
+        if (vpython.mag(r) != 0):
+            electricPotential +=  K * chargedObj.charge / vpython.mag(r)
+    return electricPotential
 
 ####################################################################################################
 
@@ -625,13 +655,15 @@ while True:
     for chargedObj in allChargedObjs:
         chargedObj.displayElectricField()
 
-    # reset electric field arrows for all if user zooms
+    # reset electric field arrows and electric potential grid for all if user zooms
     if (curRange != vpython.scene.range):
         curRange = vpython.scene.range
         setElectricFieldArrowsAll()
         setElectricPotentialGrid()
 
     displayElectricFieldAll()
+    displayElectricPotential()
+
     # for charge in allChargedObjs:
     #     charge.checkCollision()
 
