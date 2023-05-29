@@ -16,6 +16,7 @@ spawnDensity = 2.5E-6
 steps = 10
 epsilon = 0.01
 numOfRate = 1000
+sliderLength = 450
 
 # electric field stuff
 electricFieldOpacitySetter = 1
@@ -448,9 +449,15 @@ def on_mouse_move():
 ####################################################################################################
 
 # Intro Screen
+
+# Intro text
+startText = vpython.text(pos = vpython.vec(0, -3, 0), text="JackXiang", align='center', color = vpython.color.cyan)
+startText.height = 10
+startText.length = 25
+
+# Start Button
 def start():
     vpython.scene.userzoom = True
-    startText.visible = False
     createButtons()
 
     # bind events
@@ -459,15 +466,31 @@ def start():
     vpython.scene.bind('mouseup', on_mouse_up)
     vpython.scene.bind('mousemove', on_mouse_move)
 
-startText = vpython.text(pos = vpython.vec(0, -3, 0), text="JackXiang", align='center', color = vpython.color.cyan)
-startText.height = 10
-startText.length = 25
-    
-startButton = vpython.button(text = "Start", bind = start)
+vpython.scene.append_to_caption("   ")
+startButton = vpython.button(text = "Start without preset", bind = start)
+vpython.scene.append_to_caption("\n\n   ")
 
+# Presets
+vpython.button(text = "Dipole", bind = start)
+vpython.scene.append_to_caption("   ")
+vpython.button(text = "Three-Charge Motion", bind = start)
+vpython.scene.append_to_caption("\n\n   ")
+vpython.button(text = "Parallel Plates", bind = start)
+vpython.scene.append_to_caption("   ")
+vpython.button(text = "Faraday Bucket", bind = start)
+
+# Precision Slider
+def precisionShift():
+    global precision
+    precision = precisionSlider.value
+
+vpython.scene.append_to_caption("\n\n")
+precisionSlider = vpython.slider(min = 5, max = 20, value = 10, bind = precisionShift, length = sliderLength)
+precisionText = vpython.wtext(text = "<center>Precision: 10</center>")
+
+# Instruction
 def createInstruction():
     vpython.scene.append_to_caption(""" 
-
 Instruction: 
 
 Controls:
@@ -491,31 +514,38 @@ createInstruction()
 
 ####################################################################################################
 
-# Button and Sliders
+# Buttons and Sliders
 
 def createButtons():
-    global spawnChargeSlider, spawnChargeText, massSlider, massText, deleteButton, fixButton, electricFieldButton, electricOpacityButton, electricPotentialButton, playButton, instructionButton, resetButton
+    global spawnChargeSlider, spawnChargeText, massSlider, massText, deleteButton, fixButton, electricFieldButton, electricOpacityButton, electricPotentialButton, playButton, trailButton, instructionButton, resetButton, chargeMenu
     global spawnCharge, spawnMass, playing, electricFieldMode, electricOpacity, electricPotentialMode
 
     vpython.scene.caption = ""
+
+    vpython.scene.append_to_caption("   Spawn Charge Object Menu: ")
+    chargeMenu = vpython.menu(text = "Charge Menu", choices = ["Sphere", "Cyllinder", "Plate", "Box"], bind = spawnRadio) 
     
     spawnCharge = 1E-9
-    spawnChargeSlider = vpython.slider(bind = spawnChargeShift, min = -5, max = 5, value = 1, step = 0.1, length = 450)
+    vpython.scene.append_to_caption("\n\n")
+    spawnChargeSlider = vpython.slider(bind = spawnChargeShift, min = -5, max = 5, value = 1, step = 0.1, length = sliderLength)
     vpython.scene.append_to_caption("\n")
-    spawnChargeText = vpython.wtext(text = '<center>Charge:'+'{:1.2f}'.format(spawnChargeSlider.value) + " nC </center>")
+    spawnChargeText = vpython.wtext(text = '<center>Charge: '+'{:1.2f}'.format(spawnChargeSlider.value) + " nC </center>")
 
     spawnMass = 1E-6
     vpython.scene.append_to_caption("\n")
-    massSlider = vpython.slider(bind=massShift, min = 1, max = 2, value = 1, step = 0.1, length = 450) 
+    massSlider = vpython.slider(bind=massShift, min = 1, max = 2, value = 1, step = 0.1, length = sliderLength) 
     vpython.scene.append_to_caption("\n")
-    massText = vpython.wtext(text = '<center>Mass: '+'{:1.2f}'.format(massSlider.value) + " * 10^-6 Kg<center>")
+    massText = vpython.wtext(text = '<center>Mass: '+'{:1.2f}'.format(massSlider.value) + " * 10^-6 Kg</center>")
 
     playing = False
     vpython.scene.append_to_caption("\n   ")
     playButton = vpython.button(text="Play", bind=changePlay)
 
-    electricFieldMode = 0
     vpython.scene.append_to_caption("   ")
+    trailButton = vpython.button (text = "Trail: False", bind = changePlay)
+
+    electricFieldMode = 0
+    vpython.scene.append_to_caption("\n   ")
     electricFieldButton = vpython.button(text="Electric Field: Mode 0", bind=changeElectricField)
 
     electricOpacity = False
@@ -538,13 +568,20 @@ def createButtons():
     vpython.scene.append_to_caption("   ")
     resetButton = vpython.button(text="Reset", bind=resetScene)    
 
+# spawn menu
+def spawnRadio ():
+    global chargeMenu 
+    chargeMenu.text = "Charge Menu:" 
+
+chargeMenu = None
+
 # spawn slider
 spawnCharge = 1E-9
 
 def spawnChargeShift():
     global spawnCharge, spawnChargeText
     spawnCharge = spawnChargeSlider.value * 1E-9
-    spawnChargeText.text = '<center>Charge:'+'{:1.2f}'.format(spawnChargeSlider.value) + " nC </center>"
+    spawnChargeText.text = '<center>Charge: '+'{:1.2f}'.format(spawnChargeSlider.value) + " nC </center>"
     
 spawnChargeSlider = None
 spawnChargeText = None
@@ -678,6 +715,7 @@ def displayInstructionPage():
     global startButton
     vpython.scene.caption = ""
     startButton = vpython.button(text = "Back", bind = createButtons)
+    vpython.scene.append_to_caption("\n")
     createInstruction()
 
 instructionButton = None
@@ -716,6 +754,9 @@ def resetScene():
     vpython.scene.range = 10
 
 resetButton = None
+
+# trail button
+trailButton = None
 
 # program runs
 curRange = vpython.scene.range
