@@ -349,7 +349,9 @@ def on_mouse_move():
                 chargedObjToDrag.pos = mousePos
                 chargedObjToDrag.display.pos = chargedObjToDrag.pos
                 chargedObjToDrag.velVec.pos = chargedObjToDrag.pos
-                chargedObjToDrag.createVelLabel()
+                # create velocity label only if velocity not too small
+                if (vpython.mag(chargedObjToDrag.velVec.axis) > chargedObjToDrag.display.radius):
+                    chargedObjToDrag.createVelLabel()
         else:
             if chargedObjToDrag != None:
                 # velocity vector
@@ -357,7 +359,7 @@ def on_mouse_move():
                     chargedObjToDrag.velVec.pos = chargedObjToDrag.pos
                     chargedObjToDrag.velVec.axis = getMousePos() - chargedObjToDrag.pos
                     chargedObjToDrag.createVelLabel()
-                    # too small reset
+                    # velocity too small reset
                     if (vpython.mag(chargedObjToDrag.velVec.axis) < chargedObjToDrag.display.radius):
                         chargedObjToDrag.velVec.axis = vpython.vec(0, 0, 0)
                         chargedObjToDrag.velLabel.visible = False
