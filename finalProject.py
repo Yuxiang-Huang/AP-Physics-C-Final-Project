@@ -122,7 +122,7 @@ allChargedObjs = []
 spawnPosIndicator = vpython.curve()
 for i in range(steps * 8):
     theta = i * 2 * vpython.pi / steps 
-    radius = vpython.scene.range / 50
+    radius = vpython.scene.range / 75
     spawnPosIndicator.append({"pos": vpython.vec(vpython.cos(theta) * radius, vpython.sin(theta) * radius, 0)
                         , "color": vpython.color.yellow})
 spawnPosIndicator.visible = False
@@ -344,7 +344,7 @@ def tooClose(owner, pos, size):
 
 def displayElectricPotential():
     # calculate electric potential for each label
-    if (electricPotentialMode):
+    if (electricPotentialMode == 1):
         for i in range(precision-1):
             for j in range(precision-1):
                 electricPotentialLabels[i][j].text = '{:1.2f}'.format(calculateElectricPotential(electricPotentialLabels[i][j].pos))
@@ -411,7 +411,7 @@ def displaySpawnPosIndicator(pos):
     global spawnPosIndicator
     for i in range(steps * 8):
         theta = i * 2 * vpython.pi / steps 
-        radius = vpython.scene.range / 50
+        radius = vpython.scene.range / 75
         spawnPosIndicator.modify(i, pos = vpython.vec(vpython.cos(theta) * radius, vpython.sin(theta) * radius, 0) + pos)
     spawnPosIndicator.visible = True
 
@@ -498,6 +498,7 @@ startText.length = 25
 def start():
     vpython.scene.userzoom = True
     startText.visible = False
+    
     createCaptionMainScreen()
 
     # bind events
@@ -561,7 +562,7 @@ createInstruction()
 def createCaptionMainScreen():
     global playing, playButton, time, timeSlider, timeText
     global electricFieldMode, electricFieldButton, electricOpacity, electricOpacityButton, electricPotentialMode, electricPotentialButton
-    global instructionButton, resetButton
+    global gridMode, gridButton, instructionButton, resetButton
 
     vpython.scene.caption = ""
 
@@ -598,12 +599,13 @@ def createCaptionMainScreen():
     vpython.scene.append_to_caption("   ")
     electricOpacityButton = vpython.button(text = "Electric Field Opacity: Off", bind=chanageElectricOpacityMode)
 
-    electricPotentialMode = False
+    electricPotentialMode = 0
     vpython.scene.append_to_caption("\n\n   ")
-    electricPotentialButton = vpython.button(text="Electric Potential: False", bind=changeElectricPotential)
+    electricPotentialButton = vpython.button(text="Electric Potential Mode 0", bind=changeElectricPotential)
     
+    gridMode = False
     vpython.scene.append_to_caption("   ")  
-    vpython.button(text="Grid: Off", bind=changeElectricPotential)
+    gridButton = vpython.button(text="Grid: Off", bind=setGridVisibility)
 
     vpython.scene.append_to_caption("\n\n   ")
     instructionButton = vpython.button(text="Instructions", bind=displayInstructionPage)
@@ -656,31 +658,46 @@ def chanageElectricOpacityMode():
 
 electricOpacityButton = None
 
-# electric potential grid button
-electricPotentialMode = False
+# electric potential button
+electricPotentialMode = 0
 
 def changeElectricPotential():
     global electricPotentialMode, electricPotentialButton
-    electricPotentialMode = not electricPotentialMode
+    electricPotentialMode = electricPotentialMode + 1
+    if (electricPotentialMode == 2):
+        electricPotentialMode = 0
     # set visibility 
-    if (electricPotentialMode):
+    if (electricPotentialMode == 1):
         for i in range(precision-1):
             for j in range(precision-1):
                 electricPotentialLabels[i][j].visible = True
-        for i in range(precision):
-            potentialGridRows[i].visible = True
-            potentialGridCols[i].visible = True
     else: 
         for i in range(precision-1):
             for j in range(precision-1):
                 electricPotentialLabels[i][j].visible = False
+        
+    electricPotentialButton.text = "Electric Potential Mode " + str(electricPotentialMode)
+
+electricPotentialButton = None
+
+# grid button
+gridMode = False
+
+def setGridVisibility():
+    global gridMode
+    gridMode = not gridMode
+    if (gridMode):
+        for i in range(precision):
+            potentialGridRows[i].visible = True
+            potentialGridCols[i].visible = True
+        gridButton.text = "Grid: On"
+    else:
         for i in range(precision):
             potentialGridRows[i].visible = False
             potentialGridCols[i].visible = False
-        
-    electricPotentialButton.text = "Electric Potential: " + str(electricPotentialMode)
+        gridButton.text = "Grid: Off"
 
-electricPotentialButton = None
+gridButton = None
 
 # playing button
 playing = False
@@ -720,7 +737,7 @@ backButton = None
 
 # reset button
 def resetScene():
-    global chargedObjSelected, ruler, rulerLabel, playing, electricFieldMode
+    global chargedObjSelected, ruler, rulerLabel, playing, electricFieldMode, spawnPosIndicator
     global electricFieldArrowsAll, potentialGridRows, potentialGridCols, electricPotentialLabels
     # delete every charge
     while len(allChargedObjs) > 0:
@@ -759,7 +776,7 @@ resetButton = None
 # region Spawn Screen Caption
 
 def createCaptionSpawnScreen():
-    global spawnCharge, spawnChargeSlider, spawnChargeText, spawnMass, massSlider, massText, chargeMenu, spawnButton, startButton
+    global spawnCharge, spawnChargeSlider, spawnChargeText, spawnMass, massSlider, massText, chargeMenu, spawnButton, backButton
 
     vpython.scene.caption = ""
 
@@ -782,7 +799,16 @@ def createCaptionSpawnScreen():
     spawnButton = vpython.button(text = "Spawn", bind = spawnChargedObj)
 
     vpython.scene.append_to_caption("   ")
-    startButton = vpython.button(text = "Back", bind = start)
+    backButton = vpython.button(text = "Back", bind = back)
+
+    vpython.scene.append_to_caption("\n\n   ")
+    vpython.wtext(text = "Position: <0, 0>")
+
+    vpython.scene.append_to_caption("\n\n   ")
+    vpython.wtext(text = "Electric Field: <0, 0> N/C; 0 N/C @ 0 degree")
+
+    vpython.scene.append_to_caption("\n\n   ")
+    vpython.wtext(text = "Electric Potential: 0 V/C")
 
 # spawn menu
 def spawnRadio():
@@ -816,8 +842,18 @@ massText = None
 # spawn button
 def spawnChargedObj():
     allChargedObjs.append(ChargedObj(spawnMass, spawnCharge, spawnPos, vpython.vec(0, 0, 0)))
+    back()
 
 spawnButton = None
+
+# back button
+def back():
+    global spawnPos
+    createCaptionMainScreen()
+    spawnPosIndicator.visible = False
+    spawnPos = None
+
+backButton = None
 
 # endregion
 
@@ -850,6 +886,15 @@ def createCaptionSelectCharge():
 
     vpython.scene.append_to_caption("\n\n   ")
     deleteButton = vpython.button(text="Delete", bind=deleteChargedObj)
+
+    vpython.scene.append_to_caption("\n\n   ")
+    vpython.wtext(text="Position: <0, 0>")
+
+    vpython.scene.append_to_caption("\n\n   ")
+    vpython.wtext(text="Velocity: <0, 0> m/s; 0 m/s @ 0 degree")
+
+    vpython.scene.append_to_caption("\n\n   ")
+    vpython.wtext(text="Force: <0, 0> N; 0 N @ 0 degree")
     
 # delete button
 def deleteChargedObj():
@@ -867,6 +912,7 @@ def deleteChargedObj():
                 chargedObjSelected.electricFieldArrows[i][j].visible = False
     allChargedObjs.remove(chargedObjSelected)
     chargedObjSelected = None
+    createCaptionMainScreen()
 
 deleteButton = None
 
