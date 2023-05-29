@@ -119,12 +119,13 @@ allChargedObjs = []
 #endregion
 
 # region select display
-selectDisplay = vpython.curve()
+spawnPosIndicator = vpython.curve()
 for i in range(steps * 8):
     theta = i * 2 * vpython.pi / steps 
     radius = vpython.scene.range / 50
-    selectDisplay.append({"pos": vpython.vec(vpython.cos(theta) * radius, vpython.sin(theta) * radius, 0)
+    spawnPosIndicator.append({"pos": vpython.vec(vpython.cos(theta) * radius, vpython.sin(theta) * radius, 0)
                         , "color": vpython.color.yellow})
+spawnPosIndicator.visible = False
 
 #endregion
 
@@ -217,8 +218,7 @@ class ChargedObj:
             for i in range(steps):
                 theta = i * thetaRange / steps + initialTheta - thetaRange / 2 
                 arc.modify(i, pos = vpython.vec(vpython.cos(theta) * (self.display.radius + epsilon * vpython.scene.range), 
-                                    vpython.sin(theta) * (self.display.radius + epsilon * vpython.scene.range), 0) + self.pos
-                                    , color = vpython.color.yellow)
+                                    vpython.sin(theta) * (self.display.radius + epsilon * vpython.scene.range), 0) + self.pos)
             arc.visible = True
     
     def hideSelect(self):
@@ -381,9 +381,9 @@ def clicked():
                 createCaptionSelectCharge()
             # spawn screen when the click is not on a charged object
             else:
-                spawnPos = chargedObjOnMouse()
+                spawnPos = getMousePos()
                 createCaptionSpawnScreen()
-
+                displaySpawnPosIndicator(spawnPos)
         else:
             # reselect 
             if (chargedObjSelected != None):
@@ -407,21 +407,13 @@ def chargedObjOnMouse():
 def getMousePos():
     return vpython.scene.mouse.project(normal=vpython.vec(0, 0, 1))
 
-# def displaySelect(pos):
-#     def createSelectDisplay(self):
-        
-    
-#     def displaySelect(self):
-#         thetaRange = vpython.pi / 4
-#         for x in range(4):
-#             arc = self.selectDisplay[x]
-#             initialTheta = x * vpython.pi / 2 + vpython.pi / 4
-#             for i in range(steps):
-#                 theta = i * thetaRange / steps + initialTheta - thetaRange / 2 
-#                 arc.modify(i, pos = vpython.vec(vpython.cos(theta) * (self.display.radius + epsilon * vpython.scene.range), 
-#                                     vpython.sin(theta) * (self.display.radius + epsilon * vpython.scene.range), 0) + self.pos
-#                                     , color = vpython.color.yellow)
-#             arc.visible = True
+def displaySpawnPosIndicator(pos):
+    global spawnPosIndicator
+    for i in range(steps * 8):
+        theta = i * 2 * vpython.pi / steps 
+        radius = vpython.scene.range / 50
+        spawnPosIndicator.modify(i, pos = vpython.vec(vpython.cos(theta) * radius, vpython.sin(theta) * radius, 0) + pos)
+    spawnPosIndicator.visible = True
 
 # dragging
 chargedObjToDrag = None
@@ -823,7 +815,7 @@ massText = None
 
 # spawn button
 def spawnChargedObj():
-    allChargedObjs.append(ChargedObj(spawnMass, spawnCharge, getMousePos(), vpython.vec(0, 0, 0)))
+    allChargedObjs.append(ChargedObj(spawnMass, spawnCharge, spawnPos, vpython.vec(0, 0, 0)))
 
 spawnButton = None
 
