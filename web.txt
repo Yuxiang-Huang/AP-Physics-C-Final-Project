@@ -47,6 +47,25 @@ def setElectricFieldArrowsAll():
             
 setElectricFieldArrowsAll()
 
+# electric potential
+thickness = 0.02
+
+potentialGridRows = []
+potentialGridCols = []
+
+for i in range(precision):
+    potentialGridRows.append(box(size=vec(2 * scene.width / scene.height * scene.range,
+                                                           thickness, thickness),
+                                            axis=vec(1, 0, 0), color = color.black, visible = False))
+    potentialGridCols.append(box(visible = False))
+
+# method for rescaling
+def setElectricPotentialGrid():
+    for i in range(precision):
+        potentialGridRows[i].pos = vec(0, (i - precision / 2) * 2 * scene.range / precision, 0)
+        # potentialGridRows[i].pos += vec(0, scene.range / precision, 0)
+        potentialGridRows[i].visible = True
+
 # ruler
 ruler = curve({"pos": vector(0, 0, 0), "color": color.cyan},
                       {"pos": vector(0, 0, 0), "color": color.cyan})
@@ -63,7 +82,11 @@ def createRulerLabel():
 # store all spawned charges
 allChargedObjs = []
 
-# Class Charge
+####################################################################################################
+
+# Classes
+
+# Sphere of Charge
 class ChargedObj:
     def __init__(self, mass, charge, spawnPos, spawnVel):
         # physics variables
@@ -371,7 +394,7 @@ def on_mouse_move():
 # Intro Screen
 def start():
     scene.userzoom = True
-    startText.visible = False
+    # startText.visible = False
     createButtons()
 
     # bind events
@@ -380,9 +403,9 @@ def start():
     scene.bind('mouseup', on_mouse_up)
     scene.bind('mousemove', on_mouse_move)
 
-startText = text(pos = vec(0, -0.3, 0), text="JackXiang", align='center', color = color.cyan)
-startText.height = 1
-startText.length = 2.5
+# startText = text(pos = vec(0, -0.3, 0), text="JackXiang", align='center', color = color.cyan)
+# startText.height = 1
+# startText.length = 2.5
     
 startButton = button(text = "Start", bind = start)
 
@@ -415,7 +438,7 @@ createInstruction()
 # Button and Sliders
 
 def createButtons():
-    global spawnChargeSlider, spawnChargeText, massSlider, massText, deleteButton, fixButton, electricFieldButton, playButton, instructionButton, resetButton
+    global spawnChargeSlider, spawnChargeText, massSlider, massText, deleteButton, fixButton, electricFieldButton, electricPotentialButton, playButton, instructionButton, resetButton
     
     scene.caption = ""
     
@@ -435,6 +458,9 @@ def createButtons():
     electricFieldButton = button(text="Electric Field: Mode 0", bind=changeElectricField)
 
     scene.append_to_caption("   ")
+    electricPotentialButton = button(text="Electric Potential: False", bind=changeElectricPotential)
+
+    scene.append_to_caption("\n   ")
     fixButton = button(text="Fix", bind=fixChargedObj)
 
     scene.append_to_caption("   ")
@@ -505,6 +531,16 @@ def changeElectricField():
     electricFieldButton.text = "Electric Field: Mode " + str(electricFieldMode)
 
 electricFieldButton = undefined
+
+# electric potential grid button
+electricPotentialMode = False
+
+def changeElectricPotential():
+    global electricPotentialMode, electricPotentialButton
+    electricPotentialMode = not electricPotentialMode
+    electricPotentialButton.text = "Electric Potential: " + str(electricPotentialMode)
+
+electricPotentialButton = undefined
 
 # playing button
 playing = False

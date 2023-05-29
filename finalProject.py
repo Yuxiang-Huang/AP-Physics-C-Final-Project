@@ -47,6 +47,35 @@ def setElectricFieldArrowsAll():
             
 setElectricFieldArrowsAll()
 
+# electric potential
+potentialGridRows = []
+potentialGridCols = []
+
+for i in range(precision):
+    potentialGridRows.append(vpython.box(axis=vpython.vec(1, 0, 0), color = vpython.color.black, visible = False))
+    potentialGridCols.append(vpython.box(axis=vpython.vec(0, 0, 1), color = vpython.color.black, visible = False))
+
+# method for rescaling
+def setElectricPotentialGrid():
+    # determine thickness
+    thickness = vpython.scene.range / 100
+    for i in range(precision):
+        # rows
+        potentialGridRows[i].size = vpython.vec(2 * vpython.scene.width / vpython.scene.height * vpython.scene.range,
+                                                           thickness, thickness)
+        potentialGridRows[i].pos = vpython.vec(0, (i - precision / 2) * 2 * vpython.scene.range / precision, 0)
+        potentialGridRows[i].pos += vpython.vec(0, vpython.scene.range / precision, 0)
+        potentialGridRows[i].visible = True
+
+        # cols
+        potentialGridCols[i].size = vpython.vec(thickness, 2 * vpython.scene.range, thickness)
+        potentialGridCols[i].pos = vpython.vec((i - precision / 2) * 2 * 
+                                               vpython.scene.width / vpython.scene.height * vpython.scene.range / precision, 0, 0)
+        potentialGridCols[i].pos += vpython.vec(vpython.scene.width / vpython.scene.height * vpython.scene.range / precision, 0, 0)
+        potentialGridCols[i].visible = True
+
+setElectricPotentialGrid()
+
 # ruler
 ruler = vpython.curve({"pos": vpython.vector(0, 0, 0), "color": vpython.color.cyan},
                       {"pos": vpython.vector(0, 0, 0), "color": vpython.color.cyan})
@@ -63,7 +92,11 @@ def createRulerLabel():
 # store all spawned charges
 allChargedObjs = []
 
-# Class Charge
+####################################################################################################
+
+# Classes
+
+# Sphere of Charge
 class ChargedObj:
     def __init__(self, mass, charge, spawnPos, spawnVel):
         # physics variables
@@ -371,7 +404,7 @@ def on_mouse_move():
 # Intro Screen
 def start():
     vpython.scene.userzoom = True
-    startText.visible = False
+    # startText.visible = False
     createButtons()
 
     # bind events
@@ -380,9 +413,9 @@ def start():
     vpython.scene.bind('mouseup', on_mouse_up)
     vpython.scene.bind('mousemove', on_mouse_move)
 
-startText = vpython.text(pos = vpython.vec(0, -0.3, 0), text="JackXiang", align='center', color = vpython.color.cyan)
-startText.height = 1
-startText.length = 2.5
+# startText = vpython.text(pos = vpython.vec(0, -0.3, 0), text="JackXiang", align='center', color = vpython.color.cyan)
+# startText.height = 1
+# startText.length = 2.5
     
 startButton = vpython.button(text = "Start", bind = start)
 
@@ -415,7 +448,7 @@ createInstruction()
 # Button and Sliders
 
 def createButtons():
-    global spawnChargeSlider, spawnChargeText, massSlider, massText, deleteButton, fixButton, electricFieldButton, playButton, instructionButton, resetButton
+    global spawnChargeSlider, spawnChargeText, massSlider, massText, deleteButton, fixButton, electricFieldButton, electricPotentialButton, playButton, instructionButton, resetButton
     
     vpython.scene.caption = ""
     
@@ -435,6 +468,9 @@ def createButtons():
     electricFieldButton = vpython.button(text="Electric Field: Mode 0", bind=changeElectricField)
 
     vpython.scene.append_to_caption("   ")
+    electricPotentialButton = vpython.button(text="Electric Potential: False", bind=changeElectricPotential)
+
+    vpython.scene.append_to_caption("\n   ")
     fixButton = vpython.button(text="Fix", bind=fixChargedObj)
 
     vpython.scene.append_to_caption("   ")
@@ -505,6 +541,16 @@ def changeElectricField():
     electricFieldButton.text = "Electric Field: Mode " + str(electricFieldMode)
 
 electricFieldButton = None
+
+# electric potential grid button
+electricPotentialMode = False
+
+def changeElectricPotential():
+    global electricPotentialMode, electricPotentialButton
+    electricPotentialMode = not electricPotentialMode
+    electricPotentialButton.text = "Electric Potential: " + str(electricPotentialMode)
+
+electricPotentialButton = None
 
 # playing button
 playing = False
@@ -583,6 +629,7 @@ while True:
     if (curRange != vpython.scene.range):
         curRange = vpython.scene.range
         setElectricFieldArrowsAll()
+        setElectricPotentialGrid()
 
     displayElectricFieldAll()
     # for charge in allChargedObjs:
