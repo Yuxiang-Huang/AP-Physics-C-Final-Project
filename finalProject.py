@@ -50,30 +50,15 @@ setElectricFieldArrowsAll()
 # ruler
 ruler = vpython.curve({"pos": vpython.vector(0, 0, 0), "color": vpython.color.cyan},
                       {"pos": vpython.vector(0, 0, 0), "color": vpython.color.cyan})
+rulerLabel = vpython.label(text="0", visible = False)
 
-def createText(inputText):
-    inputText.height = 0.06 * vpython.scene.range
-    inputText.length = 0.2 * vpython.scene.range
-    inputText.depth = 0.01 * vpython.scene.range
-    inputText.visible = True
+def createRulerLabel():
+    global ruler, rulerLabel
 
-def createRulerText():
-    global rulerText, ruler
-    # minimum length check
-    if (vpython.mag(ruler.point(1)['pos'] - ruler.point(0)['pos']) < epsilon * vpython.scene.range):
-        rulerText.visible = False
-        ruler.modify(0, vpython.vec(0, 0, 0))
-        ruler.modify(1, vpython.vec(0, 0, 0))
-    else:   
-        # create new ruler text at the point
-        rulerText.visible = False
-        rulerText = vpython.text(text="{0:.3f}".format(vpython.mag(ruler.point(1)['pos'] - ruler.point(0)['pos'])) + "m",
-        align='center', axis = ruler.point(1)['pos'] - ruler.point(0)['pos'], pos = ruler.point(1)['pos'], color = vpython.color.cyan,
-        visible = False)
-        createText(rulerText)
-
-# place holder
-rulerText = vpython.text(text="0", visible = False)
+    # create new ruler label in the middle of the ruler
+    rulerLabel.text = "{0:.3f}".format(vpython.mag(ruler.point(1)['pos'] - ruler.point(0)['pos'])) + "m"
+    rulerLabel.pos = ruler.point(0)['pos'] + (ruler.point(1)['pos'] - ruler.point(0)['pos']) / 2
+    rulerLabel.visible = True
          
 # store all spawned charges
 allChargedObjs = []
@@ -320,7 +305,7 @@ def on_mouse_down():
     if (chargedObjToDrag == None and not playing):
         ruler.modify(0, getMousePos())
         ruler.modify(1, getMousePos())
-        rulerText.visible = False
+        rulerLabel.visible = False
 
 def on_mouse_up():
     global chargedObjToDrag, mouseDown
@@ -330,9 +315,11 @@ def on_mouse_up():
             chargedObjSelected.vel += chargedObjSelected.forceVec.axis / vectorAxisFactor / chargedObjSelected.mass 
             chargedObjSelected.forceVec.axis = vpython.vec(0, 0, 0)
 
-    if (chargedObjToDrag == None):
-        # create new ruler text
-        createRulerText()    
+    # minimum length check for the ruler
+    if (vpython.mag(ruler.point(1)['pos'] - ruler.point(0)['pos']) < epsilon * vpython.scene.range):
+        rulerLabel.visible = False
+        ruler.modify(0, vpython.vec(0, 0, 0))
+        ruler.modify(1, vpython.vec(0, 0, 0))
     
     # reset variables
     chargedObjToDrag = None
@@ -345,6 +332,7 @@ def on_mouse_move():
         # avoid mouse move after mouse up
         if (mouseDown):
             ruler.modify(1, getMousePos())
+            createRulerLabel()
     else: 
         # when charge selected is not the charge you are draging
         if (chargedObjSelected != chargedObjToDrag):
@@ -544,7 +532,7 @@ backButton = None
 # reset button
 
 def resetScene():
-    global chargedObjSelected, ruler, rulerText, playing, electricFieldMode
+    global chargedObjSelected, ruler, rulerLabel, playing, electricFieldMode
     # delete every charge
     while len(allChargedObjs) > 0:
         chargedObjSelected = allChargedObjs[0]
@@ -557,7 +545,7 @@ def resetScene():
     # ruler
     ruler.modify(0, vpython.vec(0, 0, 0))
     ruler.modify(1, vpython.vec(0, 0, 0))
-    rulerText.visible = False
+    rulerLabel.visible = False
 
     # caption
     createButtons()
