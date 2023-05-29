@@ -480,24 +480,30 @@ createInstruction()
 
 def createButtons():
     global spawnChargeSlider, spawnChargeText, massSlider, massText, deleteButton, fixButton, electricFieldButton, electricPotentialButton, playButton, instructionButton, resetButton, rateSlider, rateText
-    
+    global spawnCharge, spawnMass, playing, electricFieldMode, electricPotentialMode
+
     vpython.scene.caption = ""
     
+    spawnCharge = 1E-9
     spawnChargeSlider = vpython.slider(bind = spawnChargeShift, min = -5, max = 5, value = 1, step = 0.1, length = 450)
     vpython.scene.append_to_caption("\n")
     spawnChargeText = vpython.wtext(text = '<center>Charge (nC):'+'{:1.2f}'.format(spawnChargeSlider.value) + "</center>")
 
+    spawnMass = 1
     vpython.scene.append_to_caption("\n")
-    massSlider = vpython.slider(bind=massShift, min = 1, max =2, value =1, step = 0.1, length = 450) 
+    massSlider = vpython.slider(bind=massShift, min = 1, max =2, value = spawnMass, step = 0.1, length = 450) 
     vpython.scene.append_to_caption("\n             ")
     massText = vpython.wtext(text = 'Mass: '+'{:1.2f}'.format(massSlider.value))
 
+    playing = False
     vpython.scene.append_to_caption("\n\n   ")
     playButton = vpython.button(text="Play", bind=changePlay)
 
+    electricFieldMode = 0
     vpython.scene.append_to_caption("   ")
     electricFieldButton = vpython.button(text="Electric Field: Mode 0", bind=changeElectricField)
 
+    electricPotentialMode = False
     vpython.scene.append_to_caption("   ")
     electricPotentialButton = vpython.button(text="Electric Potential: False", bind=changeElectricPotential)
 
@@ -513,17 +519,17 @@ def createButtons():
     vpython.scene.append_to_caption("   ")
     resetButton = vpython.button(text="Reset", bind=resetScene)    
 
-    vpython.scene.append_to_caption("\n\n")
-    rateSlider = vpython.slider(bind=rateShift, min = 100, max =1000, value =1000, step = 10, length = 450) 
-    vpython.scene.append_to_caption("\n             ")
-    rateText = vpython.wtext(text = 'Rate: ' + str(rate))
+    # vpython.scene.append_to_caption("\n\n")
+    # rateSlider = vpython.slider(bind=rateShift, min = 100, max =1000, value =1000, step = 10, length = 450) 
+    # vpython.scene.append_to_caption("\n             ")
+    # rateText = vpython.wtext(text = 'Rate: ' + str(rate))
 
 # spawn slider
-spawnCharge = 10E-7
+spawnCharge = 1E-7
 
 def spawnChargeShift():
     global spawnCharge, spawnChargeText
-    spawnCharge = spawnChargeSlider.value * 10E-7
+    spawnCharge = spawnChargeSlider.value * 1E-7
     spawnChargeText.text = 'Charge (nC):'+'{:1.2f}'.format(spawnChargeSlider.value)
     
 spawnChargeSlider = None
@@ -657,10 +663,6 @@ def resetScene():
     while len(allChargedObjs) > 0:
         chargedObjSelected = allChargedObjs[0]
         deleteChargedObj()
-    
-    # reset variables
-    playing = False
-    electricFieldMode = 0
 
     # ruler
     ruler.modify(0, vpython.vec(0, 0, 0))
