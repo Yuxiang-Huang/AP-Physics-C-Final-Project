@@ -560,15 +560,17 @@ createInstruction()
 # region Main Screen Caption
 
 def createCaptionMainScreen():
-    global playing, playButton, time, timeSlider, timeText
-    global electricFieldMode, electricFieldButton, electricOpacity, electricOpacityButton, electricPotentialMode, electricPotentialButton
-    global gridMode, gridButton, instructionButton
+    global playButton, timeSlider, timeText
+    global electricFieldButton, electricOpacityButton, electricPotentialButton
+    global gridButton, instructionButton
 
     vpython.scene.caption = ""
 
     vpython.scene.append_to_caption("   ")
-    playButton = vpython.button(text="Play", bind = changePlay)
-
+    if (playing):
+        playButton = vpython.button(text="Stop", bind = changePlay)
+    else:
+        playButton = vpython.button(text="Play", bind = changePlay)
     vpython.scene.append_to_caption("   ")
     vpython.button (text = "Collision: True", bind = changePlay)
 
@@ -579,9 +581,9 @@ def createCaptionMainScreen():
     vpython.button (text = "Save", bind = changePlay)
 
     vpython.scene.append_to_caption("\n\n")
-    timeSlider = vpython.slider(bind=timeShift, min = 0.1, max = 5, value = 1, step = 0.1, length = sliderLength) 
+    timeSlider = vpython.slider(bind=timeShift, min = 0.1, max = 5, value = time, step = 0.1, length = sliderLength) 
     vpython.scene.append_to_caption("\n")
-    timeText = vpython.wtext(text = '<center>Time in program for every second in real life: 1s</center>')
+    timeText = vpython.wtext(text = "<center>Time in program for every second in real life:" + str(time) + "s</center>")
 
     vpython.scene.append_to_caption("\n\n   ")
     vpython.button(text="Show Velocity: True", bind = changePlay)
@@ -590,17 +592,21 @@ def createCaptionMainScreen():
     vpython.button(text="Show Force: False", bind = changePlay)
 
     vpython.scene.append_to_caption("\n\n   ")
-    electricFieldButton = vpython.button(text="Electric Field: Mode 0", bind = changeElectricField)
+    electricFieldButton = vpython.button(text="Electric Field: Mode " + str(electricFieldMode), bind = changeElectricField)
 
     vpython.scene.append_to_caption("   ")
-    electricOpacityButton = vpython.button(text = "Electric Field Opacity: Off", bind = chanageElectricOpacityMode)
-
+    if (electricOpacity):
+        electricOpacityButton = vpython.button(text = "Electric Field Opacity: On", bind = chanageElectricOpacityMode)
+    else:
+        electricOpacityButton = vpython.button(text = "Electric Field Opacity: Off", bind = chanageElectricOpacityMode)
     vpython.scene.append_to_caption("\n\n   ")
-    electricPotentialButton = vpython.button(text="Electric Potential Mode 0", bind = changeElectricPotential)
+    electricPotentialButton = vpython.button(text="Electric Potential Mode " + str(electricPotentialMode), bind = changeElectricPotential)
     
     vpython.scene.append_to_caption("   ")  
-    gridButton = vpython.button(text="Grid: Off", bind = changeGridMode)
-
+    if (gridMode):
+        gridButton = vpython.button(text="Grid: On", bind = changeGridMode)
+    else:
+        gridButton = vpython.button(text="Grid: Off", bind = changeGridMode)
     vpython.scene.append_to_caption("\n\n\n\n   ")
     instructionButton = vpython.button(text="Instructions", bind = displayInstructionPage)
 
@@ -733,7 +739,7 @@ backButton = None
 # region Spawn Screen Caption
 
 def createCaptionSpawnScreen():
-    global spawnCharge, spawnChargeSlider, spawnChargeText, spawnMass, massSlider, massText, chargeMenu, spawnButton, backButton
+    global spawnChargeSlider, spawnChargeText, massSlider, massText, chargeMenu, spawnButton, backButton
 
     vpython.scene.caption = ""
 
@@ -741,12 +747,12 @@ def createCaptionSpawnScreen():
     chargeMenu = vpython.menu(text = "Charge Menu", choices = ["Sphere", "Cyllinder", "Plate", "Box"], bind = spawnRadio) 
     
     vpython.scene.append_to_caption("\n\n")
-    spawnChargeSlider = vpython.slider(bind = spawnChargeShift, min = -5, max = 5, value = 1, step = 0.1, length = sliderLength)
+    spawnChargeSlider = vpython.slider(bind = spawnChargeShift, min = -5, max = 5, value = spawnCharge / 1E-9, step = 0.1, length = sliderLength)
     vpython.scene.append_to_caption("\n")
     spawnChargeText = vpython.wtext(text = '<center>Charge: '+'{:1.2f}'.format(spawnChargeSlider.value) + " nC </center>")
 
     vpython.scene.append_to_caption("\n")
-    massSlider = vpython.slider(bind=massShift, min = 1, max = 2, value = 1, step = 0.1, length = sliderLength) 
+    massSlider = vpython.slider(bind=massShift, min = 1, max = 2, value = spawnMass / 1E-6, step = 0.1, length = sliderLength) 
     vpython.scene.append_to_caption("\n")
     massText = vpython.wtext(text = '<center>Mass: '+'{:1.2f}'.format(massSlider.value) + " * 10^-6 Kg</center>")
 
