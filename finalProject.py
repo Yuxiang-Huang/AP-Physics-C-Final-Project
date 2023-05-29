@@ -353,6 +353,7 @@ def clicked():
             # select the charge when the click is on a charged object
             if (chargedObjSelected != None):
                 chargedObjSelected.displaySelect()
+                createCaptionSelectCharge()
             # spawn when the click is not on a charged object
             else:
                 makeChargeObj()
@@ -363,6 +364,9 @@ def clicked():
             chargedObjSelected = chargedObjOnMouse()
             if (chargedObjSelected != None):
                 chargedObjSelected.displaySelect()
+                createCaptionSelectCharge()
+            else:
+                createCaptionSpawnScreen()
 
 # helper methods for click
 def makeChargeObj():
@@ -381,7 +385,7 @@ def getMousePos():
 chargedObjToDrag = None
 mouseDown = False
 
-def on_mouse_down():
+def onMouseDown():
     global chargedObjToDrag, mouseDown, ruler
     # assign charged object to drag
     chargedObjToDrag = chargedObjOnMouse()
@@ -393,7 +397,7 @@ def on_mouse_down():
         ruler.modify(1, getMousePos())
         rulerLabel.visible = False
 
-def on_mouse_up():
+def onMouseUp():
     global chargedObjToDrag, mouseDown
     # apply force vector if necessary
     if (chargedObjSelected != None):
@@ -412,7 +416,7 @@ def on_mouse_up():
     chargedObjToDrag = None
     mouseDown = False
 
-def on_mouse_move():
+def onMouseMove():
     global ruler
     # ruler when no object to drag and not playing
     if chargedObjToDrag == None and not playing:
@@ -458,13 +462,14 @@ startText.length = 25
 # Start Button
 def start():
     vpython.scene.userzoom = True
+    startText.visible = False
     createCaptionSpawnScreen()
 
     # bind events
     vpython.scene.bind('click', clicked)
-    vpython.scene.bind('mousedown', on_mouse_down)
-    vpython.scene.bind('mouseup', on_mouse_up)
-    vpython.scene.bind('mousemove', on_mouse_move)
+    vpython.scene.bind('mousedown', onMouseDown)
+    vpython.scene.bind('mouseup', onMouseUp)
+    vpython.scene.bind('mousemove', onMouseMove)
 
 vpython.scene.append_to_caption("   ")
 startButton = vpython.button(text = "Start without preset", bind = start)
@@ -519,7 +524,7 @@ createInstruction()
 def createCaptionSpawnScreen():
     global spawnCharge, spawnChargeSlider, spawnChargeText, spawnMass, massSlider, massText, time, timeSlider, timeText
     global electricFieldButton, electricOpacityButton, electricPotentialButton
-    global chargeMenu, playButton, trailButton, instructionButton, resetButton
+    global chargeMenu, playButton, instructionButton, resetButton
     global playing, electricFieldMode, electricOpacity, electricPotentialMode
 
     vpython.scene.caption = ""
@@ -544,10 +549,13 @@ def createCaptionSpawnScreen():
     playButton = vpython.button(text="Play", bind=changePlay)
 
     vpython.scene.append_to_caption("   ")
-    trailButton = vpython.button (text = "Trail: False", bind = changePlay)
+    vpython.button (text = "Collision: True", bind = changePlay)
 
     vpython.scene.append_to_caption("   ")
-    trailButton = vpython.button (text = "Camera Follow: False", bind = changePlay)
+    vpython.button (text = "Trail: False", bind = changePlay)
+
+    vpython.scene.append_to_caption("   ")
+    vpython.button (text = "Save", bind = changePlay)
 
     time = 1
     vpython.scene.append_to_caption("\n\n")
@@ -574,7 +582,7 @@ def createCaptionSpawnScreen():
     resetButton = vpython.button(text="Reset", bind=resetScene)    
 
 # spawn menu
-def spawnRadio ():
+def spawnRadio():
     global chargeMenu 
     chargeMenu.text = "Charge Menu:" 
 
@@ -743,9 +751,6 @@ def resetScene():
 
 resetButton = None
 
-# trail button
-trailButton = None
-
 # Create caption when a charge is selected 
 
 def createCaptionSelectCharge():
@@ -753,10 +758,25 @@ def createCaptionSelectCharge():
 
     vpython.scene.caption = ""
 
+    vpython.slider(bind = spawnChargeShift, min = -5, max = 5, value = 1, step = 0.1, length = sliderLength)
+    vpython.scene.append_to_caption("\n")
+    vpython.wtext(text = '<center>Charge: '+'{:1.2f}'.format(spawnChargeSlider.value) + " nC </center>")
+
+    vpython.scene.append_to_caption("\n")
+    vpython.slider(bind=massShift, min = 1, max = 2, value = 1, step = 0.1, length = sliderLength) 
+    vpython.scene.append_to_caption("\n")
+    vpython.wtext(text = '<center>Mass: '+'{:1.2f}'.format(massSlider.value) + " * 10^-6 Kg</center>")
+
     vpython.scene.append_to_caption("\n   ")
+    vpython.button(text="Show Velocity: True", bind=fixChargedObj)
+
+    vpython.scene.append_to_caption("\n\n   ")
+    vpython.button(text="Show Force: False", bind=deleteChargedObj)
+
+    vpython.scene.append_to_caption("\n\n   ")
     fixButton = vpython.button(text="Fix", bind=fixChargedObj)
 
-    vpython.scene.append_to_caption("   ")
+    vpython.scene.append_to_caption("\n\n   ")
     deleteButton = vpython.button(text="Delete", bind=deleteChargedObj)
     
 # delete button
