@@ -1,5 +1,6 @@
 import vpython
 
+# set scene
 vpython.scene.background = vpython.color.white
 vpython.scene.width = 1000
 vpython.scene.height = 650
@@ -32,6 +33,10 @@ for i in range(precision):
     for j in range(precision):
         electricFieldArrowsAll[i][j] = vpython.arrow(axis = vpython.vec(0, 0, 0), color = vpython.color.orange)
 
+# Math for rescaling
+# unit width = 2 * vpython.scene.width / vpython.scene.height * vpython.scene.range / precision
+# unit height = 2 * vpython.scene.range / precision
+
 # method for rescaling
 def setElectricFieldArrowsAll():
     for i in range(precision):
@@ -58,12 +63,12 @@ for i in range(precision):
 electricPotentialLabels = [ [0]* (precision - 1) for i in range(precision - 1)]
 for i in range(precision-1):
     for j in range(precision-1):
-        electricPotentialLabels[i][j] = vpython.label(text = "0", visible = False)
+        electricPotentialLabels[i][j] = vpython.label(text = "0", visible = False, box = False)
 
 # method for rescaling
 def setElectricPotentialGrid():
     # determine thickness
-    thickness = vpython.scene.range / 100
+    thickness = vpython.scene.range / 200
     for i in range(precision):
         # rows
         potentialGridRows[i].size = vpython.vec(2 * vpython.scene.width / vpython.scene.height * vpython.scene.range,
@@ -84,13 +89,14 @@ def setElectricPotentialGrid():
             electricPotentialLabels[i][j].pos = vpython.vec(
                         (i - precision / 2 + 1) * 2 * vpython.scene.width / vpython.scene.height * vpython.scene.range / precision, 
                         (j - precision / 2 + 1) * 2 * vpython.scene.range / precision, 0)
+            electricPotentialLabels[i][j].height = 10
 
 setElectricPotentialGrid()
 
 # ruler
 ruler = vpython.curve({"pos": vpython.vector(0, 0, 0), "color": vpython.color.cyan},
                       {"pos": vpython.vector(0, 0, 0), "color": vpython.color.cyan})
-rulerLabel = vpython.label(text="0", visible = False)
+rulerLabel = vpython.label(text="0", visible = False, color = vpython.color.magenta)
 
 def createRulerLabel():
     global ruler, rulerLabel
@@ -430,7 +436,7 @@ def on_mouse_move():
 # Intro Screen
 def start():
     vpython.scene.userzoom = True
-    # startText.visible = False
+    startText.visible = False
     createButtons()
 
     # bind events
@@ -439,9 +445,9 @@ def start():
     vpython.scene.bind('mouseup', on_mouse_up)
     vpython.scene.bind('mousemove', on_mouse_move)
 
-# startText = vpython.text(pos = vpython.vec(0, -0.3, 0), text="JackXiang", align='center', color = vpython.color.cyan)
-# startText.height = 1
-# startText.length = 2.5
+startText = vpython.text(pos = vpython.vec(0, -0.3, 0), text="JackXiang", align='center', color = vpython.color.cyan)
+startText.height = 1
+startText.length = 2.5
     
 startButton = vpython.button(text = "Start", bind = start)
 
@@ -615,6 +621,7 @@ def changePlay():
         playButton.text = "Stop"
     else:
         playButton.text = "Play"
+
     #set velocity vector visibilities
     if (playing):
         for co in allChargedObjs:
@@ -625,7 +632,7 @@ def changePlay():
             co.velVec.visible = True
             co.velVec.pos = co.pos
             co.velVec.axis = co.vel * vectorAxisFactor
-            co.createVelText()
+            co.createVelLabel()
 
 playButton = None
 

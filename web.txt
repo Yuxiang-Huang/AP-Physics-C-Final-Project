@@ -1,5 +1,6 @@
 Web VPython 3.2
 
+# set scene
 scene.background = color.white
 scene.width = 1000
 scene.height = 650
@@ -32,6 +33,10 @@ for i in range(precision):
     for j in range(precision):
         electricFieldArrowsAll[i][j] = arrow(axis = vec(0, 0, 0), color = color.orange)
 
+# Math for rescaling
+# unit width = 2 * scene.width / scene.height * scene.range / precision
+# unit height = 2 * scene.range / precision
+
 # method for rescaling
 def setElectricFieldArrowsAll():
     for i in range(precision):
@@ -48,28 +53,50 @@ def setElectricFieldArrowsAll():
 setElectricFieldArrowsAll()
 
 # electric potential
-thickness = 0.02
-
 potentialGridRows = []
 potentialGridCols = []
 
 for i in range(precision):
-    potentialGridRows.append(box(size=vec(2 * scene.width / scene.height * scene.range,
-                                                           thickness, thickness),
-                                            axis=vec(1, 0, 0), color = color.black, visible = False))
-    potentialGridCols.append(box(visible = False))
+    potentialGridRows.append(box(axis=vec(1, 0, 0), color = color.black, visible = False))
+    potentialGridCols.append(box(axis=vec(0, 0, 1), color = color.black, visible = False))
+
+electricPotentialLabels = [ [0]* (precision - 1) for i in range(precision - 1)]
+for i in range(precision-1):
+    for j in range(precision-1):
+        electricPotentialLabels[i][j] = label(text = "0", visible = False, box = False)
 
 # method for rescaling
 def setElectricPotentialGrid():
+    # determine thickness
+    thickness = scene.range / 200
     for i in range(precision):
+        # rows
+        potentialGridRows[i].size = vec(2 * scene.width / scene.height * scene.range,
+                                                           thickness, thickness)
         potentialGridRows[i].pos = vec(0, (i - precision / 2) * 2 * scene.range / precision, 0)
-        # potentialGridRows[i].pos += vec(0, scene.range / precision, 0)
-        potentialGridRows[i].visible = True
+        potentialGridRows[i].pos += vec(0, scene.range / precision, 0)
+
+        # cols
+        potentialGridCols[i].size = vec(thickness, 2 * scene.range, thickness)
+        potentialGridCols[i].pos = vec((i - precision / 2) * 2 * 
+                                               scene.width / scene.height * scene.range / precision, 0, 0)
+        potentialGridCols[i].pos += vec(scene.width / scene.height * scene.range / precision, 0, 0)
+
+    # labels
+    for i in range(precision-1):
+        for j in range(precision-1):
+            # assume height > width
+            electricPotentialLabels[i][j].pos = vec(
+                        (i - precision / 2 + 1) * 2 * scene.width / scene.height * scene.range / precision, 
+                        (j - precision / 2 + 1) * 2 * scene.range / precision, 0)
+            electricPotentialLabels[i][j].height = 10
+
+setElectricPotentialGrid()
 
 # ruler
 ruler = curve({"pos": vector(0, 0, 0), "color": color.cyan},
                       {"pos": vector(0, 0, 0), "color": color.cyan})
-rulerLabel = label(text="0", visible = False)
+rulerLabel = label(text="0", visible = False, color = color.magenta)
 
 def createRulerLabel():
     global ruler, rulerLabel
@@ -253,17 +280,12 @@ def calculateForce(q1, q2):
 # Electric Field
 
 def displayElectricFieldAll():
+    # calculate electric field for each arrow
     if (electricFieldMode == 2):
-        size = scene.range / 20
+        size = scene.range / 10
         for i in range(precision):
             for j in range(precision):
-                electricFieldArrowsAll[i][j].visible = True
                 electricFieldArrowsAll[i][j].axis = norm(calculateElectricField(electricFieldArrowsAll[i][j].pos)) * size
-    else:
-        # hide all electric field
-        for i in range(precision):
-            for j in range(precision):
-                electricFieldArrowsAll[i][j].visible = False
     
 def calculateElectricField(pos):
     electricField = vec(0, 0, 0)
@@ -280,6 +302,26 @@ def tooClose(owner, pos, size):
                 if mag(pos - chargedObj.pos) < chargedObj.display.radius + size:
                     return True
     return False
+
+####################################################################################################
+
+# Electric Potential
+
+def displayElectricPotential():
+    # calculate electric potential for each label
+    if (electricPotentialMode):
+        for i in range(precision-1):
+            for j in range(precision-1):
+                electricPotentialLabels[i][j].text = '{:1.2f}'.format(calculateElectricPotential(electricPotentialLabels[i][j].pos))
+
+def calculateElectricPotential(pos):
+    electricPotential = 0
+    for chargedObj in allChargedObjs:
+        r = pos - chargedObj.pos
+        # just check for now before I figure out what to do in this case
+        if (mag(r) != 0):
+            electricPotential +=  K * chargedObj.charge / mag(r)
+    return electricPotential
 
 ####################################################################################################
 
@@ -394,7 +436,7 @@ def on_mouse_move():
 # Intro Screen
 def start():
     scene.userzoom = True
-    # startText.visible = False
+    startText.visible = False
     createButtons()
 
     # bind events
@@ -403,9 +445,9 @@ def start():
     scene.bind('mouseup', on_mouse_up)
     scene.bind('mousemove', on_mouse_move)
 
-# startText = text(pos = vec(0, -0.3, 0), text="JackXiang", align='center', color = color.cyan)
-# startText.height = 1
-# startText.length = 2.5
+startText = text(pos = vec(0, -0.3, 0), text="JackXiang", align='center', color = color.cyan)
+startText.height = 1
+startText.length = 2.5
     
 startButton = button(text = "Start", bind = start)
 
@@ -524,10 +566,21 @@ fixButton = undefined
 electricFieldMode = 0
 
 def changeElectricField():
-    global electricFieldMode, electricFieldButton
+    global electricFieldMode, electricFieldButton, electricFieldArrowsAll
     electricFieldMode += 1
     if electricFieldMode == 3:
         electricFieldMode = 0
+    
+    # set visibility
+    if (electricFieldMode == 2):
+        for i in range(precision):
+            for j in range(precision):
+                electricFieldArrowsAll[i][j].visible = True
+    else:
+        for i in range(precision):
+            for j in range(precision):
+                electricFieldArrowsAll[i][j].visible = False
+
     electricFieldButton.text = "Electric Field: Mode " + str(electricFieldMode)
 
 electricFieldButton = undefined
@@ -538,6 +591,22 @@ electricPotentialMode = False
 def changeElectricPotential():
     global electricPotentialMode, electricPotentialButton
     electricPotentialMode = not electricPotentialMode
+    # set visibility 
+    if (electricPotentialMode):
+        for i in range(precision-1):
+            for j in range(precision-1):
+                electricPotentialLabels[i][j].visible = True
+        for i in range(precision):
+            potentialGridRows[i].visible = True
+            potentialGridCols[i].visible = True
+    else: 
+        for i in range(precision-1):
+            for j in range(precision-1):
+                electricPotentialLabels[i][j].visible = False
+        for i in range(precision):
+            potentialGridRows[i].visible = False
+            potentialGridCols[i].visible = False
+        
     electricPotentialButton.text = "Electric Potential: " + str(electricPotentialMode)
 
 electricPotentialButton = undefined
@@ -552,6 +621,7 @@ def changePlay():
         playButton.text = "Stop"
     else:
         playButton.text = "Play"
+
     #set velocity vector visibilities
     if (playing):
         for co in allChargedObjs:
@@ -562,7 +632,7 @@ def changePlay():
             co.velVec.visible = True
             co.velVec.pos = co.pos
             co.velVec.axis = co.vel * vectorAxisFactor
-            co.createVelText()
+            co.createVelLabel()
 
 playButton = undefined
 
@@ -615,12 +685,15 @@ while True:
     for chargedObj in allChargedObjs:
         chargedObj.displayElectricField()
 
-    # reset electric field arrows for all if user zooms
+    # reset electric field arrows and electric potential grid for all if user zooms
     if (curRange != scene.range):
         curRange = scene.range
         setElectricFieldArrowsAll()
+        setElectricPotentialGrid()
 
     displayElectricFieldAll()
+    displayElectricPotential()
+
     # for charge in allChargedObjs:
     #     charge.checkCollision()
 
