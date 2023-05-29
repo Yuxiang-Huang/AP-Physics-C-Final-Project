@@ -4,7 +4,7 @@ import vpython
 vpython.scene.background = vpython.color.white
 vpython.scene.width = 1000
 vpython.scene.height = 650
-vpython.scene.range = 1
+vpython.scene.range = 10
 vpython.scene.userzoom = False
 vpython.scene.userspin = False
 vpython.scene.fov = vpython.pi / 50
@@ -12,9 +12,10 @@ vpython.scene.align = "left"
 
 #constants
 K = 9E9
-spawnDensity = 2500 
+spawnDensity = 2.5
 steps = 10
 epsilon = 0.01
+rate = 1000
 
 # electric field stuff
 electricFieldOpacitySetter = 1E4
@@ -113,7 +114,7 @@ allChargedObjs = []
 # Classes
 
 # Sphere of Charge
-class ChargedObj:
+class ChargedObj:       
     def __init__(self, mass, charge, spawnPos, spawnVel):
         # physics variables
         self.charge = charge
@@ -456,9 +457,9 @@ def start():
     vpython.scene.bind('mouseup', on_mouse_up)
     vpython.scene.bind('mousemove', on_mouse_move)
 
-startText = vpython.text(pos = vpython.vec(0, -0.3, 0), text="JackXiang", align='center', color = vpython.color.cyan)
-startText.height = 1
-startText.length = 2.5
+startText = vpython.text(pos = vpython.vec(0, -3, 0), text="JackXiang", align='center', color = vpython.color.cyan)
+startText.height = 10
+startText.length = 25
     
 startButton = vpython.button(text = "Start", bind = start)
 
@@ -496,16 +497,16 @@ def createButtons():
 
     vpython.scene.caption = ""
     
-    spawnCharge = 1E-9
+    # spawnCharge = 1E-9
     spawnChargeSlider = vpython.slider(bind = spawnChargeShift, min = -5, max = 5, value = 1, step = 0.1, length = 450)
     vpython.scene.append_to_caption("\n")
     spawnChargeText = vpython.wtext(text = '<center>Charge (nC):'+'{:1.2f}'.format(spawnChargeSlider.value) + "</center>")
 
-    spawnMass = 1
+    spawnMass = 1E-6
     vpython.scene.append_to_caption("\n")
-    massSlider = vpython.slider(bind=massShift, min = 1, max =2, value = spawnMass, step = 0.1, length = 450) 
+    massSlider = vpython.slider(bind=massShift, min = 1, max =2, value = 1, step = 0.1, length = 450) 
     vpython.scene.append_to_caption("\n             ")
-    massText = vpython.wtext(text = 'Mass: '+'{:1.2f}'.format(massSlider.value))
+    massText = vpython.wtext(text = 'Mass: '+'{:1.2f}'.format(massSlider.value) + " * 10^-6 Kg")
 
     playing = False
     vpython.scene.append_to_caption("\n\n   ")
@@ -535,28 +536,23 @@ def createButtons():
     vpython.scene.append_to_caption("   ")
     resetButton = vpython.button(text="Reset", bind=resetScene)    
 
-    # vpython.scene.append_to_caption("\n\n")
-    # rateSlider = vpython.slider(bind=rateShift, min = 100, max =1000, value =1000, step = 10, length = 450) 
-    # vpython.scene.append_to_caption("\n             ")
-    # rateText = vpython.wtext(text = 'Rate: ' + str(rate))
-
 # spawn slider
-spawnCharge = 1E-7
+spawnCharge = 1E-9
 
 def spawnChargeShift():
     global spawnCharge, spawnChargeText
-    spawnCharge = spawnChargeSlider.value * 1E-7
+    spawnCharge = spawnChargeSlider.value * 1E-9
     spawnChargeText.text = 'Charge (nC):'+'{:1.2f}'.format(spawnChargeSlider.value)
     
 spawnChargeSlider = None
 spawnChargeText = None
 
 # mass slider
-spawnMass = 1
+spawnMass = 1E-6
 
 def massShift():
     global spawnMass
-    spawnMass = massSlider.value
+    spawnMass = massSlider.value * 1E-6
     massText.text = 'Mass: '+'{:1.2f}'.format(massSlider.value)
 
 massSlider = None
@@ -707,7 +703,7 @@ def resetScene():
 resetButton = None
 
 # rate slider
-rate = 1
+rate = 1000
 
 def rateShift():
     global rate, rateText
@@ -721,7 +717,7 @@ rateText = None
 curRange = vpython.scene.range
 
 while True:
-    vpython.rate(1000)
+    vpython.rate(rate)
     if (playing):
         for chargedObj in allChargedObjs:
             chargedObj.applyForce()
