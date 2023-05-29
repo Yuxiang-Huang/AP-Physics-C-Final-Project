@@ -5,7 +5,7 @@ vpython.scene.width = 1000
 vpython.scene.height = 650
 vpython.scene.range = 1
 vpython.scene.userzoom = False
-# vpython.scene.userspin = False
+vpython.scene.userspin = False
 vpython.scene.fov = vpython.pi / 50
 vpython.scene.align = "left"
 
@@ -189,10 +189,16 @@ class ChargedObj:
 
     def createVelText(self):
         self.velText.visible = False
-        self.velText = vpython.text(text="{0:.3f}".format(vpython.mag(self.velVec.axis)) + "m/s",
-        align='center', axis = self.velVec.axis, pos = self.velVec.pos + self.velVec.axis, color = vpython.color.cyan,
-        visible = False)
-        createText(self.velText)
+        # self.velText = vpython.text(text="{0:.3f}".format(vpython.mag(self.velVec.axis)) + "m/s",
+        #     align='center', axis = self.velVec.axis, pos = self.velVec.pos + self.velVec.axis, color = vpython.color.cyan,
+        #     visible = False)
+        # if (self.velVec.axis.x < 0):
+        #     # flip if arrow points to the left
+        #     self.velText.axis = - self.velText.axis
+        # createText(self.velText)
+
+        self.velText = vpython.label(text = "{0:.3f}".format(vpython.mag(self.velVec.axis)) + "m/s",
+                                      pos = self.velVec.pos + self.velVec.axis, visible = True)
 
     def checkCollision(self):
         for chargedObj in allChargedObjs:
@@ -324,9 +330,9 @@ def on_mouse_down():
         ruler.modify(1, getMousePos())
         rulerText.visible = False
 
-    # hide velocity text
-    if (chargedObjToDrag != None):
-        chargedObjToDrag.velText.visible = False
+    # # hide velocity text
+    # if (chargedObjToDrag != None):
+    #     chargedObjToDrag.velText.visible = False
 
 def on_mouse_up():
     global chargedObjToDrag, mouseDown
@@ -369,6 +375,7 @@ def on_mouse_move():
                 if (not playing):
                     chargedObjToDrag.velVec.pos = chargedObjToDrag.pos
                     chargedObjToDrag.velVec.axis = getMousePos() - chargedObjToDrag.pos
+                    chargedObjToDrag.createVelText()
                     # too small reset
                     if (vpython.mag(chargedObjToDrag.velVec.axis) < chargedObjToDrag.display.radius):
                         chargedObjToDrag.velVec.axis = vpython.vec(0, 0, 0)
