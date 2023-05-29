@@ -16,6 +16,7 @@ spawnDensity = 2.5E-6
 steps = 10
 epsilon = 0.01
 numOfRate = 1000
+sliderLength = 450
 
 # electric field stuff
 electricFieldOpacitySetter = 1
@@ -27,7 +28,7 @@ forceScaler = 1E6
 
 ####################################################################################################
 
-# Initilization
+# region Initilization
 
 # electric field arrows for mode 2
 electricFieldArrowsAll = [ [0]*precision for i in range(precision)]
@@ -111,9 +112,11 @@ def createRulerLabel():
 # store all spawned charges
 allChargedObjs = []
 
+#endregion
+
 ####################################################################################################
 
-# Classes
+# region Classes
 
 # Sphere of Charge
 class ChargedObj:       
@@ -284,9 +287,11 @@ def calculateForce(q1, q2):
     r12 = q1.pos - q2.pos
     return norm(r12) * K * q1.charge * q2.charge / (mag(r12)**2)
 
+# endregion
+
 ####################################################################################################
 
-# Electric Field
+# region Electric Field and Potential
 
 def displayElectricFieldAll():
     # calculate electric field for each arrow
@@ -317,8 +322,6 @@ def tooClose(owner, pos, size):
                     return True
     return False
 
-####################################################################################################
-
 # Electric Potential
 
 def displayElectricPotential():
@@ -337,7 +340,11 @@ def calculateElectricPotential(pos):
             electricPotential +=  K * chargedObj.charge / mag(r)
     return electricPotential
 
+# endregion
+
 ####################################################################################################
+
+# region User Controls
 
 # Clicks
 chargedObjSelected = undefined
@@ -352,6 +359,7 @@ def clicked():
             # select the charge when the click is on a charged object
             if (chargedObjSelected != undefined):
                 chargedObjSelected.displaySelect()
+                createCaptionSelectCharge()
             # spawn when the click is not on a charged object
             else:
                 makeChargeObj()
@@ -362,6 +370,9 @@ def clicked():
             chargedObjSelected = chargedObjOnMouse()
             if (chargedObjSelected != undefined):
                 chargedObjSelected.displaySelect()
+                createCaptionSelectCharge()
+            else:
+                createCaptionMainScreen()
 
 # helper methods for click
 def makeChargeObj():
@@ -380,7 +391,7 @@ def getMousePos():
 chargedObjToDrag = undefined
 mouseDown = False
 
-def on_mouse_down():
+def onMouseDown():
     global chargedObjToDrag, mouseDown, ruler
     # assign charged object to drag
     chargedObjToDrag = chargedObjOnMouse()
@@ -392,7 +403,7 @@ def on_mouse_down():
         ruler.modify(1, getMousePos())
         rulerLabel.visible = False
 
-def on_mouse_up():
+def onMouseUp():
     global chargedObjToDrag, mouseDown
     # apply force vector if necessary
     if (chargedObjSelected != undefined):
@@ -411,7 +422,7 @@ def on_mouse_up():
     chargedObjToDrag = undefined
     mouseDown = False
 
-def on_mouse_move():
+def onMouseMove():
     global ruler
     # ruler when no object to drag and not playing
     if chargedObjToDrag == undefined and not playing:
@@ -444,38 +455,62 @@ def on_mouse_move():
                         chargedObjToDrag.velLabel.visible = False
                     chargedObjToDrag.vel = chargedObjToDrag.velVec.axis
 
+# endregion
 
 ####################################################################################################
 
-# Intro Screen
-def start():
-    scene.userzoom = True
-    startText.visible = False
-    createButtons()
+# region Intro Screen
 
-    # bind events
-    scene.bind('click', clicked)
-    scene.bind('mousedown', on_mouse_down)
-    scene.bind('mouseup', on_mouse_up)
-    scene.bind('mousemove', on_mouse_move)
-
+# Intro text
 startText = text(pos = vec(0, -3, 0), text="JackXiang", align='center', color = color.cyan)
 startText.height = 10
 startText.length = 25
-    
-startButton = button(text = "Start", bind = start)
 
+# Start Button
+def start():
+    scene.userzoom = True
+    startText.visible = False
+    createCaptionMainScreen()
+
+    # bind events
+    scene.bind('click', clicked)
+    scene.bind('mousedown', onMouseDown)
+    scene.bind('mouseup', onMouseUp)
+    scene.bind('mousemove', onMouseMove)
+
+scene.append_to_caption("   ")
+startButton = button(text = "Start without preset", bind = start)
+scene.append_to_caption("\n\n   ")
+
+# Presets
+button(text = "Dipole", bind = start)
+scene.append_to_caption("   ")
+button(text = "Three-Charge Motion", bind = start)
+scene.append_to_caption("\n\n   ")
+button(text = "Parallel Plates", bind = start)
+scene.append_to_caption("   ")
+button(text = "Faraday Bucket", bind = start)
+
+# Precision Slider
+def precisionShift():
+    global precision
+    precision = precisionSlider.value
+
+scene.append_to_caption("\n\n")
+precisionSlider = slider(min = 5, max = 20, value = 10, bind = precisionShift, length = sliderLength)
+precisionText = wtext(text = "<center>Precision: 10</center>")
+
+# Instruction
 def createInstruction():
     scene.append_to_caption(""" 
-
 Instruction: 
 
 Controls:
     Not Playing:
         Click:
             Charge not selected:
-                Empty Space = Spawn
-                On a charge = Select
+                Empty Space = Spawn Screen
+                On a charge = Select Screen
             Charge selected:
                 Empty Space = Deselect
         Drag:
@@ -489,102 +524,64 @@ Controls:
 
 createInstruction()
 
+# endregion
+
 ####################################################################################################
 
-# Button and Sliders
+# region Main Screen Caption
 
-def createButtons():
-    global spawnChargeSlider, spawnChargeText, massSlider, massText, deleteButton, fixButton, electricFieldButton, electricOpacityButton, electricPotentialButton, playButton, instructionButton, resetButton
-    global spawnCharge, spawnMass, playing, electricFieldMode, electricOpacity, electricPotentialMode
+def createCaptionMainScreen():
+    global playing, playButton, time, timeSlider, timeText
+    global electricFieldMode, electricFieldButton, electricOpacity, electricOpacityButton, electricPotentialMode, electricPotentialButton
+    global instructionButton, resetButton
 
     scene.caption = ""
-    
-    spawnCharge = 1E-9
-    spawnChargeSlider = slider(bind = spawnChargeShift, min = -5, max = 5, value = 1, step = 0.1, length = 450)
-    scene.append_to_caption("\n")
-    spawnChargeText = wtext(text = '<center>Charge:'+'{:1.2f}'.format(spawnChargeSlider.value) + " nC </center>")
-
-    spawnMass = 1E-6
-    scene.append_to_caption("\n")
-    massSlider = slider(bind=massShift, min = 1, max = 2, value = 1, step = 0.1, length = 450) 
-    scene.append_to_caption("\n")
-    massText = wtext(text = '<center>Mass: '+'{:1.2f}'.format(massSlider.value) + " * 10^-6 Kg<center>")
 
     playing = False
-    scene.append_to_caption("\n   ")
+    scene.append_to_caption("   ")
     playButton = button(text="Play", bind=changePlay)
 
-    electricFieldMode = 0
     scene.append_to_caption("   ")
+    button (text = "Collision: True", bind = changePlay)
+
+    scene.append_to_caption("   ")
+    button (text = "Trail: False", bind = changePlay)
+
+    scene.append_to_caption("   ")
+    button (text = "Save", bind = changePlay)
+
+    time = 1
+    scene.append_to_caption("\n\n")
+    timeSlider = slider(bind=timeShift, min = 0.1, max = 5, value = 1, step = 0.1, length = sliderLength) 
+    scene.append_to_caption("\n")
+    timeText = wtext(text = '<center>Time in program for every second in real life: 1s</center>')
+
+    electricFieldMode = 0
+    scene.append_to_caption("\n\n   ")
     electricFieldButton = button(text="Electric Field: Mode 0", bind=changeElectricField)
 
     electricOpacity = False
-    scene.append_to_caption("   ")
+    scene.append_to_caption("\n\n   ")
     electricOpacityButton = button(text = "Electric Field Opacity: Off", bind=chanageElectricOpacityMode)
 
     electricPotentialMode = False
-    scene.append_to_caption("\n   ")
+    scene.append_to_caption("\n\n   ")
     electricPotentialButton = button(text="Electric Potential: False", bind=changeElectricPotential)
 
-    scene.append_to_caption("\n   ")
-    fixButton = button(text="Fix", bind=fixChargedObj)
-
-    scene.append_to_caption("   ")
-    deleteButton = button(text="Delete", bind=deleteChargedObj)
-
-    scene.append_to_caption("\n   ")
+    scene.append_to_caption("\n\n   ")
     instructionButton = button(text="Instructions", bind=displayInstructionPage)
 
     scene.append_to_caption("   ")
-    resetButton = button(text="Reset", bind=resetScene)    
+    resetButton = button(text="Reset", bind=resetScene)  
 
-# spawn slider
-spawnCharge = 1E-9
+# time slider
+time = 1
 
-def spawnChargeShift():
-    global spawnCharge, spawnChargeText
-    spawnCharge = spawnChargeSlider.value * 1E-9
-    spawnChargeText.text = '<center>Charge:'+'{:1.2f}'.format(spawnChargeSlider.value) + " nC </center>"
-    
-spawnChargeSlider = undefined
-spawnChargeText = undefined
+def timeShift():
+    global timeSlider, timeText
 
-# mass slider
-spawnMass = 1E-6
-
-def massShift():
-    global spawnMass, massText
-    spawnMass = massSlider.value * 1E-6
-    massText.text = '<center>Mass: '+'{:1.2f}'.format(massSlider.value) + " * 10^-6 Kg <center>"
-
-massSlider = undefined
-massText = undefined
-
-# delete button
-def deleteChargedObj():
-    global chargedObjSelected
-    if (chargedObjSelected != undefined):
-        # hide everything, remove from list, reset chargedObjSelected
-        chargedObjSelected.display.visible = False
-        chargedObjSelected.velVec.visible = False
-        chargedObjSelected.forceVec.visible = False
-        chargedObjSelected.velLabel.visible = False
-        chargedObjSelected.forceLabel.visible = False
-        chargedObjSelected.hideSelect()
-        for i in range(chargedObjSelected.numOfLine):   
-                for j in range(precision):
-                    chargedObjSelected.electricFieldArrows[i][j].visible = False
-        allChargedObjs.remove(chargedObjSelected)
-        chargedObjSelected = undefined
-
-deleteButton = undefined
-
-# fix button
-def fixChargedObj():
-    if (chargedObjSelected != undefined):
-        chargedObjSelected.fixed = not chargedObjSelected.fixed
-
-fixButton = undefined
+timeSlider = undefined
+timeText = undefined
 
 # electic field mode button
 electricFieldMode = 0
@@ -677,7 +674,8 @@ playButton = undefined
 def displayInstructionPage():
     global startButton
     scene.caption = ""
-    startButton = button(text = "Back", bind = createButtons)
+    startButton = button(text = "Back", bind = createCaptionMainScreen)
+    scene.append_to_caption("\n")
     createInstruction()
 
 instructionButton = undefined
@@ -698,7 +696,7 @@ def resetScene():
     rulerLabel.visible = False
 
     # caption
-    createButtons()
+    createCaptionMainScreen()
 
     # electric field and potential reset
     for i in range(precision):
@@ -715,9 +713,165 @@ def resetScene():
     # reset zoom
     scene.range = 10
 
-resetButton = undefined
+resetButton = undefined 
 
-# program runs
+# endregion
+
+####################################################################################################
+
+# region Spawn Screen Caption
+
+def createCaptionSpawnScreen():
+    global spawnCharge, spawnChargeSlider, spawnChargeText, spawnMass, massSlider, massText, time, timeSlider, timeText
+    global electricFieldButton, electricOpacityButton, electricPotentialButton
+    global chargeMenu, playButton, instructionButton, resetButton
+    global playing, electricFieldMode, electricOpacity, electricPotentialMode
+
+    scene.caption = ""
+
+    scene.append_to_caption("   Spawn Charge Object Menu: ")
+    chargeMenu = menu(text = "Charge Menu", choices = ["Sphere", "Cyllinder", "Plate", "Box"], bind = spawnRadio) 
+    
+    spawnCharge = 1E-9
+    scene.append_to_caption("\n\n")
+    spawnChargeSlider = slider(bind = spawnChargeShift, min = -5, max = 5, value = 1, step = 0.1, length = sliderLength)
+    scene.append_to_caption("\n")
+    spawnChargeText = wtext(text = '<center>Charge: '+'{:1.2f}'.format(spawnChargeSlider.value) + " nC </center>")
+
+    spawnMass = 1E-6
+    scene.append_to_caption("\n")
+    massSlider = slider(bind=massShift, min = 1, max = 2, value = 1, step = 0.1, length = sliderLength) 
+    scene.append_to_caption("\n")
+    massText = wtext(text = '<center>Mass: '+'{:1.2f}'.format(massSlider.value) + " * 10^-6 Kg</center>")
+
+    playing = False
+    scene.append_to_caption("\n   ")
+    playButton = button(text="Play", bind=changePlay)
+
+    scene.append_to_caption("   ")
+    button (text = "Collision: True", bind = changePlay)
+
+    scene.append_to_caption("   ")
+    button (text = "Trail: False", bind = changePlay)
+
+    scene.append_to_caption("   ")
+    button (text = "Save", bind = changePlay)
+
+    time = 1
+    scene.append_to_caption("\n\n")
+    timeSlider = slider(bind=timeShift, min = 0.1, max = 5, value = 1, step = 0.1, length = sliderLength) 
+    scene.append_to_caption("\n")
+    massText = wtext(text = '<center>Time in program for every second in real life: 1s</center>')
+
+    electricFieldMode = 0
+    scene.append_to_caption("\n\n   ")
+    electricFieldButton = button(text="Electric Field: Mode 0", bind=changeElectricField)
+
+    electricOpacity = False
+    scene.append_to_caption("\n\n   ")
+    electricOpacityButton = button(text = "Electric Field Opacity: Off", bind=chanageElectricOpacityMode)
+
+    electricPotentialMode = False
+    scene.append_to_caption("\n\n   ")
+    electricPotentialButton = button(text="Electric Potential: False", bind=changeElectricPotential)
+
+    scene.append_to_caption("\n\n   ")
+    instructionButton = button(text="Instructions", bind=displayInstructionPage)
+
+    scene.append_to_caption("   ")
+    resetButton = button(text="Reset", bind=resetScene)    
+
+# spawn menu
+def spawnRadio():
+    global chargeMenu 
+    chargeMenu.text = "Charge Menu:" 
+
+chargeMenu = undefined
+
+# spawn slider
+spawnCharge = 1E-9
+
+def spawnChargeShift():
+    global spawnCharge, spawnChargeText
+    spawnCharge = spawnChargeSlider.value * 1E-9
+    spawnChargeText.text = '<center>Charge: '+'{:1.2f}'.format(spawnChargeSlider.value) + " nC </center>"
+    
+spawnChargeSlider = undefined
+spawnChargeText = undefined
+
+# mass slider
+spawnMass = 1E-6
+
+def massShift():
+    global spawnMass, massText
+    spawnMass = massSlider.value * 1E-6
+    massText.text = '<center>Mass: '+'{:1.2f}'.format(massSlider.value) + " * 10^-6 Kg <center>"
+
+massSlider = undefined
+massText = undefined
+
+# endregion
+
+####################################################################################################
+
+# region Select Charge Screen Caption
+
+def createCaptionSelectCharge():
+    global deleteButton, fixButton
+
+    scene.caption = ""
+
+    slider(bind = spawnChargeShift, min = -5, max = 5, value = 1, step = 0.1, length = sliderLength)
+    scene.append_to_caption("\n")
+    wtext(text = '<center>Charge: '+'{:1.2f}'.format(1) + " nC </center>")
+
+    scene.append_to_caption("\n")
+    slider(bind=massShift, min = 1, max = 2, value = 1, step = 0.1, length = sliderLength) 
+    scene.append_to_caption("\n")
+    wtext(text = '<center>Mass: '+'{:1.2f}'.format(1) + " * 10^-6 Kg</center>")
+
+    scene.append_to_caption("\n   ")
+    button(text="Show Velocity: True", bind=fixChargedObj)
+
+    scene.append_to_caption("\n\n   ")
+    button(text="Show Force: False", bind=deleteChargedObj)
+
+    scene.append_to_caption("\n\n   ")
+    fixButton = button(text="Fix", bind=fixChargedObj)
+
+    scene.append_to_caption("\n\n   ")
+    deleteButton = button(text="Delete", bind=deleteChargedObj)
+    
+# delete button
+def deleteChargedObj():
+    global chargedObjSelected
+
+    # hide everything, remove from list, reset chargedObjSelected
+    chargedObjSelected.display.visible = False
+    chargedObjSelected.velVec.visible = False
+    chargedObjSelected.forceVec.visible = False
+    chargedObjSelected.velLabel.visible = False
+    chargedObjSelected.forceLabel.visible = False
+    chargedObjSelected.hideSelect()
+    for i in range(chargedObjSelected.numOfLine):   
+            for j in range(precision):
+                chargedObjSelected.electricFieldArrows[i][j].visible = False
+    allChargedObjs.remove(chargedObjSelected)
+    chargedObjSelected = undefined
+
+deleteButton = undefined
+
+# fix button
+def fixChargedObj():
+    chargedObjSelected.fixed = not chargedObjSelected.fixed
+
+fixButton = undefined
+
+# endregion 
+
+####################################################################################################
+
+# region program runs here
 curRange = scene.range
 
 while True:
@@ -748,4 +902,4 @@ while True:
         chargedObjSelected.forceVec.axis = getMousePos() - chargedObjSelected.pos 
         chargedObjSelected.createForceLabel()
 
-        
+# endregion

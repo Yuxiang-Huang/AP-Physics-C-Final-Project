@@ -30,7 +30,7 @@ forceScaler = 1E6
 
 # region Initilization
 
-# electric field arrows for mode 2
+# region electric field for mode 2
 electricFieldArrowsAll = [ [0]*precision for i in range(precision)]
 for i in range(precision):
     for j in range(precision):
@@ -55,7 +55,9 @@ def setElectricFieldArrowsAll():
             
 setElectricFieldArrowsAll()
 
-# electric potential
+# endregion
+
+# region electric potential
 potentialGridRows = []
 potentialGridCols = []
 
@@ -96,7 +98,9 @@ def setElectricPotentialGrid():
 
 setElectricPotentialGrid()
 
-# ruler
+# endregion 
+
+# region ruler
 ruler = vpython.curve({"pos": vpython.vector(0, 0, 0), "color": vpython.color.cyan},
                       {"pos": vpython.vector(0, 0, 0), "color": vpython.color.cyan})
 rulerLabel = vpython.label(text="0", visible = False, color = vpython.color.magenta)
@@ -114,11 +118,23 @@ allChargedObjs = []
 
 #endregion
 
+# region select display
+selectDisplay = vpython.curve()
+for i in range(steps * 8):
+    theta = i * 2 * vpython.pi / steps 
+    radius = vpython.scene.range / 50
+    selectDisplay.append({"pos": vpython.vec(vpython.cos(theta) * radius, vpython.sin(theta) * radius, 0)
+                        , "color": vpython.color.yellow})
+
+#endregion
+
+#endregion
+
 ####################################################################################################
 
 # region Classes
 
-# Sphere of Charge
+# region Sphere of Charge
 class ChargedObj:       
     def __init__(self, mass, charge, spawnPos, spawnVel):
         # physics variables
@@ -289,6 +305,8 @@ def calculateForce(q1, q2):
 
 # endregion
 
+# endregion
+
 ####################################################################################################
 
 # region Electric Field and Potential
@@ -348,36 +366,38 @@ def calculateElectricPotential(pos):
 
 # Clicks
 chargedObjSelected = None
+spawnPos = None
 
 def clicked():
-    global chargedObjSelected
+    global chargedObjSelected, spawnPos
     # only when not playing
     if (not playing):
-        # When no charge is selected, try spawn or select charge 
+        # When no charge is selected
         if (chargedObjSelected == None):
             chargedObjSelected = chargedObjOnMouse()
             # select the charge when the click is on a charged object
             if (chargedObjSelected != None):
                 chargedObjSelected.displaySelect()
                 createCaptionSelectCharge()
-            # spawn when the click is not on a charged object
+            # spawn screen when the click is not on a charged object
             else:
-                makeChargeObj()
+                spawnPos = chargedObjOnMouse()
+                createCaptionSpawnScreen()
+
         else:
-            # deselect if needed
+            # reselect 
             if (chargedObjSelected != None):
                 chargedObjSelected.hideSelect()
             chargedObjSelected = chargedObjOnMouse()
+
+            # select again or deselect
             if (chargedObjSelected != None):
                 chargedObjSelected.displaySelect()
                 createCaptionSelectCharge()
             else:
                 createCaptionMainScreen()
 
-# helper methods for click
-def makeChargeObj():
-    allChargedObjs.append(ChargedObj(spawnMass, spawnCharge, getMousePos(), vpython.vec(0, 0, 0)))
-
+# helper methods
 def chargedObjOnMouse():
     mousePos = getMousePos()
     for chargedObj in allChargedObjs:
@@ -386,6 +406,22 @@ def chargedObjOnMouse():
         
 def getMousePos():
     return vpython.scene.mouse.project(normal=vpython.vec(0, 0, 1))
+
+# def displaySelect(pos):
+#     def createSelectDisplay(self):
+        
+    
+#     def displaySelect(self):
+#         thetaRange = vpython.pi / 4
+#         for x in range(4):
+#             arc = self.selectDisplay[x]
+#             initialTheta = x * vpython.pi / 2 + vpython.pi / 4
+#             for i in range(steps):
+#                 theta = i * thetaRange / steps + initialTheta - thetaRange / 2 
+#                 arc.modify(i, pos = vpython.vec(vpython.cos(theta) * (self.display.radius + epsilon * vpython.scene.range), 
+#                                     vpython.sin(theta) * (self.display.radius + epsilon * vpython.scene.range), 0) + self.pos
+#                                     , color = vpython.color.yellow)
+#             arc.visible = True
 
 # dragging
 chargedObjToDrag = None
@@ -556,17 +592,26 @@ def createCaptionMainScreen():
     vpython.scene.append_to_caption("\n")
     timeText = vpython.wtext(text = '<center>Time in program for every second in real life: 1s</center>')
 
+    vpython.scene.append_to_caption("\n\n   ")
+    vpython.button(text="Show Velocity: True", bind=fixChargedObj)
+
+    vpython.scene.append_to_caption("   ")
+    vpython.button(text="Show Force: False", bind=deleteChargedObj)
+
     electricFieldMode = 0
     vpython.scene.append_to_caption("\n\n   ")
     electricFieldButton = vpython.button(text="Electric Field: Mode 0", bind=changeElectricField)
 
     electricOpacity = False
-    vpython.scene.append_to_caption("\n\n   ")
+    vpython.scene.append_to_caption("   ")
     electricOpacityButton = vpython.button(text = "Electric Field Opacity: Off", bind=chanageElectricOpacityMode)
 
     electricPotentialMode = False
     vpython.scene.append_to_caption("\n\n   ")
     electricPotentialButton = vpython.button(text="Electric Potential: False", bind=changeElectricPotential)
+    
+    vpython.scene.append_to_caption("   ")  
+    vpython.button(text="Grid: Off", bind=changeElectricPotential)
 
     vpython.scene.append_to_caption("\n\n   ")
     instructionButton = vpython.button(text="Instructions", bind=displayInstructionPage)
@@ -722,10 +767,7 @@ resetButton = None
 # region Spawn Screen Caption
 
 def createCaptionSpawnScreen():
-    global spawnCharge, spawnChargeSlider, spawnChargeText, spawnMass, massSlider, massText, time, timeSlider, timeText
-    global electricFieldButton, electricOpacityButton, electricPotentialButton
-    global chargeMenu, playButton, instructionButton, resetButton
-    global playing, electricFieldMode, electricOpacity, electricPotentialMode
+    global spawnCharge, spawnChargeSlider, spawnChargeText, spawnMass, massSlider, massText, chargeMenu, spawnButton, startButton
 
     vpython.scene.caption = ""
 
@@ -744,42 +786,11 @@ def createCaptionSpawnScreen():
     vpython.scene.append_to_caption("\n")
     massText = vpython.wtext(text = '<center>Mass: '+'{:1.2f}'.format(massSlider.value) + " * 10^-6 Kg</center>")
 
-    playing = False
     vpython.scene.append_to_caption("\n   ")
-    playButton = vpython.button(text="Play", bind=changePlay)
+    spawnButton = vpython.button(text = "Spawn", bind = spawnChargedObj)
 
     vpython.scene.append_to_caption("   ")
-    vpython.button (text = "Collision: True", bind = changePlay)
-
-    vpython.scene.append_to_caption("   ")
-    vpython.button (text = "Trail: False", bind = changePlay)
-
-    vpython.scene.append_to_caption("   ")
-    vpython.button (text = "Save", bind = changePlay)
-
-    time = 1
-    vpython.scene.append_to_caption("\n\n")
-    timeSlider = vpython.slider(bind=timeShift, min = 0.1, max = 5, value = 1, step = 0.1, length = sliderLength) 
-    vpython.scene.append_to_caption("\n")
-    massText = vpython.wtext(text = '<center>Time in program for every second in real life: 1s</center>')
-
-    electricFieldMode = 0
-    vpython.scene.append_to_caption("\n\n   ")
-    electricFieldButton = vpython.button(text="Electric Field: Mode 0", bind=changeElectricField)
-
-    electricOpacity = False
-    vpython.scene.append_to_caption("\n\n   ")
-    electricOpacityButton = vpython.button(text = "Electric Field Opacity: Off", bind=chanageElectricOpacityMode)
-
-    electricPotentialMode = False
-    vpython.scene.append_to_caption("\n\n   ")
-    electricPotentialButton = vpython.button(text="Electric Potential: False", bind=changeElectricPotential)
-
-    vpython.scene.append_to_caption("\n\n   ")
-    instructionButton = vpython.button(text="Instructions", bind=displayInstructionPage)
-
-    vpython.scene.append_to_caption("   ")
-    resetButton = vpython.button(text="Reset", bind=resetScene)    
+    startButton = vpython.button(text = "Back", bind = start)
 
 # spawn menu
 def spawnRadio():
@@ -809,6 +820,12 @@ def massShift():
 
 massSlider = None
 massText = None
+
+# spawn button
+def spawnChargedObj():
+    allChargedObjs.append(ChargedObj(spawnMass, spawnCharge, getMousePos(), vpython.vec(0, 0, 0)))
+
+spawnButton = None
 
 # endregion
 
@@ -871,7 +888,7 @@ fixButton = None
 
 ####################################################################################################
 
-# region program runs here
+# region Program Runs Here
 curRange = vpython.scene.range
 
 while True:
