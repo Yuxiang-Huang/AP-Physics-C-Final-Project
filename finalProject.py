@@ -310,7 +310,10 @@ def tooClose(owner, pos, size):
 # Electric Potential
 
 def displayElectricPotential():
-    print("wait")
+    for i in range(precision-1):
+        for j in range(precision-1):
+            electricPotentialLabels[i][j].visible = True
+            electricPotentialLabels[i][j].text = '{:1.2f}'.format(calculateElectricPotential(electricPotentialLabels[i][j].pos))
 
 def calculateElectricPotential(pos):
     electricPotential = 0
