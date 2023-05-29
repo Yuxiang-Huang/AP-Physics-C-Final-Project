@@ -18,8 +18,10 @@ epsilon = 0.01
 numOfRate = 1000
 
 # electric field stuff
-electricFieldOpacitySetter = 1E4
+electricFieldOpacitySetter = 1
 precision = 10
+
+forceScaler = 1E6
 
 # Test place
 
@@ -125,7 +127,7 @@ class ChargedObj:
         self.velLabel = label(text="0", visible = False)
         self.forceLabel = label(text="0", visible = False)
         # Displays
-        spawnRadius = ((spawnMass) / (((4/3)* pi*spawnDensity)))**(1/3)
+        spawnRadius = ((mass) / (((4/3)* pi*spawnDensity)))**(1/3)
 
         # spheres for now
         if (charge > 0):
@@ -180,8 +182,8 @@ class ChargedObj:
             initialTheta = x * pi / 2 + pi / 4
             for i in range(steps):
                 theta = i * thetaRange / steps + initialTheta - thetaRange / 2 
-                arc.append({"pos": vec(cos(theta) * (self.display.radius + epsilon), 
-                                    sin(theta) * (self.display.radius + epsilon), 0) + self.pos
+                arc.append({"pos": vec(cos(theta) * (self.display.radius + epsilon * scene.range), 
+                                    sin(theta) * (self.display.radius + epsilon * scene.range), 0) + self.pos
                                     , "color": color.yellow})
             
             self.selectDisplay.append(arc)
@@ -195,8 +197,8 @@ class ChargedObj:
             initialTheta = x * pi / 2 + pi / 4
             for i in range(steps):
                 theta = i * thetaRange / steps + initialTheta - thetaRange / 2 
-                arc.modify(i, pos = vec(cos(theta) * (self.display.radius + epsilon), 
-                                    sin(theta) * (self.display.radius + epsilon), 0) + self.pos
+                arc.modify(i, pos = vec(cos(theta) * (self.display.radius + epsilon * scene.range), 
+                                    sin(theta) * (self.display.radius + epsilon * scene.range), 0) + self.pos
                                     , color = color.yellow)
             arc.visible = True
     
@@ -229,7 +231,7 @@ class ChargedObj:
         self.velLabel.visible = True
 
     def createForceLabel(self):
-        self.forceLabel.text = "{0:.3f}".format(mag(self.forceVec.axis)) + "N"
+        self.forceLabel.text = "{0:.3f}".format(mag(self.forceVec.axis)) + "μN"
         self.forceLabel.pos = self.forceVec.pos + self.forceVec.axis
         self.forceLabel.visible = True
 
@@ -395,7 +397,7 @@ def on_mouse_up():
     # apply force vector if necessary
     if (chargedObjSelected != undefined):
         if (chargedObjSelected.forceVec.axis != vec(0, 0, 0)):
-            chargedObjSelected.vel += chargedObjSelected.forceVec.axis / chargedObjSelected.mass 
+            chargedObjSelected.vel += chargedObjSelected.forceVec.axis / forceScaler / chargedObjSelected.mass 
             chargedObjSelected.forceVec.axis = vec(0, 0, 0)
             chargedObjSelected.forceLabel.visible = False
 
@@ -518,7 +520,7 @@ def createButtons():
 
     electricOpacity = False
     scene.append_to_caption("   ")
-    electricOpacityButton = button(text = "Electric Field Opacity: Off", bind = chanageElectricOpacityMode)
+    electricOpacityButton = button(text = "Electric Field Opacity: Off", bind=chanageElectricOpacityMode)
 
     electricPotentialMode = False
     scene.append_to_caption("\n   ")
@@ -711,7 +713,7 @@ def resetScene():
         potentialGridCols[i].visible = False
 
     # reset zoom
-    scene.range = 1
+    scene.range = 10
 
 resetButton = undefined
 

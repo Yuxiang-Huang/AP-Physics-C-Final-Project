@@ -18,8 +18,10 @@ epsilon = 0.01
 numOfRate = 1000
 
 # electric field stuff
-electricFieldOpacitySetter = 1E4
+electricFieldOpacitySetter = 1
 precision = 10
+
+forceScaler = 1E6
 
 # Test place
 
@@ -180,8 +182,8 @@ class ChargedObj:
             initialTheta = x * vpython.pi / 2 + vpython.pi / 4
             for i in range(steps):
                 theta = i * thetaRange / steps + initialTheta - thetaRange / 2 
-                arc.append({"pos": vpython.vec(vpython.cos(theta) * (self.display.radius + epsilon), 
-                                    vpython.sin(theta) * (self.display.radius + epsilon), 0) + self.pos
+                arc.append({"pos": vpython.vec(vpython.cos(theta) * (self.display.radius + epsilon * vpython.scene.range), 
+                                    vpython.sin(theta) * (self.display.radius + epsilon * vpython.scene.range), 0) + self.pos
                                     , "color": vpython.color.yellow})
             
             self.selectDisplay.append(arc)
@@ -195,8 +197,8 @@ class ChargedObj:
             initialTheta = x * vpython.pi / 2 + vpython.pi / 4
             for i in range(steps):
                 theta = i * thetaRange / steps + initialTheta - thetaRange / 2 
-                arc.modify(i, pos = vpython.vec(vpython.cos(theta) * (self.display.radius + epsilon), 
-                                    vpython.sin(theta) * (self.display.radius + epsilon), 0) + self.pos
+                arc.modify(i, pos = vpython.vec(vpython.cos(theta) * (self.display.radius + epsilon * vpython.scene.range), 
+                                    vpython.sin(theta) * (self.display.radius + epsilon * vpython.scene.range), 0) + self.pos
                                     , color = vpython.color.yellow)
             arc.visible = True
     
@@ -229,7 +231,7 @@ class ChargedObj:
         self.velLabel.visible = True
 
     def createForceLabel(self):
-        self.forceLabel.text = "{0:.3f}".format(vpython.mag(self.forceVec.axis)) + "N"
+        self.forceLabel.text = "{0:.3f}".format(vpython.mag(self.forceVec.axis)) + "μN"
         self.forceLabel.pos = self.forceVec.pos + self.forceVec.axis
         self.forceLabel.visible = True
 
@@ -395,7 +397,7 @@ def on_mouse_up():
     # apply force vector if necessary
     if (chargedObjSelected != None):
         if (chargedObjSelected.forceVec.axis != vpython.vec(0, 0, 0)):
-            chargedObjSelected.vel += chargedObjSelected.forceVec.axis / chargedObjSelected.mass 
+            chargedObjSelected.vel += chargedObjSelected.forceVec.axis / forceScaler / chargedObjSelected.mass 
             chargedObjSelected.forceVec.axis = vpython.vec(0, 0, 0)
             chargedObjSelected.forceLabel.visible = False
 
