@@ -588,6 +588,7 @@ def onMouseMove():
                         chargedObjToDrag.velVec.axis = vpython.vec(0, 0, 0)
                         chargedObjToDrag.velLabel.visible = False
                     chargedObjToDrag.vel = chargedObjToDrag.velVec.axis
+                    updateSelectScreen()
 
 # endregion
 
@@ -607,6 +608,7 @@ def createCaptionMainScreen():
         playButton = vpython.button(text="Stop", bind = changePlay)
     else:
         playButton = vpython.button(text="Play", bind = changePlay)
+
     vpython.scene.append_to_caption("   ")
     vpython.button (text = "Collision: True", bind = changePlay)
 
@@ -901,10 +903,17 @@ spawnYInputField = None
 # region Select Charge Screen Caption
 
 def createCaptionSelectCharge():
-    global deleteButton, fixButton
+    global playButton, deleteButton, fixButton, selectedChargeVelText, selectedChargeForceText
 
     vpython.scene.caption = ""
 
+    vpython.scene.append_to_caption("   ")
+    if (playing):
+        playButton = vpython.button(text="Stop", bind = changePlay)
+    else:
+        playButton = vpython.button(text="Play", bind = changePlay)
+
+    vpython.scene.append_to_caption("\n\n")
     vpython.slider(bind = spawnChargeShift, min = -5, max = 5, value = 1, step = 0.1, length = sliderLength)
     vpython.scene.append_to_caption("\n")
     vpython.wtext(text = '<center>Charge: '+'{:1.2f}'.format(1) + " nC </center>")
@@ -934,7 +943,7 @@ def createCaptionSelectCharge():
     vpython.winput(bind = spawnYInput) 
 
     vpython.scene.append_to_caption("\n\n   ")
-    vpython.wtext(text="Velocity: <" + 
+    selectedChargeVelText = vpython.wtext(text="Velocity: <" + 
                     '{:1.2f}'.format(chargedObjSelected.vel.x) + ", " + 
                     '{:1.2f}'.format(chargedObjSelected.vel.y) + "> m/s \n   Velocity: "+
                     '{:1.2f}'.format((vpython.mag(chargedObjSelected.vel))) + " m/s @ " +
@@ -942,12 +951,30 @@ def createCaptionSelectCharge():
 
     vpython.scene.append_to_caption("\n\n   ")
     force = chargedObjSelected.calculateNetForce() / 1E-9
-    vpython.wtext(text="Force: <" + 
+    selectedChargeForceText = vpython.wtext(text="Force: <" + 
                     '{:1.5f}'.format(force.x) + ", " + 
                     '{:1.5f}'.format(force.y) + "> nN \n   Force: "+
                     '{:1.5f}'.format((vpython.mag(force))) + " nN @ " +
-                    '{:1.5f}'.format(vpython.atan2(force.y, force.x) / vpython.pi * 180) + " degree")
-    
+                    '{:1.2f}'.format(vpython.atan2(force.y, force.x) / vpython.pi * 180) + " degree")
+
+# stats
+selectedChargeVelText = None
+selectedChargeForceText = None
+
+def updateSelectScreen():
+    global selectedChargeVelText, selectedChargeForceText
+    selectedChargeVelText.text = ("Velocity: <" + 
+                    '{:1.2f}'.format(chargedObjSelected.vel.x) + ", " + 
+                    '{:1.2f}'.format(chargedObjSelected.vel.y) + "> m/s \n   Velocity: "+
+                    '{:1.2f}'.format((vpython.mag(chargedObjSelected.vel))) + " m/s @ " +
+                    '{:1.2f}'.format(vpython.atan2(chargedObjSelected.vel.y, chargedObjSelected.vel.x) / vpython.pi * 180) + " degree")
+    force = chargedObjSelected.calculateNetForce() / 1E-9
+    selectedChargeForceText.text = ("Force: <" + 
+                    '{:1.5f}'.format(force.x) + ", " + 
+                    '{:1.5f}'.format(force.y) + "> nN \n   Force: "+
+                    '{:1.5f}'.format((vpython.mag(force))) + " nN @ " +
+                    '{:1.2f}'.format(vpython.atan2(force.y, force.x) / vpython.pi * 180) + " degree")
+
 # delete button
 def deleteChargedObj():
     global chargedObjSelected
