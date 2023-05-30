@@ -20,83 +20,181 @@ sliderLength = 450
 
 # electric field stuff
 electricFieldOpacitySetter = 1
-precision = 10
-
 forceScaler = 1E6
 
 # Test place
+
+# region Intro Screen
+
+# Intro text
+startText = vpython.text(pos = vpython.vec(0, -3, 0), text="JackXiang", align='center', color = vpython.color.cyan)
+startText.height = 10
+startText.length = 25
+
+# Start Button
+def start():
+    vpython.scene.userzoom = True
+    startText.visible = False
+
+    # initialize the electric field arrows and grids
+    createElectricFieldArrowsAll()
+    setElectricFieldArrowsAll()
+
+    createPotentialGrid()
+    setElectricPotentialGrid()
+    
+    createCaptionMainScreen()
+
+    # bind events
+    vpython.scene.bind('click', clicked)
+    vpython.scene.bind('mousedown', onMouseDown)
+    vpython.scene.bind('mouseup', onMouseUp)
+    vpython.scene.bind('mousemove', onMouseMove)
+
+vpython.scene.append_to_caption("   ")
+startButton = vpython.button(text = "Start without preset", bind = start)
+vpython.scene.append_to_caption("\n\n   ")
+
+# Presets
+vpython.button(text = "Dipole", bind = start)
+vpython.scene.append_to_caption("   ")
+vpython.button(text = "Three-Charge Motion", bind = start)
+vpython.scene.append_to_caption("\n\n   ")
+vpython.button(text = "Parallel Plates", bind = start)
+vpython.scene.append_to_caption("   ")
+vpython.button(text = "Faraday Bucket", bind = start)
+
+# electric field Slider
+electricFieldPrecision = 10
+
+def electricFieldPrecisionShift():
+    global electricFieldPrecision, electricFieldPrecisionText
+    electricFieldPrecision = electricFieldPrecisionSlider.value
+    electricFieldPrecisionText.text = "<center>Electric Field Precision: " + str(electricFieldPrecision) + "</center>"
+
+vpython.scene.append_to_caption("\n\n")
+electricFieldPrecisionSlider = vpython.slider(min = 5, max = 20, value = 10, step = 1, bind = electricFieldPrecisionShift, length = sliderLength)
+electricFieldPrecisionText = vpython.wtext(text = "<center>Electric Field Precision: 10</center>")
+
+# gridPrecision Slider
+gridPrecision = 10
+
+def gridPrecisionShift():
+    global gridPrecision, gridPrecisionText
+    gridPrecision = gridPrecisionSlider.value
+    gridPrecisionText.text = "<center>Grid Precision: " + str(gridPrecision) + "</center>"
+
+vpython.scene.append_to_caption("\n")
+gridPrecisionSlider = vpython.slider(min = 5, max = 20, value = 10, step = 1, bind = gridPrecisionShift, length = sliderLength)
+gridPrecisionText = vpython.wtext(text = "<center>Grid Precision: 10</center>")
+
+# Instruction
+def createInstruction():
+    vpython.scene.append_to_caption(""" 
+Instruction: 
+
+Controls:
+    Not Playing:
+        Click:
+            Charge not selected:
+                Empty Space = Spawn Screen
+                On a charge = Select Screen
+            Charge selected:
+                Empty Space = Deselect
+        Drag:
+            Start on a charge:
+                Charge not selected = Position
+                Charge selected = Velocity
+            Start on empty space = Ruler
+    Playing:
+        Click & Drag = Force vector for selected charge
+""")
+
+createInstruction()
+
+# endregion
+
+####################################################################################################
 
 ####################################################################################################
 
 # region Initilization
 
 # region electric field for mode 2
-electricFieldArrowsAll = [ [0]*precision for i in range(precision)]
-for i in range(precision):
-    for j in range(precision):
-        electricFieldArrowsAll[i][j] = vpython.arrow(axis = vpython.vec(0, 0, 0), color = vpython.color.orange)
+electricFieldArrowsAll = None
+
+# create when click start after know precision
+def createElectricFieldArrowsAll():
+    global electricFieldArrowsAll
+    electricFieldArrowsAll = [ [0]*gridPrecision for i in range(gridPrecision)]
+    for i in range(gridPrecision):
+        for j in range(gridPrecision):
+            electricFieldArrowsAll[i][j] = vpython.arrow(axis = vpython.vec(0, 0, 0), color = vpython.color.orange)
 
 # Math for rescaling
-# unit width = 2 * vpython.scene.width / vpython.scene.height * vpython.scene.range / precision
-# unit height = 2 * vpython.scene.range / precision
+# unit width = 2 * vpython.scene.width / vpython.scene.height * vpython.scene.range / gridPrecision
+# unit height = 2 * vpython.scene.range / gridPrecision
 
 # method for rescaling
 def setElectricFieldArrowsAll():
-    for i in range(precision):
-        for j in range(precision):
+    for i in range(gridPrecision):
+        for j in range(gridPrecision):
             electricFieldArrowsAll[i][j].visible = True
             # assume height > width
             electricFieldArrowsAll[i][j].pos = vpython.vec(
-                        (i - precision / 2) * 2 * vpython.scene.width / vpython.scene.height * vpython.scene.range / precision, 
-                        (j - precision / 2) * 2 * vpython.scene.range / precision, 0)
+                        (i - gridPrecision / 2) * 2 * vpython.scene.width / vpython.scene.height * vpython.scene.range / gridPrecision, 
+                        (j - gridPrecision / 2) * 2 * vpython.scene.range / gridPrecision, 0)
             electricFieldArrowsAll[i][j].pos += vpython.vec(
-                        vpython.scene.width / vpython.scene.height * vpython.scene.range / precision, 
-                        vpython.scene.range / precision, 0)
-            
-setElectricFieldArrowsAll()
+                        vpython.scene.width / vpython.scene.height * vpython.scene.range / gridPrecision, 
+                        vpython.scene.range / gridPrecision, 0)
 
 # endregion
 
 # region electric potential
-potentialGridRows = []
-potentialGridCols = []
+potentialGridRows = None
+potentialGridCols = None
+electricPotentialLabels = None
 
-for i in range(precision):
-    potentialGridRows.append(vpython.box(axis=vpython.vec(1, 0, 0), color = vpython.color.black, visible = False))
-    potentialGridCols.append(vpython.box(axis=vpython.vec(0, 0, 1), color = vpython.color.black, visible = False))
+# create when click start after know precision
+def createPotentialGrid():
+    global potentialGridRows, potentialGridCols, electricPotentialLabels
+    potentialGridRows = []
+    potentialGridCols = []
+    for i in range(gridPrecision):
+        potentialGridRows.append(vpython.box(axis=vpython.vec(1, 0, 0), color = vpython.color.black, visible = False))
+        potentialGridCols.append(vpython.box(axis=vpython.vec(0, 0, 1), color = vpython.color.black, visible = False))
 
-electricPotentialLabels = [ [0]* (precision - 1) for i in range(precision - 1)]
-for i in range(precision-1):
-    for j in range(precision-1):
-        electricPotentialLabels[i][j] = vpython.label(text = "0", visible = False, box = False)
+    electricPotentialLabels = [ [0]* (gridPrecision - 1) for i in range(gridPrecision - 1)]
+    for i in range(gridPrecision-1):
+        for j in range(gridPrecision-1):
+            electricPotentialLabels[i][j] = vpython.label(text = "0", visible = False, box = False)
 
 # method for rescaling
 def setElectricPotentialGrid():
+    global potentialGridRows, potentialGridCols, electricPotentialLabels
     # determine thickness
     thickness = vpython.scene.range / 200
-    for i in range(precision):
+    for i in range(gridPrecision):
         # rows
         potentialGridRows[i].size = vpython.vec(2 * vpython.scene.width / vpython.scene.height * vpython.scene.range,
                                                            thickness, thickness)
-        potentialGridRows[i].pos = vpython.vec(0, (i - precision / 2) * 2 * vpython.scene.range / precision, 0)
-        potentialGridRows[i].pos += vpython.vec(0, vpython.scene.range / precision, 0)
+        potentialGridRows[i].pos = vpython.vec(0, (i - gridPrecision / 2) * 2 * vpython.scene.range / gridPrecision, 0)
+        potentialGridRows[i].pos += vpython.vec(0, vpython.scene.range / gridPrecision, 0)
 
         # cols
         potentialGridCols[i].size = vpython.vec(thickness, 2 * vpython.scene.range, thickness)
-        potentialGridCols[i].pos = vpython.vec((i - precision / 2) * 2 * 
-                                               vpython.scene.width / vpython.scene.height * vpython.scene.range / precision, 0, 0)
-        potentialGridCols[i].pos += vpython.vec(vpython.scene.width / vpython.scene.height * vpython.scene.range / precision, 0, 0)
+        potentialGridCols[i].pos = vpython.vec((i - gridPrecision / 2) * 2 * 
+                                               vpython.scene.width / vpython.scene.height * vpython.scene.range / gridPrecision, 0, 0)
+        potentialGridCols[i].pos += vpython.vec(vpython.scene.width / vpython.scene.height * vpython.scene.range / gridPrecision, 0, 0)
 
     # labels
-    for i in range(precision-1):
-        for j in range(precision-1):
+    for i in range(gridPrecision-1):
+        for j in range(gridPrecision-1):
             # assume height > width
             electricPotentialLabels[i][j].pos = vpython.vec(
-                        (i - precision / 2 + 1) * 2 * vpython.scene.width / vpython.scene.height * vpython.scene.range / precision, 
-                        (j - precision / 2 + 1) * 2 * vpython.scene.range / precision, 0)
+                        (i - gridPrecision / 2 + 1) * 2 * vpython.scene.width / vpython.scene.height * vpython.scene.range / gridPrecision, 
+                        (j - gridPrecision / 2 + 1) * 2 * vpython.scene.range / gridPrecision, 0)
             electricPotentialLabels[i][j].height = 10
-
-setElectricPotentialGrid()
 
 # endregion 
 
@@ -159,9 +257,9 @@ class ChargedObj:
             # possibly sliders for more variables
             self.numOfLine = 8
             # initialize all the arrows
-            self.electricFieldArrows = [ [0]*precision for i in range(self.numOfLine)]
+            self.electricFieldArrows = [ [0]*electricFieldPrecision for i in range(self.numOfLine)]
             for i in range(self.numOfLine):
-                for j in range(precision):
+                for j in range(electricFieldPrecision):
                     self.electricFieldArrows[i][j] = vpython.arrow(axis = vpython.vec(0, 0, 0), color = vpython.color.red)
         elif (charge < 0):
             self.display = vpython.sphere(pos=spawnPos, radius=spawnRadius, texture="https://i.imgur.com/r6loarb.png")
@@ -172,9 +270,9 @@ class ChargedObj:
             # possibly sliders for more variables
             self.numOfLine = 8
             # initialize all the arrows
-            self.electricFieldArrows = [ [0]*precision for i in range(self.numOfLine)]
+            self.electricFieldArrows = [ [0]*electricFieldPrecision for i in range(self.numOfLine)]
             for i in range(self.numOfLine):
-                for j in range(precision):
+                for j in range(electricFieldPrecision):
                     self.electricFieldArrows[i][j] = vpython.arrow(axis = vpython.vec(0, 0, 0), color = vpython.color.blue)
         else:
             self.display = vpython.sphere(pos=spawnPos, radius=spawnRadius, color = vpython.color.black)
@@ -185,9 +283,9 @@ class ChargedObj:
             # possibly sliders for more variables
             self.numOfLine = 8
             # initialize all the arrows
-            self.electricFieldArrows = [ [0]*precision for i in range(self.numOfLine)]
+            self.electricFieldArrows = [ [0]*electricFieldPrecision for i in range(self.numOfLine)]
             for i in range(self.numOfLine):
-                for j in range(precision):
+                for j in range(electricFieldPrecision):
                     self.electricFieldArrows[i][j] = vpython.arrow(axis = vpython.vec(0, 0, 0), color = vpython.color.black)
         
         # select display
@@ -270,7 +368,7 @@ class ChargedObj:
                 theta = i * 2 * vpython.pi / self.numOfLine
                 curPos = self.pos + vpython.vec(vpython.cos(theta), vpython.sin(theta), 0) * self.display.radius
                 #for every step
-                for j in range(precision):
+                for j in range(electricFieldPrecision):
                     # don't display if too close to a charge
                     if (tooClose(self, curPos, size)):
                         self.electricFieldArrows[i][j].visible = False
@@ -295,7 +393,7 @@ class ChargedObj:
         else: 
             # hide all electric field arrows
             for i in range(self.numOfLine):   
-                for j in range(precision):
+                for j in range(electricFieldPrecision):
                     self.electricFieldArrows[i][j].visible = False
 
 # Coulomb's Law for force of q2 on q1
@@ -315,8 +413,8 @@ def displayElectricFieldAll():
     # calculate electric field for each arrow
     if (electricFieldMode == 2):
         size = vpython.scene.range / 10
-        for i in range(precision):
-            for j in range(precision):
+        for i in range(gridPrecision):
+            for j in range(gridPrecision):
                 electricField = calculateElectricField(electricFieldArrowsAll[i][j].pos)
                 electricFieldArrowsAll[i][j].axis = vpython.norm(electricField) * size
                 if (electricOpacity):
@@ -345,8 +443,8 @@ def tooClose(owner, pos, size):
 def displayElectricPotential():
     # calculate electric potential for each label
     if (electricPotentialMode == 1):
-        for i in range(precision-1):
-            for j in range(precision-1):
+        for i in range(gridPrecision-1):
+            for j in range(gridPrecision-1):
                 electricPotentialLabels[i][j].text = '{:1.2f}'.format(calculateElectricPotential(electricPotentialLabels[i][j].pos))
 
 def calculateElectricPotential(pos):
@@ -487,76 +585,6 @@ def onMouseMove():
 
 ####################################################################################################
 
-# region Intro Screen
-
-# Intro text
-startText = vpython.text(pos = vpython.vec(0, -3, 0), text="JackXiang", align='center', color = vpython.color.cyan)
-startText.height = 10
-startText.length = 25
-
-# Start Button
-def start():
-    vpython.scene.userzoom = True
-    startText.visible = False
-    
-    createCaptionMainScreen()
-
-    # bind events
-    vpython.scene.bind('click', clicked)
-    vpython.scene.bind('mousedown', onMouseDown)
-    vpython.scene.bind('mouseup', onMouseUp)
-    vpython.scene.bind('mousemove', onMouseMove)
-
-vpython.scene.append_to_caption("   ")
-startButton = vpython.button(text = "Start without preset", bind = start)
-vpython.scene.append_to_caption("\n\n   ")
-
-# Presets
-vpython.button(text = "Dipole", bind = start)
-vpython.scene.append_to_caption("   ")
-vpython.button(text = "Three-Charge Motion", bind = start)
-vpython.scene.append_to_caption("\n\n   ")
-vpython.button(text = "Parallel Plates", bind = start)
-vpython.scene.append_to_caption("   ")
-vpython.button(text = "Faraday Bucket", bind = start)
-
-# Precision Slider
-def precisionShift():
-    global precision
-    precision = precisionSlider.value
-
-vpython.scene.append_to_caption("\n\n")
-precisionSlider = vpython.slider(min = 5, max = 20, value = 10, bind = precisionShift, length = sliderLength)
-precisionText = vpython.wtext(text = "<center>Precision: 10</center>")
-
-# Instruction
-def createInstruction():
-    vpython.scene.append_to_caption(""" 
-Instruction: 
-
-Controls:
-    Not Playing:
-        Click:
-            Charge not selected:
-                Empty Space = Spawn Screen
-                On a charge = Select Screen
-            Charge selected:
-                Empty Space = Deselect
-        Drag:
-            Start on a charge:
-                Charge not selected = Position
-                Charge selected = Velocity
-            Start on empty space = Ruler
-    Playing:
-        Click & Drag = Force vector for selected charge
-""")
-
-createInstruction()
-
-# endregion
-
-####################################################################################################
-
 # region Main Screen Caption
 
 def createCaptionMainScreen():
@@ -610,6 +638,31 @@ def createCaptionMainScreen():
     vpython.scene.append_to_caption("\n\n\n\n   ")
     instructionButton = vpython.button(text="Instructions", bind = displayInstructionPage)
 
+# playing button
+playing = False
+
+def changePlay():
+    global playing, playButton
+    playing = not playing
+    if playing:
+        playButton.text = "Stop"
+    else:
+        playButton.text = "Play"
+
+    #set velocity vector visibilities
+    if (playing):
+        for co in allChargedObjs:
+            co.velVec.visible = False
+            co.velLabel.visible = False
+    else:
+        for co in allChargedObjs:
+            co.velVec.visible = True
+            co.velVec.pos = co.pos
+            co.velVec.axis = co.vel
+            co.createVelLabel()
+
+playButton = None
+
 # time slider
 time = 1
 
@@ -630,12 +683,12 @@ def changeElectricField():
     
     # set visibility
     if (electricFieldMode == 2):
-        for i in range(precision):
-            for j in range(precision):
+        for i in range(gridPrecision):
+            for j in range(gridPrecision):
                 electricFieldArrowsAll[i][j].visible = True
     else:
-        for i in range(precision):
-            for j in range(precision):
+        for i in range(gridPrecision):
+            for j in range(gridPrecision):
                 electricFieldArrowsAll[i][j].visible = False
 
     electricFieldButton.text = "Electric Field: Mode " + str(electricFieldMode)
@@ -665,12 +718,12 @@ def changeElectricPotential():
         electricPotentialMode = 0
     # set visibility 
     if (electricPotentialMode == 1):
-        for i in range(precision-1):
-            for j in range(precision-1):
+        for i in range(gridPrecision-1):
+            for j in range(gridPrecision-1):
                 electricPotentialLabels[i][j].visible = True
     else: 
-        for i in range(precision-1):
-            for j in range(precision-1):
+        for i in range(gridPrecision-1):
+            for j in range(gridPrecision-1):
                 electricPotentialLabels[i][j].visible = False
         
     electricPotentialButton.text = "Electric Potential Mode " + str(electricPotentialMode)
@@ -684,42 +737,17 @@ def changeGridMode():
     global gridMode
     gridMode = not gridMode
     if (gridMode):
-        for i in range(precision):
+        for i in range(gridPrecision):
             potentialGridRows[i].visible = True
             potentialGridCols[i].visible = True
         gridButton.text = "Grid: On"
     else:
-        for i in range(precision):
+        for i in range(gridPrecision):
             potentialGridRows[i].visible = False
             potentialGridCols[i].visible = False
         gridButton.text = "Grid: Off"
 
 gridButton = None
-
-# playing button
-playing = False
-
-def changePlay():
-    global playing, playButton
-    playing = not playing
-    if playing:
-        playButton.text = "Stop"
-    else:
-        playButton.text = "Play"
-
-    #set velocity vector visibilities
-    if (playing):
-        for co in allChargedObjs:
-            co.velVec.visible = False
-            co.velLabel.visible = False
-    else:
-        for co in allChargedObjs:
-            co.velVec.visible = True
-            co.velVec.pos = co.pos
-            co.velVec.axis = co.vel
-            co.createVelLabel()
-
-playButton = None
 
 # instruction and back buttons
 def displayInstructionPage():
@@ -869,7 +897,7 @@ def deleteChargedObj():
     chargedObjSelected.forceLabel.visible = False
     chargedObjSelected.hideSelect()
     for i in range(chargedObjSelected.numOfLine):   
-            for j in range(precision):
+            for j in range(electricFieldPrecision):
                 chargedObjSelected.electricFieldArrows[i][j].visible = False
     allChargedObjs.remove(chargedObjSelected)
     chargedObjSelected = None
