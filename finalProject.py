@@ -903,7 +903,9 @@ spawnYInputField = None
 # region Select Charge Screen Caption
 
 def createCaptionSelectCharge():
-    global playButton, deleteButton, fixButton, selectedChargeVelText, selectedChargeForceText
+    global playButton, deleteButton, fixButton
+    global selectedChargeVelXYText, selectedChargeVelMAText
+    global selectedChargeForceXYText, selectedChargeForceMAText
 
     vpython.scene.caption = ""
 
@@ -943,35 +945,62 @@ def createCaptionSelectCharge():
     vpython.winput(bind = spawnYInput) 
 
     vpython.scene.append_to_caption("\n\n   ")
-    selectedChargeVelText = vpython.wtext(text="Velocity: <" + 
+    selectedChargeVelXYText = vpython.wtext(text = "Velocity: <" + 
                     '{:1.2f}'.format(chargedObjSelected.vel.x) + ", " + 
-                    '{:1.2f}'.format(chargedObjSelected.vel.y) + "> m/s \n   Velocity: "+
-                    '{:1.2f}'.format((vpython.mag(chargedObjSelected.vel))) + " m/s @ " +
-                    '{:1.2f}'.format(vpython.atan2(chargedObjSelected.vel.y, chargedObjSelected.vel.x) / vpython.pi * 180) + " degree")
+                    '{:1.2f}'.format(chargedObjSelected.vel.y) + "> m/s")
+    vpython.scene.append_to_caption("\n   x:")
+    vpython.winput(bind = spawnXInput)
+    vpython.scene.append_to_caption("\n   y:")
+    vpython.winput(bind = spawnYInput) 
 
     vpython.scene.append_to_caption("\n\n   ")
+    selectedChargeVelMAText = vpython.wtext(text = "Velocity: "+
+                    '{:1.2f}'.format((vpython.mag(chargedObjSelected.vel))) + " m/s @ " +
+                    '{:1.2f}'.format(vpython.atan2(chargedObjSelected.vel.y, chargedObjSelected.vel.x) / vpython.pi * 180) + " degree")
+    vpython.scene.append_to_caption("\n   mag:")
+    vpython.winput(bind = spawnXInput)
+    vpython.scene.append_to_caption("\n   angle:")
+    vpython.winput(bind = spawnYInput) 
+
     force = chargedObjSelected.calculateNetForce() / 1E-9
-    selectedChargeForceText = vpython.wtext(text="Force: <" + 
+    vpython.scene.append_to_caption("\n\n   ")
+    selectedChargeForceXYText = vpython.wtext(text = "Force: <" + 
                     '{:1.5f}'.format(force.x) + ", " + 
-                    '{:1.5f}'.format(force.y) + "> nN \n   Force: "+
+                    '{:1.5f}'.format(force.y) + "> nN") 
+    vpython.scene.append_to_caption("\n   x:")
+    vpython.winput(bind = spawnXInput)
+    vpython.scene.append_to_caption("\n   y:")
+    vpython.winput(bind = spawnYInput) 
+
+    vpython.scene.append_to_caption("\n\n   ")
+    selectedChargeForceMAText= vpython.wtext(text = "Force: "+
                     '{:1.5f}'.format((vpython.mag(force))) + " nN @ " +
                     '{:1.2f}'.format(vpython.atan2(force.y, force.x) / vpython.pi * 180) + " degree")
+    vpython.scene.append_to_caption("\n   mag:")
+    vpython.winput(bind = spawnXInput)
+    vpython.scene.append_to_caption("\n   angle:")
+    vpython.winput(bind = spawnYInput) 
 
 # stats
-selectedChargeVelText = None
-selectedChargeForceText = None
+selectedChargeVelXYText = None
+selectedChargeVelMAText = None
+selectedChargeForceXYText = None
+selectedChargeForceMAText = None
 
 def updateSelectScreen():
-    global selectedChargeVelText, selectedChargeForceText
-    selectedChargeVelText.text = ("Velocity: <" + 
+    global selectedChargeVelXYText, selectedChargeVelMAText, selectedChargeForceXYText, selectedChargeForceMAText
+    selectedChargeVelXYText.text = ("Velocity: <" + 
                     '{:1.2f}'.format(chargedObjSelected.vel.x) + ", " + 
-                    '{:1.2f}'.format(chargedObjSelected.vel.y) + "> m/s \n   Velocity: "+
+                    '{:1.2f}'.format(chargedObjSelected.vel.y) + "> m/s")
+    selectedChargeVelMAText.text = ("Velocity: "+
                     '{:1.2f}'.format((vpython.mag(chargedObjSelected.vel))) + " m/s @ " +
                     '{:1.2f}'.format(vpython.atan2(chargedObjSelected.vel.y, chargedObjSelected.vel.x) / vpython.pi * 180) + " degree")
     force = chargedObjSelected.calculateNetForce() / 1E-9
-    selectedChargeForceText.text = ("Force: <" + 
+
+    selectedChargeForceXYText.text = ("Force: <" + 
                     '{:1.5f}'.format(force.x) + ", " + 
-                    '{:1.5f}'.format(force.y) + "> nN \n   Force: "+
+                    '{:1.5f}'.format(force.y) + "> nN") 
+    selectedChargeForceMAText.text = ("Force: "+
                     '{:1.5f}'.format((vpython.mag(force))) + " nN @ " +
                     '{:1.2f}'.format(vpython.atan2(force.y, force.x) / vpython.pi * 180) + " degree")
 
