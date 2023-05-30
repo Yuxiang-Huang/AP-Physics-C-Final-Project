@@ -323,21 +323,24 @@ class ChargedObj:
         for x in range(4):
             arc = self.selectDisplay[x]
             arc.visible = False
-                    
+
+    def calculateNetForce(self):
+        force = vec(0, 0, 0)
+        for chargedObj in allChargedObjs:
+            if (chargedObj != self):
+                if (mag(self.pos - chargedObj.pos) > 2 * self.display.radius):
+                    force += calculateForce(self, chargedObj)
+        return force
+
     def applyForce(self):
         # calculate force from every other charge
         if (not self.fixed):
-            force = vec(0, 0, 0)
-            for chargedObj in allChargedObjs:
-                if (chargedObj != self):
-                    if (mag(self.pos - chargedObj.pos) > 2 * self.display.radius):
-                        force += calculateForce(self, chargedObj)
             # apply force
-            self.vel += force / self.mass
+            self.vel += self.calculateNetForce() / self.mass
 
     def applyVel(self):
         if (not self.fixed):
-            self.pos += self.vel / numOfRate
+            self.pos += self.vel * time / numOfRate
             self.display.pos = self.pos
             if (self == chargedObjSelected):
                 self.displaySelect()
@@ -476,6 +479,7 @@ def clicked():
             # select the charge when the click is on a charged object
             if (chargedObjSelected != undefined):
                 chargedObjSelected.displaySelect()
+                spawnPosIndicator.visible = False
                 createCaptionSelectCharge()
             # spawn screen when the click is not on a charged object
             else:
@@ -568,6 +572,10 @@ def onMouseMove():
                 # create velocity label only if velocity not too small
                 if (mag(chargedObjToDrag.velVec.axis) > chargedObjToDrag.display.radius):
                     chargedObjToDrag.createVelLabel()
+
+                # could have impacted electric field and potential in the spawn screen
+                if (spawnPos != undefined):
+                    updateSpawnScreen()
         else:
             if chargedObjToDrag != undefined:
                 # velocity vector
@@ -580,6 +588,7 @@ def onMouseMove():
                         chargedObjToDrag.velVec.axis = vec(0, 0, 0)
                         chargedObjToDrag.velLabel.visible = False
                     chargedObjToDrag.vel = chargedObjToDrag.velVec.axis
+                    updateSelectScreen()
 
 # endregion
 
@@ -599,6 +608,7 @@ def createCaptionMainScreen():
         playButton = button(text="Stop", bind = changePlay)
     else:
         playButton = button(text="Play", bind = changePlay)
+
     scene.append_to_caption("   ")
     button (text = "Collision: True", bind = changePlay)
 
@@ -612,12 +622,6 @@ def createCaptionMainScreen():
     timeSlider = slider(bind=timeShift, min = 0.1, max = 5, value = time, step = 0.1, length = sliderLength) 
     scene.append_to_caption("\n")
     timeText = wtext(text = "<center>Time in program for every second in real life:" + str(time) + "s</center>")
-
-    scene.append_to_caption("\n\n   ")
-    button(text="Show Velocity: True", bind = changePlay)
-
-    scene.append_to_caption("   ")
-    button(text="Show Force: False", bind = changePlay)
 
     scene.append_to_caption("\n\n   ")
     electricFieldButton = button(text="Electric Field: Mode " + str(electricFieldMode), bind = changeElectricField)
@@ -667,7 +671,9 @@ playButton = undefined
 time = 1
 
 def timeShift():
-    global timeSlider, timeText
+    global time, timeText
+    time = timeSlider.value
+    timeText.text = "<center>Time in program for every second in real life:" + str(time) + "s</center>"
 
 timeSlider = undefined
 timeText = undefined
@@ -767,7 +773,9 @@ backButton = undefined
 # region Spawn Screen Caption
 
 def createCaptionSpawnScreen():
-    global spawnChargeSlider, spawnChargeText, massSlider, massText, chargeMenu, spawnButton, backButton, spawnXInputField, spawnYInputField
+    global spawnChargeSlider, spawnChargeText, massSlider, massText, chargeMenu, spawnButton, backButton
+    global spawnPosText, spawnXInputField, spawnYInputField
+    global electricFieldText, electricPotentialText
 
     scene.caption = ""
 
@@ -791,17 +799,22 @@ def createCaptionSpawnScreen():
     backButton = button(text = "Back", bind = back)
 
     scene.append_to_caption("\n\n   ")
-    wtext(text = "Position: ")
+    spawnPosText = wtext(text = "Position: <" + '{:1.2f}'.format(spawnPos.x) + ", " + '{:1.2f}'.format(spawnPos.y) + ">")
     scene.append_to_caption("\n   x:")
     spawnXInputField = winput(bind = spawnXInput)
     scene.append_to_caption("\n   y:")
     spawnYInputField = winput(bind = spawnYInput) 
 
     scene.append_to_caption("\n\n   ")
-    wtext(text = "Electric Field: <0, 0> N/C; 0 N/C @ 0 degree")
+    electricField = calculateElectricField(spawnPos)
+    electricFieldText = wtext(text = "Electric Field: <" + 
+                                        '{:1.2f}'.format(electricField.x) + ", " + 
+                                        '{:1.2f}'.format(electricField.y) + "> N/C \n   Electric Field: "+
+                                        '{:1.2f}'.format((mag(electricField))) + " N/C @ " +
+                                        '{:1.2f}'.format(atan2(electricField.y, electricField.x) / pi * 180) + " degree")
 
     scene.append_to_caption("\n\n   ")
-    wtext(text = "Electric Potential: 0 V/C")
+    electricPotentialText = wtext(text = "Electric Potential: " '{:1.2f}'.format(calculateElectricPotential(spawnPos)) + " V")
 
 # spawn menu
 def spawnRadio():
@@ -816,7 +829,7 @@ def spawnChargeShift():
     global spawnCharge, spawnChargeText
     spawnCharge = spawnChargeSlider.value * 1E-9
     spawnChargeText.text = '<center>Charge: '+'{:1.2f}'.format(spawnChargeSlider.value) + " nC </center>"
-    
+
 spawnChargeSlider = undefined
 spawnChargeText = undefined
 
@@ -847,19 +860,40 @@ def back():
 
 backButton = undefined
 
+# stats
+eletricFieldText = undefined
+electricPotentialText = undefined
+
+def updateSpawnScreen():
+    global spawnPosText, electricFieldText, electricPotentialText
+    spawnPosText.text = "Position: <" + '{:1.2f}'.format(spawnPos.x) + ", " + '{:1.2f}'.format(spawnPos.y) + ">"
+    electricField = calculateElectricField(spawnPos)
+    electricFieldText.text = ("Electric Field: <" + 
+                                        '{:1.2f}'.format(electricField.x) + ", " + 
+                                        '{:1.2f}'.format(electricField.y) + "> N/C \n   Electric Field: "+
+                                        '{:1.2f}'.format((mag(electricField))) + " N/C @ " +
+                                        '{:1.2f}'.format(atan2(electricField.y, electricField.x) / pi * 180) + " degree")
+    electricPotentialText.text = "Electric Potential: " '{:1.2f}'.format(calculateElectricPotential(spawnPos)) + " V"
+
 # position inputs
+spawnPosText = undefined
+
 def spawnXInput():
     global spawnPos, spawnPosIndicator
-    spawnPos.x = spawnXInputField.number
-    displaySpawnPosIndicator(spawnPos)
+    if (spawnXInputField.number != undefined):
+        spawnPos.x = spawnXInputField.number
+        updateSpawnScreen()
+    displaySpawnPosIndicator(spawnPos)  
 
 spawnXInputField = undefined
 
 def spawnYInput():
     global spawnPos, spawnPosIndicator
-    spawnPos.y = spawnYInputField.number
+    if (spawnYInputField.number != undefined):
+        spawnPos.y = spawnYInputField.number
+        updateSpawnScreen()
     displaySpawnPosIndicator(spawnPos)
-
+    
 spawnYInputField = undefined
 
 # endregion
@@ -869,10 +903,19 @@ spawnYInputField = undefined
 # region Select Charge Screen Caption
 
 def createCaptionSelectCharge():
-    global deleteButton, fixButton
+    global playButton, deleteButton, fixButton
+    global selectedChargeVelXYText, selectedChargeVelMAText
+    global selectedChargeForceXYText, selectedChargeForceMAText
 
     scene.caption = ""
 
+    scene.append_to_caption("   ")
+    if (playing):
+        playButton = button(text="Stop", bind = changePlay)
+    else:
+        playButton = button(text="Play", bind = changePlay)
+
+    scene.append_to_caption("\n\n")
     slider(bind = spawnChargeShift, min = -5, max = 5, value = 1, step = 0.1, length = sliderLength)
     scene.append_to_caption("\n")
     wtext(text = '<center>Charge: '+'{:1.2f}'.format(1) + " nC </center>")
@@ -895,14 +938,85 @@ def createCaptionSelectCharge():
     deleteButton = button(text="Delete", bind=deleteChargedObj)
 
     scene.append_to_caption("\n\n   ")
-    wtext(text="Position: <0, 0>")
+    wtext(text = "Position: <" + '{:1.2f}'.format(chargedObjSelected.pos.x) + ", " + '{:1.2f}'.format(chargedObjSelected.pos.y) + ">")
+    scene.append_to_caption("\n   x:")
+    winput(bind = spawnXInput)
+    scene.append_to_caption("\n   y:")
+    winput(bind = spawnYInput) 
 
     scene.append_to_caption("\n\n   ")
-    wtext(text="Velocity: <0, 0> m/s; 0 m/s @ 0 degree")
+    selectedChargeVelXYText = wtext(text = "Velocity: <" + 
+                    '{:1.2f}'.format(chargedObjSelected.vel.x) + ", " + 
+                    '{:1.2f}'.format(chargedObjSelected.vel.y) + "> m/s")
+    scene.append_to_caption("\n   x:")
+    winput(bind = spawnXInput)
+    scene.append_to_caption("\n   y:")
+    winput(bind = spawnYInput) 
 
     scene.append_to_caption("\n\n   ")
-    wtext(text="Force: <0, 0> N; 0 N @ 0 degree")
-    
+    selectedChargeVelMAText = wtext(text = "Velocity: "+
+                    '{:1.2f}'.format((mag(chargedObjSelected.vel))) + " m/s @ " +
+                    '{:1.2f}'.format(atan2(chargedObjSelected.vel.y, chargedObjSelected.vel.x) / pi * 180) + " degree")
+    scene.append_to_caption("\n   mag:")
+    winput(bind = spawnXInput)
+    scene.append_to_caption("\n   angle:")
+    winput(bind = spawnYInput) 
+
+    force = chargedObjSelected.calculateNetForce() / 1E-9
+    scene.append_to_caption("\n\n   ")
+    selectedChargeForceXYText = wtext(text = "Force: <" + 
+                    '{:1.5f}'.format(force.x) + ", " + 
+                    '{:1.5f}'.format(force.y) + "> nN") 
+    scene.append_to_caption("\n   x:")
+    winput(bind = spawnXInput)
+    scene.append_to_caption("\n   y:")
+    winput(bind = spawnYInput) 
+
+    scene.append_to_caption("\n\n   ")
+    selectedChargeForceMAText= wtext(text = "Force: "+
+                    '{:1.5f}'.format((mag(force))) + " nN @ " +
+                    '{:1.2f}'.format(atan2(force.y, force.x) / pi * 180) + " degree")
+    scene.append_to_caption("\n   mag:")
+    winput(bind = spawnXInput)
+    scene.append_to_caption("\n   angle:")
+    winput(bind = spawnYInput) 
+
+# stats
+selectedChargeVelXYText = undefined
+selectedChargeVelMAText = undefined
+selectedChargeForceXYText = undefined
+selectedChargeForceMAText = undefined
+
+def updateSelectScreen():
+    global selectedChargeVelXYText, selectedChargeVelMAText, selectedChargeForceXYText, selectedChargeForceMAText
+    selectedChargeVelXYText.text = ("Velocity: <" + 
+                    '{:1.2f}'.format(chargedObjSelected.vel.x) + ", " + 
+                    '{:1.2f}'.format(chargedObjSelected.vel.y) + "> m/s")
+    selectedChargeVelMAText.text = ("Velocity: "+
+                    '{:1.2f}'.format((mag(chargedObjSelected.vel))) + " m/s @ " +
+                    '{:1.2f}'.format(atan2(chargedObjSelected.vel.y, chargedObjSelected.vel.x) / pi * 180) + " degree")
+    force = chargedObjSelected.calculateNetForce() / 1E-9
+
+    selectedChargeForceXYText.text = ("Force: <" + 
+                    '{:1.5f}'.format(force.x) + ", " + 
+                    '{:1.5f}'.format(force.y) + "> nN") 
+    selectedChargeForceMAText.text = ("Force: "+
+                    '{:1.5f}'.format((mag(force))) + " nN @ " +
+                    '{:1.2f}'.format(atan2(force.y, force.x) / pi * 180) + " degree")
+
+# select charge slider
+
+def selectedChargeShift(): 
+    global chargedObjSelected, selectedChargeSliderText, selectedChargeSlider
+    chargedObjSelected.charge = selectedChargeSlider.value * 10E-9      
+    selectedChargeSliderText.text = 'Charge (nC):'+'{:1.2f}'.format(selectedChargeSlider.value)
+    if (chargedObjSelected.charge > 0):
+        chargedObjSelected.display.texture = "https://i.imgur.com/Id1Q11U.png"
+    if (chargedObjSelected.charge < 0): 
+        chargedObjSelected.display.texture = "https://i.imgur.com/r6loarb.png"
+    if (chargedObjSelected.charge == 0): 
+        chargedObjSelected.display.color = color.black 
+
 # delete button
 def deleteChargedObj():
     global chargedObjSelected

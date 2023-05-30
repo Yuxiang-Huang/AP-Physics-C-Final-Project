@@ -261,7 +261,7 @@ class ChargedObj:
             for i in range(self.numOfLine):
                 for j in range(electricFieldPrecision):
                     self.electricFieldArrows[i][j] = vpython.arrow(axis = vpython.vec(0, 0, 0), color = vpython.color.red)
-        elif (charge < 0):
+        else:
             self.display = vpython.sphere(pos=spawnPos, radius=spawnRadius, texture="https://i.imgur.com/r6loarb.png")
             self.velVec = vpython.arrow(axis = vpython.vec(0, 0, 0), color = vpython.color.blue)
             self.forceVec = vpython.arrow(axis = vpython.vec(0, 0, 0), color = vpython.color.blue)
@@ -274,19 +274,19 @@ class ChargedObj:
             for i in range(self.numOfLine):
                 for j in range(electricFieldPrecision):
                     self.electricFieldArrows[i][j] = vpython.arrow(axis = vpython.vec(0, 0, 0), color = vpython.color.blue)
-        else:
-            self.display = vpython.sphere(pos=spawnPos, radius=spawnRadius, color = vpython.color.black)
-            self.velVec = vpython.arrow(axis = vpython.vec(0, 0, 0), color = vpython.color.black)
-            self.forceVec = vpython.arrow(axis = vpython.vec(0, 0, 0), color = vpython.color.black)
+        # else:
+        #     self.display = vpython.sphere(pos=spawnPos, radius=spawnRadius, color = vpython.color.black)
+        #     self.velVec = vpython.arrow(axis = vpython.vec(0, 0, 0), color = vpython.color.black)
+        #     self.forceVec = vpython.arrow(axis = vpython.vec(0, 0, 0), color = vpython.color.black)
 
-            # electric field
-            # possibly sliders for more variables
-            self.numOfLine = 8
-            # initialize all the arrows
-            self.electricFieldArrows = [ [0]*electricFieldPrecision for i in range(self.numOfLine)]
-            for i in range(self.numOfLine):
-                for j in range(electricFieldPrecision):
-                    self.electricFieldArrows[i][j] = vpython.arrow(axis = vpython.vec(0, 0, 0), color = vpython.color.black)
+        #     # electric field
+        #     # possibly sliders for more variables
+        #     self.numOfLine = 8
+        #     # initialize all the arrows
+        #     self.electricFieldArrows = [ [0]*electricFieldPrecision for i in range(self.numOfLine)]
+        #     for i in range(self.numOfLine):
+        #         for j in range(electricFieldPrecision):
+        #             self.electricFieldArrows[i][j] = vpython.arrow(axis = vpython.vec(0, 0, 0), color = vpython.color.black)
         
         # select display
         self.selectDisplay = []
@@ -906,6 +906,7 @@ def createCaptionSelectCharge():
     global playButton, deleteButton, fixButton
     global selectedChargeVelXYText, selectedChargeVelMAText
     global selectedChargeForceXYText, selectedChargeForceMAText
+    global selectedChargeSlider, selectedChargeText
 
     vpython.scene.caption = ""
 
@@ -916,9 +917,9 @@ def createCaptionSelectCharge():
         playButton = vpython.button(text="Play", bind = changePlay)
 
     vpython.scene.append_to_caption("\n\n")
-    vpython.slider(bind = spawnChargeShift, min = -5, max = 5, value = 1, step = 0.1, length = sliderLength)
+    selectedChargeSlider = vpython.slider(bind = selectedChargeShift, min = -5, max = 5, value = 1, step = 0.1, length = sliderLength)
     vpython.scene.append_to_caption("\n")
-    vpython.wtext(text = '<center>Charge: '+'{:1.2f}'.format(1) + " nC </center>")
+    selectedChargeText = vpython.wtext(text = '<center>Charge: '+'{:1.2f}'.format(1) + " nC </center>")
 
     vpython.scene.append_to_caption("\n")
     vpython.slider(bind=massShift, min = 1, max = 2, value = 1, step = 0.1, length = sliderLength) 
@@ -1003,6 +1004,22 @@ def updateSelectScreen():
     selectedChargeForceMAText.text = ("Force: "+
                     '{:1.5f}'.format((vpython.mag(force))) + " nN @ " +
                     '{:1.2f}'.format(vpython.atan2(force.y, force.x) / vpython.pi * 180) + " degree")
+
+# select charge slider
+
+def selectedChargeShift(): 
+    global chargedObjSelected, selectedChargeSlider, selectedChargeText
+    chargedObjSelected.charge = selectedChargeSlider.value * 10E-9      
+    selectedChargeText.text = 'Charge (nC):'+'{:1.2f}'.format(selectedChargeSlider.value)
+    if (chargedObjSelected.charge > 0):
+        chargedObjSelected.display.texture = "https://i.imgur.com/Id1Q11U.png"
+    if (chargedObjSelected.charge < 0): 
+        chargedObjSelected.display.texture = "https://i.imgur.com/r6loarb.png"
+    # if (chargedObjSelected.charge == 0): 
+    #     chargedObjSelected.display.color = vpython.color.black 
+
+selectedChargeSlider = None
+selectedChargeText = None
 
 # delete button
 def deleteChargedObj():
