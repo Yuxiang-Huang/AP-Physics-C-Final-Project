@@ -24,6 +24,8 @@ forceScaler = 1E6
 
 # Test place
 
+####################################################################################################
+
 # region Intro Screen
 
 # Intro text
@@ -113,8 +115,6 @@ Controls:
 createInstruction()
 
 # endregion
-
-####################################################################################################
 
 ####################################################################################################
 
@@ -767,7 +767,7 @@ backButton = None
 # region Spawn Screen Caption
 
 def createCaptionSpawnScreen():
-    global spawnChargeSlider, spawnChargeText, massSlider, massText, chargeMenu, spawnButton, backButton
+    global spawnChargeSlider, spawnChargeText, massSlider, massText, chargeMenu, spawnButton, backButton, spawnXInputField, spawnYInputField
 
     vpython.scene.caption = ""
 
@@ -791,7 +791,11 @@ def createCaptionSpawnScreen():
     backButton = vpython.button(text = "Back", bind = back)
 
     vpython.scene.append_to_caption("\n\n   ")
-    vpython.wtext(text = "Position: <0, 0>")
+    vpython.wtext(text = "Position: ")
+    vpython.scene.append_to_caption("\n   x:")
+    spawnXInputField = vpython.winput(bind = spawnXInput)
+    vpython.scene.append_to_caption("\n   y:")
+    spawnYInputField = vpython.winput(bind = spawnYInput) 
 
     vpython.scene.append_to_caption("\n\n   ")
     vpython.wtext(text = "Electric Field: <0, 0> N/C; 0 N/C @ 0 degree")
@@ -802,11 +806,10 @@ def createCaptionSpawnScreen():
 # spawn menu
 def spawnRadio():
     global chargeMenu 
-    chargeMenu.text = "Charge Menu:" 
 
 chargeMenu = None
 
-# spawn slider
+# spawn charge slider
 spawnCharge = 1E-9
 
 def spawnChargeShift():
@@ -817,7 +820,7 @@ def spawnChargeShift():
 spawnChargeSlider = None
 spawnChargeText = None
 
-# mass slider
+# spawn mass slider
 spawnMass = 1E-6
 
 def massShift():
@@ -843,6 +846,21 @@ def back():
     spawnPos = None
 
 backButton = None
+
+# position inputs
+def spawnXInput():
+    global spawnPos, spawnPosIndicator
+    spawnPos.x = spawnXInputField.number
+    displaySpawnPosIndicator(spawnPos)
+
+spawnXInputField = None
+
+def spawnYInput():
+    global spawnPos, spawnPosIndicator
+    spawnPos.y = spawnYInputField.number
+    displaySpawnPosIndicator(spawnPos)
+
+spawnYInputField = None
 
 # endregion
 
