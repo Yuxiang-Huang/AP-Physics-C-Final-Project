@@ -26,98 +26,6 @@ forceScaler = 1E6
 
 ####################################################################################################
 
-# region Intro Screen
-
-# Intro text
-startText = text(pos = vec(0, -3, 0), text="JackXiang", align='center', color = color.cyan)
-startText.height = 10
-startText.length = 25
-
-# Start Button
-def start():
-    scene.userzoom = True
-    startText.visible = False
-
-    # initialize the electric field arrows and grids
-    createElectricFieldArrowsAll()
-    setElectricFieldArrowsAll()
-
-    createPotentialGrid()
-    setElectricPotentialGrid()
-    
-    createCaptionMainScreen()
-
-    # bind events
-    scene.bind('click', clicked)
-    scene.bind('mousedown', onMouseDown)
-    scene.bind('mouseup', onMouseUp)
-    scene.bind('mousemove', onMouseMove)
-
-scene.append_to_caption("   ")
-startButton = button(text = "Start without preset", bind = start)
-scene.append_to_caption("\n\n   ")
-
-# Presets
-button(text = "Dipole", bind = start)
-scene.append_to_caption("   ")
-button(text = "Three-Charge Motion", bind = start)
-scene.append_to_caption("\n\n   ")
-button(text = "Parallel Plates", bind = start)
-scene.append_to_caption("   ")
-button(text = "Faraday Bucket", bind = start)
-
-# electric field Slider
-electricFieldPrecision = 10
-
-def electricFieldPrecisionShift():
-    global electricFieldPrecision, electricFieldPrecisionText
-    electricFieldPrecision = electricFieldPrecisionSlider.value
-    electricFieldPrecisionText.text = "<center>Electric Field Precision: " + str(electricFieldPrecision) + "</center>"
-
-scene.append_to_caption("\n\n")
-electricFieldPrecisionSlider = slider(min = 5, max = 20, value = 10, step = 1, bind = electricFieldPrecisionShift, length = sliderLength)
-electricFieldPrecisionText = wtext(text = "<center>Electric Field Precision: 10</center>")
-
-# gridPrecision Slider
-gridPrecision = 10
-
-def gridPrecisionShift():
-    global gridPrecision, gridPrecisionText
-    gridPrecision = gridPrecisionSlider.value
-    gridPrecisionText.text = "<center>Grid Precision: " + str(gridPrecision) + "</center>"
-
-scene.append_to_caption("\n")
-gridPrecisionSlider = slider(min = 5, max = 20, value = 10, step = 1, bind = gridPrecisionShift, length = sliderLength)
-gridPrecisionText = wtext(text = "<center>Grid Precision: 10</center>")
-
-# Instruction
-def createInstruction():
-    scene.append_to_caption(""" 
-Instruction: 
-
-Controls:
-    Not Playing:
-        Click:
-            Charge not selected:
-                Empty Space = Spawn Screen
-                On a charge = Select Screen
-            Charge selected:
-                Empty Space = Deselect
-        Drag:
-            Start on a charge:
-                Charge not selected = Position
-                Charge selected = Velocity
-            Start on empty space = Ruler
-    Playing:
-        Click & Drag = Force vector for selected charge
-""")
-
-createInstruction()
-
-# endregion
-
-####################################################################################################
-
 # region Initilization
 
 # region electric field for mode 2
@@ -261,7 +169,7 @@ class ChargedObj:
             for i in range(self.numOfLine):
                 for j in range(electricFieldPrecision):
                     self.electricFieldArrows[i][j] = arrow(axis = vec(0, 0, 0), color = color.red)
-        elif (charge < 0):
+        else:
             self.display = sphere(pos=spawnPos, radius=spawnRadius, texture="https://i.imgur.com/r6loarb.png")
             self.velVec = arrow(axis = vec(0, 0, 0), color = color.blue)
             self.forceVec = arrow(axis = vec(0, 0, 0), color = color.blue)
@@ -274,19 +182,19 @@ class ChargedObj:
             for i in range(self.numOfLine):
                 for j in range(electricFieldPrecision):
                     self.electricFieldArrows[i][j] = arrow(axis = vec(0, 0, 0), color = color.blue)
-        else:
-            self.display = sphere(pos=spawnPos, radius=spawnRadius, color = color.black)
-            self.velVec = arrow(axis = vec(0, 0, 0), color = color.black)
-            self.forceVec = arrow(axis = vec(0, 0, 0), color = color.black)
+        # else:
+        #     self.display = sphere(pos=spawnPos, radius=spawnRadius, color = color.black)
+        #     self.velVec = arrow(axis = vec(0, 0, 0), color = color.black)
+        #     self.forceVec = arrow(axis = vec(0, 0, 0), color = color.black)
 
-            # electric field
-            # possibly sliders for more variables
-            self.numOfLine = 8
-            # initialize all the arrows
-            self.electricFieldArrows = [ [0]*electricFieldPrecision for i in range(self.numOfLine)]
-            for i in range(self.numOfLine):
-                for j in range(electricFieldPrecision):
-                    self.electricFieldArrows[i][j] = arrow(axis = vec(0, 0, 0), color = color.black)
+        #     # electric field
+        #     # possibly sliders for more variables
+        #     self.numOfLine = 8
+        #     # initialize all the arrows
+        #     self.electricFieldArrows = [ [0]*electricFieldPrecision for i in range(self.numOfLine)]
+        #     for i in range(self.numOfLine):
+        #         for j in range(electricFieldPrecision):
+        #             self.electricFieldArrows[i][j] = arrow(axis = vec(0, 0, 0), color = color.black)
         
         # select display
         self.selectDisplay = []
@@ -405,6 +313,106 @@ def calculateForce(q1, q2):
     return norm(r12) * K * q1.charge * q2.charge / (mag(r12)**2)
 
 # endregion
+
+# endregion
+
+####################################################################################################
+
+# region Intro Screen
+
+# Intro text
+startText = text(pos = vec(0, -3, 0), text="JackXiang", align='center', color = color.cyan)
+startText.height = 10
+startText.length = 25
+
+# Start Button
+def start():
+    scene.userzoom = True
+    startText.visible = False
+
+    # initialize the electric field arrows and grids
+    createElectricFieldArrowsAll()
+    setElectricFieldArrowsAll()
+
+    createPotentialGrid()
+    setElectricPotentialGrid()
+    
+    createCaptionMainScreen()
+
+    # bind events
+    scene.bind('click', clicked)
+    scene.bind('mousedown', onMouseDown)
+    scene.bind('mouseup', onMouseUp)
+    scene.bind('mousemove', onMouseMove)
+
+scene.append_to_caption("   ")
+startButton = button(text = "Start without preset", bind = start)
+scene.append_to_caption("\n\n   ")
+
+#Dipole
+def dipolePreset(): 
+    #allChargedObjs.append(ChargedObj(1E-6, 1E-9, vec(1,0,0), vec(0, 0, 0)))
+    allChargedObjs.append(ChargedObj(1E-6, -1E-9, vec(-1, 0, 0) , vec(0, 0, 0)))
+
+# Presets
+button(text = "Dipole", bind = dipolePreset)
+scene.append_to_caption("   ")
+button(text = "Three-Charge Motion", bind = start)
+scene.append_to_caption("\n\n   ")
+button(text = "Parallel Plates", bind = start)
+scene.append_to_caption("   ")
+button(text = "Faraday Bucket", bind = start)
+
+# store all spawned charges
+allChargedObjs = []
+
+# electric field Slider
+electricFieldPrecision = 10
+
+def electricFieldPrecisionShift():
+    global electricFieldPrecision, electricFieldPrecisionText
+    electricFieldPrecision = electricFieldPrecisionSlider.value
+    electricFieldPrecisionText.text = "<center>Electric Field Precision: " + str(electricFieldPrecision) + "</center>"
+
+scene.append_to_caption("\n\n")
+electricFieldPrecisionSlider = slider(min = 5, max = 20, value = 10, step = 1, bind = electricFieldPrecisionShift, length = sliderLength)
+electricFieldPrecisionText = wtext(text = "<center>Electric Field Precision: 10</center>")
+
+# gridPrecision Slider
+gridPrecision = 10
+
+def gridPrecisionShift():
+    global gridPrecision, gridPrecisionText
+    gridPrecision = gridPrecisionSlider.value
+    gridPrecisionText.text = "<center>Grid Precision: " + str(gridPrecision) + "</center>"
+
+scene.append_to_caption("\n")
+gridPrecisionSlider = slider(min = 5, max = 20, value = 10, step = 1, bind = gridPrecisionShift, length = sliderLength)
+gridPrecisionText = wtext(text = "<center>Grid Precision: 10</center>")
+
+# Instruction
+def createInstruction():
+    scene.append_to_caption(""" 
+Instruction: 
+
+Controls:
+    Not Playing:
+        Click:
+            Charge not selected:
+                Empty Space = Spawn Screen
+                On a charge = Select Screen
+            Charge selected:
+                Empty Space = Deselect
+        Drag:
+            Start on a charge:
+                Charge not selected = Position
+                Charge selected = Velocity
+            Start on empty space = Ruler
+    Playing:
+        Click & Drag = Force vector for selected charge
+""")
+
+createInstruction()
 
 # endregion
 
@@ -906,6 +914,7 @@ def createCaptionSelectCharge():
     global playButton, deleteButton, fixButton
     global selectedChargeVelXYText, selectedChargeVelMAText
     global selectedChargeForceXYText, selectedChargeForceMAText
+    global selectedChargeSlider, selectedChargeText
 
     scene.caption = ""
 
@@ -916,9 +925,9 @@ def createCaptionSelectCharge():
         playButton = button(text="Play", bind = changePlay)
 
     scene.append_to_caption("\n\n")
-    slider(bind = spawnChargeShift, min = -5, max = 5, value = 1, step = 0.1, length = sliderLength)
+    selectedChargeSlider = slider(bind = selectedChargeShift, min = -5, max = 5, value = 1, step = 0.1, length = sliderLength)
     scene.append_to_caption("\n")
-    wtext(text = '<center>Charge: '+'{:1.2f}'.format(1) + " nC </center>")
+    selectedChargeText = wtext(text = '<center>Charge: '+'{:1.2f}'.format(1) + " nC </center>")
 
     scene.append_to_caption("\n")
     slider(bind=massShift, min = 1, max = 2, value = 1, step = 0.1, length = sliderLength) 
@@ -1007,15 +1016,18 @@ def updateSelectScreen():
 # select charge slider
 
 def selectedChargeShift(): 
-    global chargedObjSelected, selectedChargeSliderText, selectedChargeSlider
+    global chargedObjSelected, selectedChargeSlider, selectedChargeText
     chargedObjSelected.charge = selectedChargeSlider.value * 10E-9      
-    selectedChargeSliderText.text = 'Charge (nC):'+'{:1.2f}'.format(selectedChargeSlider.value)
+    selectedChargeText.text = 'Charge (nC):'+'{:1.2f}'.format(selectedChargeSlider.value)
     if (chargedObjSelected.charge > 0):
         chargedObjSelected.display.texture = "https://i.imgur.com/Id1Q11U.png"
     if (chargedObjSelected.charge < 0): 
         chargedObjSelected.display.texture = "https://i.imgur.com/r6loarb.png"
-    if (chargedObjSelected.charge == 0): 
-        chargedObjSelected.display.color = color.black 
+    # if (chargedObjSelected.charge == 0): 
+    #     chargedObjSelected.display.color = color.black 
+
+selectedChargeSlider = undefined
+selectedChargeText = undefined
 
 # delete button
 def deleteChargedObj():

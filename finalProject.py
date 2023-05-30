@@ -26,98 +26,6 @@ forceScaler = 1E6
 
 ####################################################################################################
 
-# region Intro Screen
-
-# Intro text
-startText = vpython.text(pos = vpython.vec(0, -3, 0), text="JackXiang", align='center', color = vpython.color.cyan)
-startText.height = 10
-startText.length = 25
-
-# Start Button
-def start():
-    vpython.scene.userzoom = True
-    startText.visible = False
-
-    # initialize the electric field arrows and grids
-    createElectricFieldArrowsAll()
-    setElectricFieldArrowsAll()
-
-    createPotentialGrid()
-    setElectricPotentialGrid()
-    
-    createCaptionMainScreen()
-
-    # bind events
-    vpython.scene.bind('click', clicked)
-    vpython.scene.bind('mousedown', onMouseDown)
-    vpython.scene.bind('mouseup', onMouseUp)
-    vpython.scene.bind('mousemove', onMouseMove)
-
-vpython.scene.append_to_caption("   ")
-startButton = vpython.button(text = "Start without preset", bind = start)
-vpython.scene.append_to_caption("\n\n   ")
-
-# Presets
-vpython.button(text = "Dipole", bind = start)
-vpython.scene.append_to_caption("   ")
-vpython.button(text = "Three-Charge Motion", bind = start)
-vpython.scene.append_to_caption("\n\n   ")
-vpython.button(text = "Parallel Plates", bind = start)
-vpython.scene.append_to_caption("   ")
-vpython.button(text = "Faraday Bucket", bind = start)
-
-# electric field Slider
-electricFieldPrecision = 10
-
-def electricFieldPrecisionShift():
-    global electricFieldPrecision, electricFieldPrecisionText
-    electricFieldPrecision = electricFieldPrecisionSlider.value
-    electricFieldPrecisionText.text = "<center>Electric Field Precision: " + str(electricFieldPrecision) + "</center>"
-
-vpython.scene.append_to_caption("\n\n")
-electricFieldPrecisionSlider = vpython.slider(min = 5, max = 20, value = 10, step = 1, bind = electricFieldPrecisionShift, length = sliderLength)
-electricFieldPrecisionText = vpython.wtext(text = "<center>Electric Field Precision: 10</center>")
-
-# gridPrecision Slider
-gridPrecision = 10
-
-def gridPrecisionShift():
-    global gridPrecision, gridPrecisionText
-    gridPrecision = gridPrecisionSlider.value
-    gridPrecisionText.text = "<center>Grid Precision: " + str(gridPrecision) + "</center>"
-
-vpython.scene.append_to_caption("\n")
-gridPrecisionSlider = vpython.slider(min = 5, max = 20, value = 10, step = 1, bind = gridPrecisionShift, length = sliderLength)
-gridPrecisionText = vpython.wtext(text = "<center>Grid Precision: 10</center>")
-
-# Instruction
-def createInstruction():
-    vpython.scene.append_to_caption(""" 
-Instruction: 
-
-Controls:
-    Not Playing:
-        Click:
-            Charge not selected:
-                Empty Space = Spawn Screen
-                On a charge = Select Screen
-            Charge selected:
-                Empty Space = Deselect
-        Drag:
-            Start on a charge:
-                Charge not selected = Position
-                Charge selected = Velocity
-            Start on empty space = Ruler
-    Playing:
-        Click & Drag = Force vector for selected charge
-""")
-
-createInstruction()
-
-# endregion
-
-####################################################################################################
-
 # region Initilization
 
 # region electric field for mode 2
@@ -405,6 +313,103 @@ def calculateForce(q1, q2):
     return vpython.norm(r12) * K * q1.charge * q2.charge / (vpython.mag(r12)**2)
 
 # endregion
+
+# endregion
+
+####################################################################################################
+
+# region Intro Screen
+
+# Intro text
+startText = vpython.text(pos = vpython.vec(0, -3, 0), text="JackXiang", align='center', color = vpython.color.cyan)
+startText.height = 10
+startText.length = 25
+
+# Start Button
+def start():
+    vpython.scene.userzoom = True
+    startText.visible = False
+
+    # initialize the electric field arrows and grids
+    createElectricFieldArrowsAll()
+    setElectricFieldArrowsAll()
+
+    createPotentialGrid()
+    setElectricPotentialGrid()
+    
+    createCaptionMainScreen()
+
+    # bind events
+    vpython.scene.bind('click', clicked)
+    vpython.scene.bind('mousedown', onMouseDown)
+    vpython.scene.bind('mouseup', onMouseUp)
+    vpython.scene.bind('mousemove', onMouseMove)
+
+vpython.scene.append_to_caption("   ")
+startButton = vpython.button(text = "Start without preset", bind = start)
+vpython.scene.append_to_caption("\n\n   ")
+
+#Dipole
+def dipolePreset(): 
+    #allChargedObjs.append(ChargedObj(1E-6, 1E-9, vec(1,0,0), vec(0, 0, 0)))
+    allChargedObjs.append(ChargedObj(1E-6, -1E-9, vpython.vec(-1, 0, 0) , vpython.vec(0, 0, 0)))
+
+# Presets
+vpython.button(text = "Dipole", bind = dipolePreset)
+vpython.scene.append_to_caption("   ")
+vpython.button(text = "Three-Charge Motion", bind = start)
+vpython.scene.append_to_caption("\n\n   ")
+vpython.button(text = "Parallel Plates", bind = start)
+vpython.scene.append_to_caption("   ")
+vpython.button(text = "Faraday Bucket", bind = start)
+
+# electric field Slider
+electricFieldPrecision = 10
+
+def electricFieldPrecisionShift():
+    global electricFieldPrecision, electricFieldPrecisionText
+    electricFieldPrecision = electricFieldPrecisionSlider.value
+    electricFieldPrecisionText.text = "<center>Electric Field Precision: " + str(electricFieldPrecision) + "</center>"
+
+vpython.scene.append_to_caption("\n\n")
+electricFieldPrecisionSlider = vpython.slider(min = 5, max = 20, value = 10, step = 1, bind = electricFieldPrecisionShift, length = sliderLength)
+electricFieldPrecisionText = vpython.wtext(text = "<center>Electric Field Precision: 10</center>")
+
+# gridPrecision Slider
+gridPrecision = 10
+
+def gridPrecisionShift():
+    global gridPrecision, gridPrecisionText
+    gridPrecision = gridPrecisionSlider.value
+    gridPrecisionText.text = "<center>Grid Precision: " + str(gridPrecision) + "</center>"
+
+vpython.scene.append_to_caption("\n")
+gridPrecisionSlider = vpython.slider(min = 5, max = 20, value = 10, step = 1, bind = gridPrecisionShift, length = sliderLength)
+gridPrecisionText = vpython.wtext(text = "<center>Grid Precision: 10</center>")
+
+# Instruction
+def createInstruction():
+    vpython.scene.append_to_caption(""" 
+Instruction: 
+
+Controls:
+    Not Playing:
+        Click:
+            Charge not selected:
+                Empty Space = Spawn Screen
+                On a charge = Select Screen
+            Charge selected:
+                Empty Space = Deselect
+        Drag:
+            Start on a charge:
+                Charge not selected = Position
+                Charge selected = Velocity
+            Start on empty space = Ruler
+    Playing:
+        Click & Drag = Force vector for selected charge
+""")
+
+createInstruction()
 
 # endregion
 
