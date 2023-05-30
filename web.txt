@@ -318,106 +318,6 @@ def calculateForce(q1, q2):
 
 ####################################################################################################
 
-# region Intro Screen
-
-# Intro text
-startText = text(pos = vec(0, -3, 0), text="JackXiang", align='center', color = color.cyan)
-startText.height = 10
-startText.length = 25
-
-# Start Button
-def start():
-    scene.userzoom = True
-    startText.visible = False
-
-    # initialize the electric field arrows and grids
-    createElectricFieldArrowsAll()
-    setElectricFieldArrowsAll()
-
-    createPotentialGrid()
-    setElectricPotentialGrid()
-    
-    createCaptionMainScreen()
-
-    # bind events
-    scene.bind('click', clicked)
-    scene.bind('mousedown', onMouseDown)
-    scene.bind('mouseup', onMouseUp)
-    scene.bind('mousemove', onMouseMove)
-
-scene.append_to_caption("   ")
-startButton = button(text = "Start without preset", bind = start)
-scene.append_to_caption("\n\n   ")
-
-#Dipole
-def dipolePreset(): 
-    #allChargedObjs.append(ChargedObj(1E-6, 1E-9, vec(1,0,0), vec(0, 0, 0)))
-    allChargedObjs.append(ChargedObj(1E-6, -1E-9, vec(-1, 0, 0) , vec(0, 0, 0)))
-
-# Presets
-button(text = "Dipole", bind = dipolePreset)
-scene.append_to_caption("   ")
-button(text = "Three-Charge Motion", bind = start)
-scene.append_to_caption("\n\n   ")
-button(text = "Parallel Plates", bind = start)
-scene.append_to_caption("   ")
-button(text = "Faraday Bucket", bind = start)
-
-# store all spawned charges
-allChargedObjs = []
-
-# electric field Slider
-electricFieldPrecision = 10
-
-def electricFieldPrecisionShift():
-    global electricFieldPrecision, electricFieldPrecisionText
-    electricFieldPrecision = electricFieldPrecisionSlider.value
-    electricFieldPrecisionText.text = "<center>Electric Field Precision: " + str(electricFieldPrecision) + "</center>"
-
-scene.append_to_caption("\n\n")
-electricFieldPrecisionSlider = slider(min = 5, max = 20, value = 10, step = 1, bind = electricFieldPrecisionShift, length = sliderLength)
-electricFieldPrecisionText = wtext(text = "<center>Electric Field Precision: 10</center>")
-
-# gridPrecision Slider
-gridPrecision = 10
-
-def gridPrecisionShift():
-    global gridPrecision, gridPrecisionText
-    gridPrecision = gridPrecisionSlider.value
-    gridPrecisionText.text = "<center>Grid Precision: " + str(gridPrecision) + "</center>"
-
-scene.append_to_caption("\n")
-gridPrecisionSlider = slider(min = 5, max = 20, value = 10, step = 1, bind = gridPrecisionShift, length = sliderLength)
-gridPrecisionText = wtext(text = "<center>Grid Precision: 10</center>")
-
-# Instruction
-def createInstruction():
-    scene.append_to_caption(""" 
-Instruction: 
-
-Controls:
-    Not Playing:
-        Click:
-            Charge not selected:
-                Empty Space = Spawn Screen
-                On a charge = Select Screen
-            Charge selected:
-                Empty Space = Deselect
-        Drag:
-            Start on a charge:
-                Charge not selected = Position
-                Charge selected = Velocity
-            Start on empty space = Ruler
-    Playing:
-        Click & Drag = Force vector for selected charge
-""")
-
-createInstruction()
-
-# endregion
-
-####################################################################################################
-
 # region Electric Field and Potential
 
 def displayElectricFieldAll():
@@ -597,6 +497,111 @@ def onMouseMove():
                         chargedObjToDrag.velLabel.visible = False
                     chargedObjToDrag.vel = chargedObjToDrag.velVec.axis
                     updateSelectScreen()
+
+# endregion
+
+####################################################################################################
+
+# region Intro Screen
+
+# Intro text
+startText = text(pos = vec(0, -3, 0), text="JackXiang", align='center', color = color.cyan)
+startText.height = 10
+startText.length = 25
+
+# Start Button
+def start():
+    scene.userzoom = True
+    startText.visible = False
+
+    # initialize the electric field arrows and grids
+    createElectricFieldArrowsAll()
+    setElectricFieldArrowsAll()
+
+    createPotentialGrid()
+    setElectricPotentialGrid()
+    
+    createCaptionMainScreen()
+
+    # bind events
+    scene.bind('click', clicked)
+    scene.bind('mousedown', onMouseDown)
+    scene.bind('mouseup', onMouseUp)
+    scene.bind('mousemove', onMouseMove)
+
+scene.append_to_caption("   ")
+startButton = button(text = "Start without preset", bind = start)
+scene.append_to_caption("\n\n   ")
+
+# Dipole
+def dipolePreset():
+    start()
+    allChargedObjs.append(ChargedObj(1E-6, 1E-9, vec(5,0,0), vec(0, 0, 0)))
+    allChargedObjs.append(ChargedObj(1E-6, -1E-9, vec(-5, 0, 0) , vec(0, 0, 0)))
+
+# Three Charge
+def threeChargePreset(): 
+    start()
+    allChargedObjs.append(ChargedObj(1E-6, 1E-9, vec(0,5,0), vec(0, 0, 0)))
+    allChargedObjs.append(ChargedObj(1E-6, 1E-9, vec(4.33,-2.5,0), vec(0, 0, 0)))
+    allChargedObjs.append(ChargedObj(1E-6, -1E-9, vec(-4.33,-2.5,0), vec(0, 0, 0)))
+
+# Presets
+button(text = "Dipole", bind = dipolePreset)
+scene.append_to_caption("   ")
+button(text = "Three-Charge Motion", bind = threeChargePreset)
+scene.append_to_caption("\n\n   ")
+button(text = "Parallel Plates", bind = start)
+scene.append_to_caption("   ")
+button(text = "Faraday Bucket", bind = start)
+
+# electric field Slider
+electricFieldPrecision = 10
+
+def electricFieldPrecisionShift():
+    global electricFieldPrecision, electricFieldPrecisionText
+    electricFieldPrecision = electricFieldPrecisionSlider.value
+    electricFieldPrecisionText.text = "<center>Electric Field Precision: " + str(electricFieldPrecision) + "</center>"
+
+scene.append_to_caption("\n\n")
+electricFieldPrecisionSlider = slider(min = 5, max = 20, value = 10, step = 1, bind = electricFieldPrecisionShift, length = sliderLength)
+electricFieldPrecisionText = wtext(text = "<center>Electric Field Precision: 10</center>")
+
+# gridPrecision Slider
+gridPrecision = 10
+
+def gridPrecisionShift():
+    global gridPrecision, gridPrecisionText
+    gridPrecision = gridPrecisionSlider.value
+    gridPrecisionText.text = "<center>Grid Precision: " + str(gridPrecision) + "</center>"
+
+scene.append_to_caption("\n")
+gridPrecisionSlider = slider(min = 5, max = 20, value = 10, step = 1, bind = gridPrecisionShift, length = sliderLength)
+gridPrecisionText = wtext(text = "<center>Grid Precision: 10</center>")
+
+# Instruction
+def createInstruction():
+    scene.append_to_caption(""" 
+Instruction: 
+
+Controls:
+    Not Playing:
+        Click:
+            Charge not selected:
+                Empty Space = Spawn Screen
+                On a charge = Select Screen
+            Charge selected:
+                Empty Space = Deselect
+        Drag:
+            Start on a charge:
+                Charge not selected = Position
+                Charge selected = Velocity
+            Start on empty space = Ruler
+    Playing:
+        Click & Drag = Force vector for selected charge
+""")
+
+createInstruction()
 
 # endregion
 

@@ -26,7 +26,16 @@ forceScaler = 1E6
 
 ####################################################################################################
 
-# region Initilization
+# region initilization
+
+unitWidth = None
+unitHeight = None
+
+# Math for rescaling (assume height > width)
+def setUnits():
+    global unitWidth, unitHeight
+    unitWidth = 2 * vpython.scene.width / vpython.scene.height * vpython.scene.range / gridPrecision
+    unitHeight = 2 * vpython.scene.range / gridPrecision
 
 # region electric field for mode 2
 electricFieldArrowsAll = None
@@ -34,44 +43,35 @@ electricFieldArrowsAll = None
 # create when click start after know precision
 def createElectricFieldArrowsAll():
     global electricFieldArrowsAll
+    # dimension = precision by precision
     electricFieldArrowsAll = [ [0]*gridPrecision for i in range(gridPrecision)]
     for i in range(gridPrecision):
         for j in range(gridPrecision):
             electricFieldArrowsAll[i][j] = vpython.arrow(axis = vpython.vec(0, 0, 0), color = vpython.color.orange)
-
-# Math for rescaling
-# unit width = 2 * vpython.scene.width / vpython.scene.height * vpython.scene.range / gridPrecision
-# unit height = 2 * vpython.scene.range / gridPrecision
 
 # method for rescaling
 def setElectricFieldArrowsAll():
     for i in range(gridPrecision):
         for j in range(gridPrecision):
             electricFieldArrowsAll[i][j].visible = True
-            # assume height > width
-            electricFieldArrowsAll[i][j].pos = vpython.vec(
-                        (i - gridPrecision / 2) * 2 * vpython.scene.width / vpython.scene.height * vpython.scene.range / gridPrecision, 
-                        (j - gridPrecision / 2) * 2 * vpython.scene.range / gridPrecision, 0)
-            electricFieldArrowsAll[i][j].pos += vpython.vec(
-                        vpython.scene.width / vpython.scene.height * vpython.scene.range / gridPrecision, 
-                        vpython.scene.range / gridPrecision, 0)
+            electricFieldArrowsAll[i][j].pos = vpython.vec((i - gridPrecision / 2 + 1/2) * unitWidth,
+                                                           (j - gridPrecision / 2 + 1/2) * unitHeight, 0)
 
 # endregion
 
 # region electric potential
-potentialGridRows = None
-potentialGridCols = None
+potentialGridRows = []
+potentialGridCols = []
 electricPotentialLabels = None
 
 # create when click start after know precision
 def createPotentialGrid():
     global potentialGridRows, potentialGridCols, electricPotentialLabels
-    potentialGridRows = []
-    potentialGridCols = []
+    # dimension = gridPrecision
     for i in range(gridPrecision):
         potentialGridRows.append(vpython.box(axis=vpython.vec(1, 0, 0), color = vpython.color.black, visible = False))
         potentialGridCols.append(vpython.box(axis=vpython.vec(0, 0, 1), color = vpython.color.black, visible = False))
-
+    # dimension = (gridPrecions - 1) * (gridPrecions - 1)
     electricPotentialLabels = [ [0]* (gridPrecision - 1) for i in range(gridPrecision - 1)]
     for i in range(gridPrecision-1):
         for j in range(gridPrecision-1):
@@ -82,26 +82,21 @@ def setElectricPotentialGrid():
     global potentialGridRows, potentialGridCols, electricPotentialLabels
     # determine thickness
     thickness = vpython.scene.range / 200
+    # grids
     for i in range(gridPrecision):
         # rows
-        potentialGridRows[i].size = vpython.vec(2 * vpython.scene.width / vpython.scene.height * vpython.scene.range,
-                                                           thickness, thickness)
-        potentialGridRows[i].pos = vpython.vec(0, (i - gridPrecision / 2) * 2 * vpython.scene.range / gridPrecision, 0)
-        potentialGridRows[i].pos += vpython.vec(0, vpython.scene.range / gridPrecision, 0)
+        potentialGridRows[i].size = vpython.vec(unitWidth * gridPrecision, thickness, thickness)
+        potentialGridRows[i].pos = vpython.vec(0, (i - gridPrecision / 2 + 1/2) * unitHeight, 0)
 
         # cols
-        potentialGridCols[i].size = vpython.vec(thickness, 2 * vpython.scene.range, thickness)
-        potentialGridCols[i].pos = vpython.vec((i - gridPrecision / 2) * 2 * 
-                                               vpython.scene.width / vpython.scene.height * vpython.scene.range / gridPrecision, 0, 0)
-        potentialGridCols[i].pos += vpython.vec(vpython.scene.width / vpython.scene.height * vpython.scene.range / gridPrecision, 0, 0)
+        potentialGridCols[i].size = vpython.vec(thickness, unitHeight * gridPrecision, thickness)
+        potentialGridCols[i].pos = vpython.vec((i - gridPrecision / 2 + 1/2) * unitWidth, 0, 0)
 
     # labels
     for i in range(gridPrecision-1):
         for j in range(gridPrecision-1):
-            # assume height > width
-            electricPotentialLabels[i][j].pos = vpython.vec(
-                        (i - gridPrecision / 2 + 1) * 2 * vpython.scene.width / vpython.scene.height * vpython.scene.range / gridPrecision, 
-                        (j - gridPrecision / 2 + 1) * 2 * vpython.scene.range / gridPrecision, 0)
+            electricPotentialLabels[i][j].pos = vpython.vec((i - gridPrecision / 2 + 1) * unitWidth, 
+                                                            (j - gridPrecision / 2 + 1) * unitHeight, 0)
             electricPotentialLabels[i][j].height = 10
 
 # endregion 
@@ -318,103 +313,6 @@ def calculateForce(q1, q2):
 
 ####################################################################################################
 
-# region Intro Screen
-
-# Intro text
-startText = vpython.text(pos = vpython.vec(0, -3, 0), text="JackXiang", align='center', color = vpython.color.cyan)
-startText.height = 10
-startText.length = 25
-
-# Start Button
-def start():
-    vpython.scene.userzoom = True
-    startText.visible = False
-
-    # initialize the electric field arrows and grids
-    createElectricFieldArrowsAll()
-    setElectricFieldArrowsAll()
-
-    createPotentialGrid()
-    setElectricPotentialGrid()
-    
-    createCaptionMainScreen()
-
-    # bind events
-    vpython.scene.bind('click', clicked)
-    vpython.scene.bind('mousedown', onMouseDown)
-    vpython.scene.bind('mouseup', onMouseUp)
-    vpython.scene.bind('mousemove', onMouseMove)
-
-vpython.scene.append_to_caption("   ")
-startButton = vpython.button(text = "Start without preset", bind = start)
-vpython.scene.append_to_caption("\n\n   ")
-
-#Dipole
-def dipolePreset(): 
-    #allChargedObjs.append(ChargedObj(1E-6, 1E-9, vec(1,0,0), vec(0, 0, 0)))
-    allChargedObjs.append(ChargedObj(1E-6, -1E-9, vpython.vec(-1, 0, 0) , vpython.vec(0, 0, 0)))
-
-# Presets
-vpython.button(text = "Dipole", bind = dipolePreset)
-vpython.scene.append_to_caption("   ")
-vpython.button(text = "Three-Charge Motion", bind = start)
-vpython.scene.append_to_caption("\n\n   ")
-vpython.button(text = "Parallel Plates", bind = start)
-vpython.scene.append_to_caption("   ")
-vpython.button(text = "Faraday Bucket", bind = start)
-
-# electric field Slider
-electricFieldPrecision = 10
-
-def electricFieldPrecisionShift():
-    global electricFieldPrecision, electricFieldPrecisionText
-    electricFieldPrecision = electricFieldPrecisionSlider.value
-    electricFieldPrecisionText.text = "<center>Electric Field Precision: " + str(electricFieldPrecision) + "</center>"
-
-vpython.scene.append_to_caption("\n\n")
-electricFieldPrecisionSlider = vpython.slider(min = 5, max = 20, value = 10, step = 1, bind = electricFieldPrecisionShift, length = sliderLength)
-electricFieldPrecisionText = vpython.wtext(text = "<center>Electric Field Precision: 10</center>")
-
-# gridPrecision Slider
-gridPrecision = 10
-
-def gridPrecisionShift():
-    global gridPrecision, gridPrecisionText
-    gridPrecision = gridPrecisionSlider.value
-    gridPrecisionText.text = "<center>Grid Precision: " + str(gridPrecision) + "</center>"
-
-vpython.scene.append_to_caption("\n")
-gridPrecisionSlider = vpython.slider(min = 5, max = 20, value = 10, step = 1, bind = gridPrecisionShift, length = sliderLength)
-gridPrecisionText = vpython.wtext(text = "<center>Grid Precision: 10</center>")
-
-# Instruction
-def createInstruction():
-    vpython.scene.append_to_caption(""" 
-Instruction: 
-
-Controls:
-    Not Playing:
-        Click:
-            Charge not selected:
-                Empty Space = Spawn Screen
-                On a charge = Select Screen
-            Charge selected:
-                Empty Space = Deselect
-        Drag:
-            Start on a charge:
-                Charge not selected = Position
-                Charge selected = Velocity
-            Start on empty space = Ruler
-    Playing:
-        Click & Drag = Force vector for selected charge
-""")
-
-createInstruction()
-
-# endregion
-
-####################################################################################################
-
 # region Electric Field and Potential
 
 def displayElectricFieldAll():
@@ -594,6 +492,113 @@ def onMouseMove():
                         chargedObjToDrag.velLabel.visible = False
                     chargedObjToDrag.vel = chargedObjToDrag.velVec.axis
                     updateSelectScreen()
+
+# endregion
+
+####################################################################################################
+
+# region Intro Screen
+
+# Intro text
+startText = vpython.text(pos = vpython.vec(0, -3, 0), text="JackXiang", align='center', color = vpython.color.cyan)
+startText.height = 10
+startText.length = 25
+
+# Start Button
+def start():
+    vpython.scene.userzoom = True
+    startText.visible = False
+
+    # initialize the electric field arrows and grids
+    setUnits()
+
+    createElectricFieldArrowsAll()
+    setElectricFieldArrowsAll()
+
+    createPotentialGrid()
+    setElectricPotentialGrid()
+    
+    createCaptionMainScreen()
+
+    # bind events
+    vpython.scene.bind('click', clicked)
+    vpython.scene.bind('mousedown', onMouseDown)
+    vpython.scene.bind('mouseup', onMouseUp)
+    vpython.scene.bind('mousemove', onMouseMove)
+
+vpython.scene.append_to_caption("   ")
+startButton = vpython.button(text = "Start without preset", bind = start)
+vpython.scene.append_to_caption("\n\n   ")
+
+# Dipole
+def dipolePreset():
+    start()
+    allChargedObjs.append(ChargedObj(1E-6, 1E-9, vpython.vec(5,0,0), vpython.vec(0, 0, 0)))
+    allChargedObjs.append(ChargedObj(1E-6, -1E-9, vpython.vec(-5, 0, 0) , vpython.vec(0, 0, 0)))
+
+# Three Charge
+def threeChargePreset(): 
+    start()
+    allChargedObjs.append(ChargedObj(1E-6, 1E-9, vpython.vec(0,5,0), vpython.vec(0, 0, 0)))
+    allChargedObjs.append(ChargedObj(1E-6, 1E-9, vpython.vec(4.33,-2.5,0), vpython.vec(0, 0, 0)))
+    allChargedObjs.append(ChargedObj(1E-6, -1E-9, vpython.vec(-4.33,-2.5,0), vpython.vec(0, 0, 0)))
+
+# Presets
+vpython.button(text = "Dipole", bind = dipolePreset)
+vpython.scene.append_to_caption("   ")
+vpython.button(text = "Three-Charge Motion", bind = threeChargePreset)
+vpython.scene.append_to_caption("\n\n   ")
+vpython.button(text = "Parallel Plates", bind = start)
+vpython.scene.append_to_caption("   ")
+vpython.button(text = "Faraday Bucket", bind = start)
+
+# electric field Slider
+electricFieldPrecision = 10
+
+def electricFieldPrecisionShift():
+    global electricFieldPrecision, electricFieldPrecisionText
+    electricFieldPrecision = electricFieldPrecisionSlider.value
+    electricFieldPrecisionText.text = "<center>Electric Field Precision: " + str(electricFieldPrecision) + "</center>"
+
+vpython.scene.append_to_caption("\n\n")
+electricFieldPrecisionSlider = vpython.slider(min = 5, max = 20, value = 10, step = 1, bind = electricFieldPrecisionShift, length = sliderLength)
+electricFieldPrecisionText = vpython.wtext(text = "<center>Electric Field Precision: 10</center>")
+
+# gridPrecision Slider
+gridPrecision = 10
+
+def gridPrecisionShift():
+    global gridPrecision, gridPrecisionText
+    gridPrecision = gridPrecisionSlider.value
+    gridPrecisionText.text = "<center>Grid Precision: " + str(gridPrecision) + "</center>"
+
+vpython.scene.append_to_caption("\n")
+gridPrecisionSlider = vpython.slider(min = 5, max = 20, value = 10, step = 1, bind = gridPrecisionShift, length = sliderLength)
+gridPrecisionText = vpython.wtext(text = "<center>Grid Precision: 10</center>")
+
+# Instruction
+def createInstruction():
+    vpython.scene.append_to_caption(""" 
+Instruction: 
+
+Controls:
+    Not Playing:
+        Click:
+            Charge not selected:
+                Empty Space = Spawn Screen
+                On a charge = Select Screen
+            Charge selected:
+                Empty Space = Deselect
+        Drag:
+            Start on a charge:
+                Charge not selected = Position
+                Charge selected = Velocity
+            Start on empty space = Ruler
+    Playing:
+        Click & Drag = Force vector for selected charge
+""")
+
+createInstruction()
 
 # endregion
 
@@ -1072,6 +1077,7 @@ while True:
     # reset electric field arrows and electric potential grid for all if user zooms
     if (curRange != vpython.scene.range):
         curRange = vpython.scene.range
+        setUnits()
         setElectricFieldArrowsAll()
         setElectricPotentialGrid()
 
