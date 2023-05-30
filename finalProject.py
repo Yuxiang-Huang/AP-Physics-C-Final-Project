@@ -323,21 +323,24 @@ class ChargedObj:
         for x in range(4):
             arc = self.selectDisplay[x]
             arc.visible = False
-                    
+
+    def calculateNetForce(self):
+        force = vpython.vec(0, 0, 0)
+        for chargedObj in allChargedObjs:
+            if (chargedObj != self):
+                if (vpython.mag(self.pos - chargedObj.pos) > 2 * self.display.radius):
+                    force += calculateForce(self, chargedObj)
+        return force
+
     def applyForce(self):
         # calculate force from every other charge
         if (not self.fixed):
-            force = vpython.vec(0, 0, 0)
-            for chargedObj in allChargedObjs:
-                if (chargedObj != self):
-                    if (vpython.mag(self.pos - chargedObj.pos) > 2 * self.display.radius):
-                        force += calculateForce(self, chargedObj)
             # apply force
-            self.vel += force / self.mass
+            self.vel += self.calculateNetForce() / self.mass
 
     def applyVel(self):
         if (not self.fixed):
-            self.pos += self.vel / numOfRate
+            self.pos += self.vel * time / numOfRate
             self.display.pos = self.pos
             if (self == chargedObjSelected):
                 self.displaySelect()
@@ -569,6 +572,10 @@ def onMouseMove():
                 # create velocity label only if velocity not too small
                 if (vpython.mag(chargedObjToDrag.velVec.axis) > chargedObjToDrag.display.radius):
                     chargedObjToDrag.createVelLabel()
+
+                # could have impacted electric field and potential in the spawn screen
+                if (spawnPos != None):
+                    updateSpawnScreen()
         else:
             if chargedObjToDrag != None:
                 # velocity vector
@@ -613,12 +620,6 @@ def createCaptionMainScreen():
     timeSlider = vpython.slider(bind=timeShift, min = 0.1, max = 5, value = time, step = 0.1, length = sliderLength) 
     vpython.scene.append_to_caption("\n")
     timeText = vpython.wtext(text = "<center>Time in program for every second in real life:" + str(time) + "s</center>")
-
-    vpython.scene.append_to_caption("\n\n   ")
-    vpython.button(text="Show Velocity: True", bind = changePlay)
-
-    vpython.scene.append_to_caption("   ")
-    vpython.button(text="Show Force: False", bind = changePlay)
 
     vpython.scene.append_to_caption("\n\n   ")
     electricFieldButton = vpython.button(text="Electric Field: Mode " + str(electricFieldMode), bind = changeElectricField)
@@ -668,7 +669,9 @@ playButton = None
 time = 1
 
 def timeShift():
-    global timeSlider, timeText
+    global time, timeText
+    time = timeSlider.value
+    timeText.text = "<center>Time in program for every second in real life:" + str(time) + "s</center>"
 
 timeSlider = None
 timeText = None
@@ -809,7 +812,7 @@ def createCaptionSpawnScreen():
                                         '{:1.2f}'.format(vpython.atan2(electricField.y, electricField.x) / vpython.pi * 180) + " degree")
 
     vpython.scene.append_to_caption("\n\n   ")
-    electricPotentialText = vpython.wtext(text = "Electric Potential: " '{:1.2f}'.format(calculateElectricPotential(spawnPos)) + " V/C")
+    electricPotentialText = vpython.wtext(text = "Electric Potential: " '{:1.2f}'.format(calculateElectricPotential(spawnPos)) + " V")
 
 # spawn menu
 def spawnRadio():
@@ -868,7 +871,7 @@ def updateSpawnScreen():
                                         '{:1.2f}'.format(electricField.y) + "> N/C \n   Electric Field: "+
                                         '{:1.2f}'.format((vpython.mag(electricField))) + " N/C @ " +
                                         '{:1.2f}'.format(vpython.atan2(electricField.y, electricField.x) / vpython.pi * 180) + " degree")
-    electricPotentialText.text = "Electric Potential: " '{:1.2f}'.format(calculateElectricPotential(spawnPos)) + " V/C"
+    electricPotentialText.text = "Electric Potential: " '{:1.2f}'.format(calculateElectricPotential(spawnPos)) + " V"
 
 # position inputs
 spawnPosText = None
@@ -924,13 +927,26 @@ def createCaptionSelectCharge():
     deleteButton = vpython.button(text="Delete", bind=deleteChargedObj)
 
     vpython.scene.append_to_caption("\n\n   ")
-    vpython.wtext(text="Position: <0, 0>")
+    vpython.wtext(text = "Position: <" + '{:1.2f}'.format(chargedObjSelected.pos.x) + ", " + '{:1.2f}'.format(chargedObjSelected.pos.y) + ">")
+    vpython.scene.append_to_caption("\n   x:")
+    vpython.winput(bind = spawnXInput)
+    vpython.scene.append_to_caption("\n   y:")
+    vpython.winput(bind = spawnYInput) 
 
     vpython.scene.append_to_caption("\n\n   ")
-    vpython.wtext(text="Velocity: <0, 0> m/s; 0 m/s @ 0 degree")
+    vpython.wtext(text="Velocity: <" + 
+                    '{:1.2f}'.format(chargedObjSelected.vel.x) + ", " + 
+                    '{:1.2f}'.format(chargedObjSelected.vel.y) + "> m/s \n   Velocity: "+
+                    '{:1.2f}'.format((vpython.mag(chargedObjSelected.vel))) + " m/s @ " +
+                    '{:1.2f}'.format(vpython.atan2(chargedObjSelected.vel.y, chargedObjSelected.vel.x) / vpython.pi * 180) + " degree")
 
     vpython.scene.append_to_caption("\n\n   ")
-    vpython.wtext(text="Force: <0, 0> N; 0 N @ 0 degree")
+    force = chargedObjSelected.calculateNetForce() / 1E-9
+    vpython.wtext(text="Force: <" + 
+                    '{:1.5f}'.format(force.x) + ", " + 
+                    '{:1.5f}'.format(force.y) + "> nN \n   Force: "+
+                    '{:1.5f}'.format((vpython.mag(force))) + " nN @ " +
+                    '{:1.5f}'.format(vpython.atan2(force.y, force.x) / vpython.pi * 180) + " degree")
     
 # delete button
 def deleteChargedObj():
