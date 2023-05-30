@@ -476,6 +476,7 @@ def clicked():
             # select the charge when the click is on a charged object
             if (chargedObjSelected != None):
                 chargedObjSelected.displaySelect()
+                spawnPosIndicator.visible = False
                 createCaptionSelectCharge()
             # spawn screen when the click is not on a charged object
             else:
@@ -767,7 +768,9 @@ backButton = None
 # region Spawn Screen Caption
 
 def createCaptionSpawnScreen():
-    global spawnChargeSlider, spawnChargeText, massSlider, massText, chargeMenu, spawnButton, backButton, spawnPosText, spawnXInputField, spawnYInputField
+    global spawnChargeSlider, spawnChargeText, massSlider, massText, chargeMenu, spawnButton, backButton
+    global spawnPosText, spawnXInputField, spawnYInputField
+    global electricFieldText, electricPotentialText
 
     vpython.scene.caption = ""
 
@@ -798,10 +801,15 @@ def createCaptionSpawnScreen():
     spawnYInputField = vpython.winput(bind = spawnYInput) 
 
     vpython.scene.append_to_caption("\n\n   ")
-    vpython.wtext(text = "Electric Field: <0, 0> N/C; 0 N/C @ 0 degree")
+    electricField = calculateElectricField(spawnPos)
+    electricFieldText = vpython.wtext(text = "Electric Field: <" + 
+                                        '{:1.2f}'.format(electricField.x) + ", " + 
+                                        '{:1.2f}'.format(electricField.y) + "> N/C \n   Electric Field: "+
+                                        '{:1.2f}'.format((vpython.mag(electricField))) + " N/C @ " +
+                                        '{:1.2f}'.format(vpython.atan2(electricField.y, electricField.x) / vpython.pi * 180) + " degree")
 
     vpython.scene.append_to_caption("\n\n   ")
-    vpython.wtext(text = "Electric Potential: 0 V/C")
+    electricPotentialText = vpython.wtext(text = "Electric Potential: " '{:1.2f}'.format(calculateElectricPotential(spawnPos)) + " V/C")
 
 # spawn menu
 def spawnRadio():
@@ -816,7 +824,7 @@ def spawnChargeShift():
     global spawnCharge, spawnChargeText
     spawnCharge = spawnChargeSlider.value * 1E-9
     spawnChargeText.text = '<center>Charge: '+'{:1.2f}'.format(spawnChargeSlider.value) + " nC </center>"
-    
+
 spawnChargeSlider = None
 spawnChargeText = None
 
@@ -847,18 +855,29 @@ def back():
 
 backButton = None
 
-# position inputs
-def updateSpawnPosText():
-    global spawnPosText
-    spawnPosText.text = "Position: <" + '{:1.2f}'.format(spawnPos.x) + ", " + '{:1.2f}'.format(spawnPos.y) + ">"
+# stats
+eletricFieldText = None
+electricPotentialText = None
 
+def updateSpawnScreen():
+    global spawnPosText, electricFieldText, electricPotentialText
+    spawnPosText.text = "Position: <" + '{:1.2f}'.format(spawnPos.x) + ", " + '{:1.2f}'.format(spawnPos.y) + ">"
+    electricField = calculateElectricField(spawnPos)
+    electricFieldText.text = ("Electric Field: <" + 
+                                        '{:1.2f}'.format(electricField.x) + ", " + 
+                                        '{:1.2f}'.format(electricField.y) + "> N/C \n   Electric Field: "+
+                                        '{:1.2f}'.format((vpython.mag(electricField))) + " N/C @ " +
+                                        '{:1.2f}'.format(vpython.atan2(electricField.y, electricField.x) / vpython.pi * 180) + " degree")
+    electricPotentialText.text = "Electric Potential: " '{:1.2f}'.format(calculateElectricPotential(spawnPos)) + " V/C"
+
+# position inputs
 spawnPosText = None
 
 def spawnXInput():
     global spawnPos, spawnPosIndicator
     if (spawnXInputField.number != None):
         spawnPos.x = spawnXInputField.number
-        updateSpawnPosText()
+        updateSpawnScreen()
     displaySpawnPosIndicator(spawnPos)  
 
 spawnXInputField = None
@@ -867,7 +886,7 @@ def spawnYInput():
     global spawnPos, spawnPosIndicator
     if (spawnYInputField.number != None):
         spawnPos.y = spawnYInputField.number
-        updateSpawnPosText()
+        updateSpawnScreen()
     displaySpawnPosIndicator(spawnPos)
     
 spawnYInputField = None
