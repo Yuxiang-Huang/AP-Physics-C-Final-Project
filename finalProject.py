@@ -767,7 +767,7 @@ backButton = None
 # region Spawn Screen Caption
 
 def createCaptionSpawnScreen():
-    global spawnChargeSlider, spawnChargeText, massSlider, massText, chargeMenu, spawnButton, backButton, spawnXInputField, spawnYInputField
+    global spawnChargeSlider, spawnChargeText, massSlider, massText, chargeMenu, spawnButton, backButton, spawnPosText, spawnXInputField, spawnYInputField
 
     vpython.scene.caption = ""
 
@@ -791,7 +791,7 @@ def createCaptionSpawnScreen():
     backButton = vpython.button(text = "Back", bind = back)
 
     vpython.scene.append_to_caption("\n\n   ")
-    vpython.wtext(text = "Position: ")
+    spawnPosText = vpython.wtext(text = "Position: <" + '{:1.2f}'.format(spawnPos.x) + ", " + '{:1.2f}'.format(spawnPos.y) + ">")
     vpython.scene.append_to_caption("\n   x:")
     spawnXInputField = vpython.winput(bind = spawnXInput)
     vpython.scene.append_to_caption("\n   y:")
@@ -848,18 +848,28 @@ def back():
 backButton = None
 
 # position inputs
+def updateSpawnPosText():
+    global spawnPosText
+    spawnPosText.text = "Position: <" + '{:1.2f}'.format(spawnPos.x) + ", " + '{:1.2f}'.format(spawnPos.y) + ">"
+
+spawnPosText = None
+
 def spawnXInput():
     global spawnPos, spawnPosIndicator
-    spawnPos.x = spawnXInputField.number
-    displaySpawnPosIndicator(spawnPos)
+    if (spawnXInputField.number != None):
+        spawnPos.x = spawnXInputField.number
+        updateSpawnPosText()
+    displaySpawnPosIndicator(spawnPos)  
 
 spawnXInputField = None
 
 def spawnYInput():
     global spawnPos, spawnPosIndicator
-    spawnPos.y = spawnYInputField.number
+    if (spawnYInputField.number != None):
+        spawnPos.y = spawnYInputField.number
+        updateSpawnPosText()
     displaySpawnPosIndicator(spawnPos)
-
+    
 spawnYInputField = None
 
 # endregion
