@@ -534,18 +534,48 @@ vpython.scene.append_to_caption("   ")
 startButton = vpython.button(text = "Start without preset", bind = start)
 vpython.scene.append_to_caption("\n\n   ")
 
-# Dipole
+#Dipole
 def dipolePreset():
     start()
     allChargedObjs.append(ChargedObj(1E-6, 1E-9, vpython.vec(5,0,0), vpython.vec(0, 0, 0)))
     allChargedObjs.append(ChargedObj(1E-6, -1E-9, vpython.vec(-5, 0, 0) , vpython.vec(0, 0, 0)))
-
-# Three Charge
+    
 def threeChargePreset(): 
     start()
     allChargedObjs.append(ChargedObj(1E-6, 1E-9, vpython.vec(0,5,0), vpython.vec(0, 0, 0)))
+    allChargedObjs.append(ChargedObj(1E-6, 1E-9, vpython.vec(5*vpython.cos(vpython.pi/6),-5*vpython.sin(vpython.pi/6),0), vpython.vec(0, 0, 0)))
+    allChargedObjs.append(ChargedObj(1E-6, -1.5E-9, vpython.vec(-5*vpython.cos(vpython.pi/6),-5*vpython.sin(vpython.pi/6),0), vpython.vec(0, 0, 0)))
+
+def butterflyPreset():
+    start()
+    allChargedObjs.append(ChargedObj(1E-6, -1E-9, vpython.vec(0,5,0), vpython.vec(1, -1, 0)))
+    allChargedObjs.append(ChargedObj(1E-6, -1E-9, vpython.vec(5,5,0), vpython.vec(-1, -1, 0)))
+    allChargedObjs.append(ChargedObj(1E-6, 5E-9, vpython.vec(2.5,0,0), vpython.vec(0, 1, 0)))
+
+def helixPreset(): 
+    start()
+    allChargedObjs.append(ChargedObj(1E-6, -1E-9, vpython.vec(-1.5,10,0), vpython.vec(.25, -2, 0)))
+    allChargedObjs.append(ChargedObj(1E-6, 1E-9, vpython.vec(1.5,10,0), vpython.vec(-.25, -2, 0)))
+
+def helixGunPreset ():
+    start()
+    allChargedObjs.append(ChargedObj(1E-6, -1E-9, vpython.vec(-15,1.5,0), vpython.vec(2, -.25, 0)))
+    allChargedObjs.append(ChargedObj(1E-6, 1E-9, vpython.vec(-15,-1.5,0), vpython.vec(2, .25, 0)))
+    allChargedObjs.append(ChargedObj(1E-6, -1E-9, vpython.vec(0,1.5,0), vpython.vec(0, 0, 0)))
+    allChargedObjs.append(ChargedObj(1E-6, 1E-9, vpython.vec(0,-1.5,0), vpython.vec(0, 0, 0)))
+    
+def dragonflyPreset ():
+    start()
+    allChargedObjs.append(ChargedObj(1E-6, 1E-9, vpython.vec(0,5,0), vpython.vec(0, 0, 0)))
     allChargedObjs.append(ChargedObj(1E-6, 1E-9, vpython.vec(4.33,-2.5,0), vpython.vec(0, 0, 0)))
-    allChargedObjs.append(ChargedObj(1E-6, -1E-9, vpython.vec(-4.33,-2.5,0), vpython.vec(0, 0, 0)))
+    allChargedObjs.append(ChargedObj(1E-6, 1E-9, vpython.vec(-4.33,-2.5,0), vpython.vec(0, 0, 0)))
+    allChargedObjs.append(ChargedObj(1E-6, -5E-9, vpython.vec(0,0,0), vpython.vec(0, 0, 0)))
+    
+def somethingPreset():
+    start()
+    allChargedObjs.append(ChargedObj(1E-6, -5E-9, vpython.vec(0,5,0), vpython.vec(3, 0, 0)))
+    allChargedObjs.append(ChargedObj(1E-6, 1E-9, vpython.vec(5*vpython.cos(30),-5*vpython.sin(30),0), vpython.vec(-1, 2, 0)))
+    allChargedObjs.append(ChargedObj(1E-6, 5E-9, vpython.vec(-5*vpython.cos(30),-5*vpython.sin(30),0), vpython.vec(1, 2, 0)))
 
 # Presets
 vpython.button(text = "Dipole", bind = dipolePreset)
@@ -555,6 +585,16 @@ vpython.scene.append_to_caption("\n\n   ")
 vpython.button(text = "Parallel Plates", bind = start)
 vpython.scene.append_to_caption("   ")
 vpython.button(text = "Faraday Bucket", bind = start)
+vpython.scene.append_to_caption("\n\n   ")
+vpython.button(text = "Draw Butterfly", bind = butterflyPreset) 
+vpython.scene.append_to_caption("   ")
+vpython.button(text = "Draw Helix", bind = helixPreset) 
+vpython.scene.append_to_caption("\n\n   ")
+vpython.button(text = "helix gun (kinda)", bind = helixGunPreset)
+vpython.scene.append_to_caption("   ")
+vpython.button(text = "draw dragonfly", bind = dragonflyPreset) 
+vpython.scene.append_to_caption("\n\n   ")
+vpython.button(text = "draw something", bind = somethingPreset)
 
 # electric field Slider
 electricFieldPrecision = 10
@@ -1058,6 +1098,12 @@ deleteButton = None
 # fix button
 def fixChargedObj():
     chargedObjSelected.fixed = not chargedObjSelected.fixed
+
+# textures
+# if fixed = True: 
+#     positiveChargeTexture = "https://i.imgur.com/9c10QCm.png"
+# else: 
+#     positiveChargeTexture = "https://i.imgur.com/ADy8l2o.png"
 
 fixButton = None
 
