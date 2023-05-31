@@ -144,6 +144,7 @@ class ChargedObj:
         self.mass = mass
         self.pos = spawnPos
         self.vel = spawnVel
+        self.tempVel = 0
         self.fixed = False
         self.velLabel = vpython.label(text="0", visible = False)
         self.forceLabel = vpython.label(text="0", visible = False)
@@ -243,7 +244,7 @@ class ChargedObj:
 
     def applyVel(self):
         if (not self.fixed):
-            self.pos += self.vel * time / numOfRate
+            self.pos += self.vel / numOfRate
             self.display.pos = self.pos
             if (self == chargedObjSelected):
                 self.displaySelect()
@@ -259,10 +260,13 @@ class ChargedObj:
         self.forceLabel.visible = True
 
     def checkCollision(self):
+        self.tempVel = self.vel
         for chargedObj in allChargedObjs:
-            if (vpython.mag(self.pos - chargedObj.pos) <= 2 * self.display.radius):
-                self.vel = vpython.vec(0, 0, 0)
-                chargedObj.vel = vpython.vec(0, 0, 0)
+            if (self != chargedObj):
+                if (vpython.mag(self.pos - chargedObj.pos) <= self.display.radius + chargedObj.display.radius):
+                    # v1 = 2 * m2 / (m1 + m2) * v2 + (m1 - m2) / (m1 + m2) * v1
+                    self.tempVel = (2 * chargedObj.mass / (chargedObj.mass + self.mass) * chargedObj.vel +
+                    (self.mass - chargedObj.mass) / (chargedObj.mass + self.mass) * self.vel)
 
     def displayElectricField(self):
         if (electricFieldMode == 1):
@@ -1065,7 +1069,7 @@ fixButton = None
 curRange = vpython.scene.range
 
 while True:
-    vpython.rate(numOfRate)
+    vpython.rate(numOfRate * time)
     if (playing):
         for chargedObj in allChargedObjs:
             chargedObj.applyForce()
@@ -1084,8 +1088,11 @@ while True:
     displayElectricFieldAll()
     displayElectricPotential()
 
-    # for charge in allChargedObjs:
-    #     charge.checkCollision()
+    # collision
+    for charge in allChargedObjs:
+        charge.checkCollision()
+    for charge in allChargedObjs:
+        charge.vel = charge.tempVel
 
     # update force vector because it is possible that mouse is not moving
     if (playing and mouseDown and chargedObjSelected != None):
