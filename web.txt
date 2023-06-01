@@ -26,7 +26,16 @@ forceScaler = 1E6
 
 ####################################################################################################
 
-# region Initilization
+# region initilization
+
+unitWidth = undefined
+unitHeight = undefined
+
+# Math for rescaling (assume height > width)
+def setUnits():
+    global unitWidth, unitHeight
+    unitWidth = 2 * scene.width / scene.height * scene.range / gridPrecision
+    unitHeight = 2 * scene.range / gridPrecision
 
 # region electric field for mode 2
 electricFieldArrowsAll = undefined
@@ -34,44 +43,35 @@ electricFieldArrowsAll = undefined
 # create when click start after know precision
 def createElectricFieldArrowsAll():
     global electricFieldArrowsAll
+    # dimension = precision by precision
     electricFieldArrowsAll = [ [0]*gridPrecision for i in range(gridPrecision)]
     for i in range(gridPrecision):
         for j in range(gridPrecision):
             electricFieldArrowsAll[i][j] = arrow(axis = vec(0, 0, 0), color = color.orange)
-
-# Math for rescaling
-# unit width = 2 * scene.width / scene.height * scene.range / gridPrecision
-# unit height = 2 * scene.range / gridPrecision
 
 # method for rescaling
 def setElectricFieldArrowsAll():
     for i in range(gridPrecision):
         for j in range(gridPrecision):
             electricFieldArrowsAll[i][j].visible = True
-            # assume height > width
-            electricFieldArrowsAll[i][j].pos = vec(
-                        (i - gridPrecision / 2) * 2 * scene.width / scene.height * scene.range / gridPrecision, 
-                        (j - gridPrecision / 2) * 2 * scene.range / gridPrecision, 0)
-            electricFieldArrowsAll[i][j].pos += vec(
-                        scene.width / scene.height * scene.range / gridPrecision, 
-                        scene.range / gridPrecision, 0)
+            electricFieldArrowsAll[i][j].pos = vec((i - gridPrecision / 2 + 1/2) * unitWidth,
+                                                           (j - gridPrecision / 2 + 1/2) * unitHeight, 0)
 
 # endregion
 
 # region electric potential
-potentialGridRows = undefined
-potentialGridCols = undefined
+potentialGridRows = []
+potentialGridCols = []
 electricPotentialLabels = undefined
 
 # create when click start after know precision
 def createPotentialGrid():
     global potentialGridRows, potentialGridCols, electricPotentialLabels
-    potentialGridRows = []
-    potentialGridCols = []
+    # dimension = gridPrecision
     for i in range(gridPrecision):
         potentialGridRows.append(box(axis=vec(1, 0, 0), color = color.black, visible = False))
         potentialGridCols.append(box(axis=vec(0, 0, 1), color = color.black, visible = False))
-
+    # dimension = (gridPrecions - 1) * (gridPrecions - 1)
     electricPotentialLabels = [ [0]* (gridPrecision - 1) for i in range(gridPrecision - 1)]
     for i in range(gridPrecision-1):
         for j in range(gridPrecision-1):
@@ -82,26 +82,21 @@ def setElectricPotentialGrid():
     global potentialGridRows, potentialGridCols, electricPotentialLabels
     # determine thickness
     thickness = scene.range / 200
+    # grids
     for i in range(gridPrecision):
         # rows
-        potentialGridRows[i].size = vec(2 * scene.width / scene.height * scene.range,
-                                                           thickness, thickness)
-        potentialGridRows[i].pos = vec(0, (i - gridPrecision / 2) * 2 * scene.range / gridPrecision, 0)
-        potentialGridRows[i].pos += vec(0, scene.range / gridPrecision, 0)
+        potentialGridRows[i].size = vec(unitWidth * gridPrecision, thickness, thickness)
+        potentialGridRows[i].pos = vec(0, (i - gridPrecision / 2 + 1/2) * unitHeight, 0)
 
         # cols
-        potentialGridCols[i].size = vec(thickness, 2 * scene.range, thickness)
-        potentialGridCols[i].pos = vec((i - gridPrecision / 2) * 2 * 
-                                               scene.width / scene.height * scene.range / gridPrecision, 0, 0)
-        potentialGridCols[i].pos += vec(scene.width / scene.height * scene.range / gridPrecision, 0, 0)
+        potentialGridCols[i].size = vec(thickness, unitHeight * gridPrecision, thickness)
+        potentialGridCols[i].pos = vec((i - gridPrecision / 2 + 1/2) * unitWidth, 0, 0)
 
     # labels
     for i in range(gridPrecision-1):
         for j in range(gridPrecision-1):
-            # assume height > width
-            electricPotentialLabels[i][j].pos = vec(
-                        (i - gridPrecision / 2 + 1) * 2 * scene.width / scene.height * scene.range / gridPrecision, 
-                        (j - gridPrecision / 2 + 1) * 2 * scene.range / gridPrecision, 0)
+            electricPotentialLabels[i][j].pos = vec((i - gridPrecision / 2 + 1) * unitWidth, 
+                                                            (j - gridPrecision / 2 + 1) * unitHeight, 0)
             electricPotentialLabels[i][j].height = 10
 
 # endregion 
@@ -149,6 +144,7 @@ class ChargedObj:
         self.mass = mass
         self.pos = spawnPos
         self.vel = spawnVel
+        self.tempVel = 0
         self.fixed = False
         self.velLabel = label(text="0", visible = False)
         self.forceLabel = label(text="0", visible = False)
@@ -248,7 +244,7 @@ class ChargedObj:
 
     def applyVel(self):
         if (not self.fixed):
-            self.pos += self.vel * time / numOfRate
+            self.pos += self.vel / numOfRate
             self.display.pos = self.pos
             if (self == chargedObjSelected):
                 self.displaySelect()
@@ -264,10 +260,13 @@ class ChargedObj:
         self.forceLabel.visible = True
 
     def checkCollision(self):
+        self.tempVel = self.vel
         for chargedObj in allChargedObjs:
-            if (mag(self.pos - chargedObj.pos) <= 2 * self.display.radius):
-                self.vel = vec(0, 0, 0)
-                chargedObj.vel = vec(0, 0, 0)
+            if (self != chargedObj):
+                if (mag(self.pos - chargedObj.pos) <= self.display.radius + chargedObj.display.radius):
+                    # v1 = 2 * m2 / (m1 + m2) * v2 + (m1 - m2) / (m1 + m2) * v1
+                    self.tempVel = (2 * chargedObj.mass / (chargedObj.mass + self.mass) * chargedObj.vel +
+                    (self.mass - chargedObj.mass) / (chargedObj.mass + self.mass) * self.vel)
 
     def displayElectricField(self):
         if (electricFieldMode == 1):
@@ -515,6 +514,8 @@ def start():
     startText.visible = False
 
     # initialize the electric field arrows and grids
+    setUnits()
+
     createElectricFieldArrowsAll()
     setElectricFieldArrowsAll()
 
@@ -533,18 +534,48 @@ scene.append_to_caption("   ")
 startButton = button(text = "Start without preset", bind = start)
 scene.append_to_caption("\n\n   ")
 
-# Dipole
+#Dipole
 def dipolePreset():
     start()
     allChargedObjs.append(ChargedObj(1E-6, 1E-9, vec(5,0,0), vec(0, 0, 0)))
     allChargedObjs.append(ChargedObj(1E-6, -1E-9, vec(-5, 0, 0) , vec(0, 0, 0)))
-
-# Three Charge
+    
 def threeChargePreset(): 
     start()
     allChargedObjs.append(ChargedObj(1E-6, 1E-9, vec(0,5,0), vec(0, 0, 0)))
+    allChargedObjs.append(ChargedObj(1E-6, 1E-9, vec(5*cos(pi/6),-5*sin(pi/6),0), vec(0, 0, 0)))
+    allChargedObjs.append(ChargedObj(1E-6, -1.5E-9, vec(-5*cos(pi/6),-5*sin(pi/6),0), vec(0, 0, 0)))
+
+def butterflyPreset():
+    start()
+    allChargedObjs.append(ChargedObj(1E-6, -1E-9, vec(0,5,0), vec(1, -1, 0)))
+    allChargedObjs.append(ChargedObj(1E-6, -1E-9, vec(5,5,0), vec(-1, -1, 0)))
+    allChargedObjs.append(ChargedObj(1E-6, 5E-9, vec(2.5,0,0), vec(0, 1, 0)))
+
+def helixPreset(): 
+    start()
+    allChargedObjs.append(ChargedObj(1E-6, -1E-9, vec(-1.5,10,0), vec(.25, -2, 0)))
+    allChargedObjs.append(ChargedObj(1E-6, 1E-9, vec(1.5,10,0), vec(-.25, -2, 0)))
+
+def helixGunPreset ():
+    start()
+    allChargedObjs.append(ChargedObj(1E-6, -1E-9, vec(-15,1.5,0), vec(2, -.25, 0)))
+    allChargedObjs.append(ChargedObj(1E-6, 1E-9, vec(-15,-1.5,0), vec(2, .25, 0)))
+    allChargedObjs.append(ChargedObj(1E-6, -1E-9, vec(0,1.5,0), vec(0, 0, 0)))
+    allChargedObjs.append(ChargedObj(1E-6, 1E-9, vec(0,-1.5,0), vec(0, 0, 0)))
+    
+def dragonflyPreset ():
+    start()
+    allChargedObjs.append(ChargedObj(1E-6, 1E-9, vec(0,5,0), vec(0, 0, 0)))
     allChargedObjs.append(ChargedObj(1E-6, 1E-9, vec(4.33,-2.5,0), vec(0, 0, 0)))
-    allChargedObjs.append(ChargedObj(1E-6, -1E-9, vec(-4.33,-2.5,0), vec(0, 0, 0)))
+    allChargedObjs.append(ChargedObj(1E-6, 1E-9, vec(-4.33,-2.5,0), vec(0, 0, 0)))
+    allChargedObjs.append(ChargedObj(1E-6, -5E-9, vec(0,0,0), vec(0, 0, 0)))
+    
+def somethingPreset():
+    start()
+    allChargedObjs.append(ChargedObj(1E-6, -5E-9, vec(0,5,0), vec(3, 0, 0)))
+    allChargedObjs.append(ChargedObj(1E-6, 1E-9, vec(5*cos(30),-5*sin(30),0), vec(-1, 2, 0)))
+    allChargedObjs.append(ChargedObj(1E-6, 5E-9, vec(-5*cos(30),-5*sin(30),0), vec(1, 2, 0)))
 
 # Presets
 button(text = "Dipole", bind = dipolePreset)
@@ -554,6 +585,16 @@ scene.append_to_caption("\n\n   ")
 button(text = "Parallel Plates", bind = start)
 scene.append_to_caption("   ")
 button(text = "Faraday Bucket", bind = start)
+scene.append_to_caption("\n\n   ")
+button(text = "Draw Butterfly", bind = butterflyPreset) 
+scene.append_to_caption("   ")
+button(text = "Draw Helix", bind = helixPreset) 
+scene.append_to_caption("\n\n   ")
+button(text = "helix gun (kinda)", bind = helixGunPreset)
+scene.append_to_caption("   ")
+button(text = "draw dragonfly", bind = dragonflyPreset) 
+scene.append_to_caption("\n\n   ")
+button(text = "draw something", bind = somethingPreset)
 
 # electric field Slider
 electricFieldPrecision = 10
@@ -1058,6 +1099,12 @@ deleteButton = undefined
 def fixChargedObj():
     chargedObjSelected.fixed = not chargedObjSelected.fixed
 
+# textures
+# if fixed = True: 
+#     positiveChargeTexture = "https://i.imgur.com/9c10QCm.png"
+# else: 
+#     positiveChargeTexture = "https://i.imgur.com/ADy8l2o.png"
+
 fixButton = undefined
 
 # endregion 
@@ -1068,7 +1115,7 @@ fixButton = undefined
 curRange = scene.range
 
 while True:
-    rate(numOfRate)
+    rate(numOfRate * time)
     if (playing):
         for chargedObj in allChargedObjs:
             chargedObj.applyForce()
@@ -1080,14 +1127,18 @@ while True:
     # reset electric field arrows and electric potential grid for all if user zooms
     if (curRange != scene.range):
         curRange = scene.range
+        setUnits()
         setElectricFieldArrowsAll()
         setElectricPotentialGrid()
 
     displayElectricFieldAll()
     displayElectricPotential()
 
-    # for charge in allChargedObjs:
-    #     charge.checkCollision()
+    # collision
+    for charge in allChargedObjs:
+        charge.checkCollision()
+    for charge in allChargedObjs:
+        charge.vel = charge.tempVel
 
     # update force vector because it is possible that mouse is not moving
     if (playing and mouseDown and chargedObjSelected != undefined):

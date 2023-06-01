@@ -144,8 +144,8 @@ class ChargedObj:
         self.mass = mass
         self.pos = spawnPos
         self.vel = spawnVel
-        self.tempVel = 0
         self.fixed = False
+        self.collided = []
         self.velLabel = vpython.label(text="0", visible = False)
         self.forceLabel = vpython.label(text="0", visible = False)
         # Displays
@@ -260,13 +260,28 @@ class ChargedObj:
         self.forceLabel.visible = True
 
     def checkCollision(self):
-        self.tempVel = self.vel
         for chargedObj in allChargedObjs:
             if (self != chargedObj):
                 if (vpython.mag(self.pos - chargedObj.pos) <= self.display.radius + chargedObj.display.radius):
-                    # v1 = 2 * m2 / (m1 + m2) * v2 + (m1 - m2) / (m1 + m2) * v1
-                    self.tempVel = (2 * chargedObj.mass / (chargedObj.mass + self.mass) * chargedObj.vel +
-                    (self.mass - chargedObj.mass) / (chargedObj.mass + self.mass) * self.vel)
+                    if (not chargedObj in self.collided):
+                        # v1 = 2 * m2 / (m1 + m2) * v2 + (m1 - m2) / (m1 + m2) * v1
+                        tempvel = (2 * chargedObj.mass / (chargedObj.mass + self.mass) * chargedObj.vel +
+                        (self.mass - chargedObj.mass) / (chargedObj.mass + self.mass) * self.vel)
+
+                        # v2 = 2 * m1 / (m1 + m2) * v1 + (m2 - m1) / (m1 + m2) * v2
+                        chargedObj.vel = (2 * self.mass / (chargedObj.mass + self.mass) * self.vel +
+                        (chargedObj.mass - self.mass) / (chargedObj.mass + self.mass) * chargedObj.vel)
+
+                        self.vel = tempvel
+
+                        # position check
+                        dif = self.display.radius + chargedObj.display.radius - vpython.mag(self.pos - chargedObj.pos) 
+                        tempPos = self.pos + vpython.norm(self.pos - chargedObj.pos) * dif / 2
+                        chargedObj.pos = chargedObj.pos + vpython.norm(chargedObj.pos - self.pos) * dif / 2
+                        self.pos = tempPos
+
+                        # prevent collision calculation twice
+                        chargedObj.collided.append(self)
 
     def displayElectricField(self):
         if (electricFieldMode == 1):
@@ -595,6 +610,24 @@ vpython.scene.append_to_caption("   ")
 vpython.button(text = "draw dragonfly", bind = dragonflyPreset) 
 vpython.scene.append_to_caption("\n\n   ")
 vpython.button(text = "draw something", bind = somethingPreset)
+
+def collisionTest():
+    start()
+    allChargedObjs.append(ChargedObj(1E-6, 1E-9, vpython.vec(2.5,0,0), vpython.vec(0, 1, 0)))
+    allChargedObjs.append(ChargedObj(1E-6, 0, vpython.vec(0,5,0), vpython.vec(1, -1, 0)))
+    allChargedObjs.append(ChargedObj(1E-6, 0, vpython.vec(5,5,0), vpython.vec(-1, -1, 0)))
+    
+vpython.scene.append_to_caption("\n\n   ")
+vpython.button(text = "Collision test", bind = collisionTest)
+
+def collisionTest2():
+    start()
+    allChargedObjs.append(ChargedObj(1E-6, 1E-9, vpython.vec(0,0,0), vpython.vec(0, 0, 0)))
+    allChargedObjs.append(ChargedObj(1E-6, 0, vpython.vec(5,0,0), vpython.vec(-1, 0, 0)))
+    allChargedObjs.append(ChargedObj(1E-6, 0, vpython.vec(-5, 0,0), vpython.vec(1, 0, 0)))
+
+vpython.scene.append_to_caption("\n\n   ")
+vpython.button(text = "Collision test", bind = collisionTest2)
 
 # electric field Slider
 electricFieldPrecision = 10
@@ -1138,7 +1171,7 @@ while True:
     for charge in allChargedObjs:
         charge.checkCollision()
     for charge in allChargedObjs:
-        charge.vel = charge.tempVel
+        charge.collided = []
 
     # update force vector because it is possible that mouse is not moving
     if (playing and mouseDown and chargedObjSelected != None):
