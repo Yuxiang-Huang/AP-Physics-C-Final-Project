@@ -396,10 +396,10 @@ def clicked():
     # only when not playing
     if (not playing):
         # When no charge is selected
-        if (chargedObjSelected == None):
+        if (chargedObjSelected is None):
             chargedObjSelected = chargedObjOnMouse()
             # select the charge when the click is on a charged object
-            if (chargedObjSelected != None):
+            if (not chargedObjSelected is None):
                 chargedObjSelected.displaySelect()
                 spawnPosIndicator.visible = False
                 createCaptionSelectCharge()
@@ -410,12 +410,12 @@ def clicked():
                 displaySpawnPosIndicator(spawnPos)
         else:
             # reselect 
-            if (chargedObjSelected != None):
+            if (not chargedObjSelected is None):
                 chargedObjSelected.hideSelect()
             chargedObjSelected = chargedObjOnMouse()
 
             # select again or deselect
-            if (chargedObjSelected != None):
+            if (not chargedObjSelected is None):
                 chargedObjSelected.displaySelect()
                 createCaptionSelectCharge()
             else:
@@ -450,7 +450,7 @@ def onMouseDown():
     mouseDown = True
 
     # initial pos of ruler
-    if (chargedObjToDrag == None and not playing):
+    if (chargedObjToDrag is None and not playing):
         ruler.modify(0, getMousePos())
         ruler.modify(1, getMousePos())
         rulerLabel.visible = False
@@ -458,7 +458,7 @@ def onMouseDown():
 def onMouseUp():
     global chargedObjToDrag, mouseDown
     # apply force vector if necessary
-    if (chargedObjSelected != None):
+    if (not chargedObjSelected is None):
         if (chargedObjSelected.forceVec.axis != vpython.vec(0, 0, 0)):
             chargedObjSelected.vel += chargedObjSelected.forceVec.axis / forceScaler / chargedObjSelected.mass 
             chargedObjSelected.forceVec.axis = vpython.vec(0, 0, 0)
@@ -477,7 +477,7 @@ def onMouseUp():
 def onMouseMove():
     global ruler
     # ruler when no object to drag and not playing
-    if chargedObjToDrag == None and not playing:
+    if chargedObjToDrag is None and not playing:
         # avoid mouse move after mouse up
         if (mouseDown):
             ruler.modify(1, getMousePos())
@@ -486,7 +486,7 @@ def onMouseMove():
         # when charge selected is not the charge you are draging
         if (chargedObjSelected != chargedObjToDrag):
             # set position
-            if (chargedObjToDrag != None):
+            if (not chargedObjToDrag is None):
                 mousePos = getMousePos()
                 chargedObjToDrag.pos = mousePos
                 chargedObjToDrag.display.pos = chargedObjToDrag.pos
@@ -496,10 +496,10 @@ def onMouseMove():
                     chargedObjToDrag.createVelLabel()
 
                 # could have impacted electric field and potential in the spawn screen
-                if (spawnPos != None):
+                if (not spawnPos is None):
                     updateSpawnScreen()
         else:
-            if chargedObjToDrag != None:
+            if not chargedObjToDrag is None:
                 # velocity vector
                 if (not playing):
                     chargedObjToDrag.velVec.pos = chargedObjToDrag.pos
@@ -967,7 +967,7 @@ spawnPosText = None
 
 def spawnXInput():
     global spawnPos, spawnPosIndicator
-    if (spawnXInputField.number != None):
+    if (not spawnXInputField.number is None):
         spawnPos.x = spawnXInputField.number
         updateSpawnScreen()
     displaySpawnPosIndicator(spawnPos)  
@@ -976,7 +976,7 @@ spawnXInputField = None
 
 def spawnYInput():
     global spawnPos, spawnPosIndicator
-    if (spawnYInputField.number != None):
+    if (not spawnYInputField.number is None):
         spawnPos.y = spawnYInputField.number
         updateSpawnScreen()
     displaySpawnPosIndicator(spawnPos)
@@ -1130,13 +1130,22 @@ deleteButton = None
 
 # fix button
 def fixChargedObj():
+    global chargedObjSelected
     chargedObjSelected.fixed = not chargedObjSelected.fixed
-
-# textures
-# if fixed = True: 
-#     positiveChargeTexture = "https://i.imgur.com/9c10QCm.png"
-# else: 
-#     positiveChargeTexture = "https://i.imgur.com/ADy8l2o.png"
+    if (chargedObjSelected.fixed): 
+        if chargedObjSelected.charge > 0:
+            chargedObjSelected.display.texture = "https://i.imgur.com/ADy8l2o.png"
+        elif chargedObjSelected.charge < 0:
+            chargedObjSelected.display.texture = "https://i.imgur.com/ReG5wU7.png"
+        else: 
+            chargedObjSelected.display.texture = "https://i.imgur.com/b80Axoa.png"
+    else:
+        if chargedObjSelected.charge > 0:
+            chargedObjSelected.display.texture = "https://i.imgur.com/9c10QCm.png" 
+        elif chargedObjSelected.charge < 0:
+            chargedObjSelected.display.texture = "https://i.imgur.com/r6loarb.png"
+        else: 
+            chargedObjSelected.display.texture = "https://i.imgur.com/eLOxvSS.png"
 
 fixButton = None
 
@@ -1174,7 +1183,7 @@ while True:
         charge.collided = []
 
     # update force vector because it is possible that mouse is not moving
-    if (playing and mouseDown and chargedObjSelected != None):
+    if (playing and mouseDown and not chargedObjSelected is None):
         chargedObjSelected.forceVec.pos = chargedObjSelected.pos
         chargedObjSelected.forceVec.axis = getMousePos() - chargedObjSelected.pos 
         chargedObjSelected.createForceLabel()

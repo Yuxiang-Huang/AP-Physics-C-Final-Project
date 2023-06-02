@@ -1,5 +1,5 @@
-file = open("finalProject.py").read()
-file = file.replace("import vpython", "")
+file = open("jackVersion.py").read()
 file = file.replace("vpython.", "")
+file = file.replace("None", "undefined")
 web = open("web.txt", 'w')
 web.write('Web VPython 3.2' + file)

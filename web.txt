@@ -28,8 +28,8 @@ forceScaler = 1E6
 
 # region initilization
 
-unitWidth = undefined
-unitHeight = undefined
+unitWidth = None
+unitHeight = None
 
 # Math for rescaling (assume height > width)
 def setUnits():
@@ -38,7 +38,7 @@ def setUnits():
     unitHeight = 2 * scene.range / gridPrecision
 
 # region electric field for mode 2
-electricFieldArrowsAll = undefined
+electricFieldArrowsAll = None
 
 # create when click start after know precision
 def createElectricFieldArrowsAll():
@@ -62,7 +62,7 @@ def setElectricFieldArrowsAll():
 # region electric potential
 potentialGridRows = []
 potentialGridCols = []
-electricPotentialLabels = undefined
+electricPotentialLabels = None
 
 # create when click start after know precision
 def createPotentialGrid():
@@ -144,8 +144,8 @@ class ChargedObj:
         self.mass = mass
         self.pos = spawnPos
         self.vel = spawnVel
-        self.tempVel = 0
         self.fixed = False
+        self.collided = []
         self.velLabel = label(text="0", visible = False)
         self.forceLabel = label(text="0", visible = False)
         # Displays
@@ -260,13 +260,28 @@ class ChargedObj:
         self.forceLabel.visible = True
 
     def checkCollision(self):
-        self.tempVel = self.vel
         for chargedObj in allChargedObjs:
             if (self != chargedObj):
                 if (mag(self.pos - chargedObj.pos) <= self.display.radius + chargedObj.display.radius):
-                    # v1 = 2 * m2 / (m1 + m2) * v2 + (m1 - m2) / (m1 + m2) * v1
-                    self.tempVel = (2 * chargedObj.mass / (chargedObj.mass + self.mass) * chargedObj.vel +
-                    (self.mass - chargedObj.mass) / (chargedObj.mass + self.mass) * self.vel)
+                    if (not chargedObj in self.collided):
+                        # v1 = 2 * m2 / (m1 + m2) * v2 + (m1 - m2) / (m1 + m2) * v1
+                        tempvel = (2 * chargedObj.mass / (chargedObj.mass + self.mass) * chargedObj.vel +
+                        (self.mass - chargedObj.mass) / (chargedObj.mass + self.mass) * self.vel)
+
+                        # v2 = 2 * m1 / (m1 + m2) * v1 + (m2 - m1) / (m1 + m2) * v2
+                        chargedObj.vel = (2 * self.mass / (chargedObj.mass + self.mass) * self.vel +
+                        (chargedObj.mass - self.mass) / (chargedObj.mass + self.mass) * chargedObj.vel)
+
+                        self.vel = tempvel
+
+                        # position check
+                        dif = self.display.radius + chargedObj.display.radius - mag(self.pos - chargedObj.pos) 
+                        tempPos = self.pos + norm(self.pos - chargedObj.pos) * dif / 2
+                        chargedObj.pos = chargedObj.pos + norm(chargedObj.pos - self.pos) * dif / 2
+                        self.pos = tempPos
+
+                        # prevent collision calculation twice
+                        chargedObj.collided.append(self)
 
     def displayElectricField(self):
         if (electricFieldMode == 1):
@@ -373,18 +388,18 @@ def calculateElectricPotential(pos):
 # region User Controls
 
 # Clicks
-chargedObjSelected = undefined
-spawnPos = undefined
+chargedObjSelected = None
+spawnPos = None
 
 def clicked():
     global chargedObjSelected, spawnPos
     # only when not playing
     if (not playing):
         # When no charge is selected
-        if (chargedObjSelected == undefined):
+        if (chargedObjSelected is None):
             chargedObjSelected = chargedObjOnMouse()
             # select the charge when the click is on a charged object
-            if (chargedObjSelected != undefined):
+            if (not chargedObjSelected is None):
                 chargedObjSelected.displaySelect()
                 spawnPosIndicator.visible = False
                 createCaptionSelectCharge()
@@ -395,12 +410,12 @@ def clicked():
                 displaySpawnPosIndicator(spawnPos)
         else:
             # reselect 
-            if (chargedObjSelected != undefined):
+            if (not chargedObjSelected is None):
                 chargedObjSelected.hideSelect()
             chargedObjSelected = chargedObjOnMouse()
 
             # select again or deselect
-            if (chargedObjSelected != undefined):
+            if (not chargedObjSelected is None):
                 chargedObjSelected.displaySelect()
                 createCaptionSelectCharge()
             else:
@@ -425,7 +440,7 @@ def displaySpawnPosIndicator(pos):
     spawnPosIndicator.visible = True
 
 # dragging
-chargedObjToDrag = undefined
+chargedObjToDrag = None
 mouseDown = False
 
 def onMouseDown():
@@ -435,7 +450,7 @@ def onMouseDown():
     mouseDown = True
 
     # initial pos of ruler
-    if (chargedObjToDrag == undefined and not playing):
+    if (chargedObjToDrag is None and not playing):
         ruler.modify(0, getMousePos())
         ruler.modify(1, getMousePos())
         rulerLabel.visible = False
@@ -443,7 +458,7 @@ def onMouseDown():
 def onMouseUp():
     global chargedObjToDrag, mouseDown
     # apply force vector if necessary
-    if (chargedObjSelected != undefined):
+    if (not chargedObjSelected is None):
         if (chargedObjSelected.forceVec.axis != vec(0, 0, 0)):
             chargedObjSelected.vel += chargedObjSelected.forceVec.axis / forceScaler / chargedObjSelected.mass 
             chargedObjSelected.forceVec.axis = vec(0, 0, 0)
@@ -456,13 +471,13 @@ def onMouseUp():
         ruler.modify(1, vec(0, 0, 0))
     
     # reset variables
-    chargedObjToDrag = undefined
+    chargedObjToDrag = None
     mouseDown = False
 
 def onMouseMove():
     global ruler
     # ruler when no object to drag and not playing
-    if chargedObjToDrag == undefined and not playing:
+    if chargedObjToDrag is None and not playing:
         # avoid mouse move after mouse up
         if (mouseDown):
             ruler.modify(1, getMousePos())
@@ -471,7 +486,7 @@ def onMouseMove():
         # when charge selected is not the charge you are draging
         if (chargedObjSelected != chargedObjToDrag):
             # set position
-            if (chargedObjToDrag != undefined):
+            if (not chargedObjToDrag is None):
                 mousePos = getMousePos()
                 chargedObjToDrag.pos = mousePos
                 chargedObjToDrag.display.pos = chargedObjToDrag.pos
@@ -481,10 +496,10 @@ def onMouseMove():
                     chargedObjToDrag.createVelLabel()
 
                 # could have impacted electric field and potential in the spawn screen
-                if (spawnPos != undefined):
+                if (not spawnPos is None):
                     updateSpawnScreen()
         else:
-            if chargedObjToDrag != undefined:
+            if not chargedObjToDrag is None:
                 # velocity vector
                 if (not playing):
                     chargedObjToDrag.velVec.pos = chargedObjToDrag.pos
@@ -595,6 +610,24 @@ scene.append_to_caption("   ")
 button(text = "draw dragonfly", bind = dragonflyPreset) 
 scene.append_to_caption("\n\n   ")
 button(text = "draw something", bind = somethingPreset)
+
+def collisionTest():
+    start()
+    allChargedObjs.append(ChargedObj(1E-6, 1E-9, vec(2.5,0,0), vec(0, 1, 0)))
+    allChargedObjs.append(ChargedObj(1E-6, 0, vec(0,5,0), vec(1, -1, 0)))
+    allChargedObjs.append(ChargedObj(1E-6, 0, vec(5,5,0), vec(-1, -1, 0)))
+    
+scene.append_to_caption("\n\n   ")
+button(text = "Collision test", bind = collisionTest)
+
+def collisionTest2():
+    start()
+    allChargedObjs.append(ChargedObj(1E-6, 1E-9, vec(0,0,0), vec(0, 0, 0)))
+    allChargedObjs.append(ChargedObj(1E-6, 0, vec(5,0,0), vec(-1, 0, 0)))
+    allChargedObjs.append(ChargedObj(1E-6, 0, vec(-5, 0,0), vec(1, 0, 0)))
+
+scene.append_to_caption("\n\n   ")
+button(text = "Collision test", bind = collisionTest2)
 
 # electric field Slider
 electricFieldPrecision = 10
@@ -719,7 +752,7 @@ def changePlay():
             co.velVec.axis = co.vel
             co.createVelLabel()
 
-playButton = undefined
+playButton = None
 
 # time slider
 time = 1
@@ -729,8 +762,8 @@ def timeShift():
     time = timeSlider.value
     timeText.text = "<center>Time in program for every second in real life:" + str(time) + "s</center>"
 
-timeSlider = undefined
-timeText = undefined
+timeSlider = None
+timeText = None
 
 # electic field mode button
 electricFieldMode = 0
@@ -753,7 +786,7 @@ def changeElectricField():
 
     electricFieldButton.text = "Electric Field: Mode " + str(electricFieldMode)
 
-electricFieldButton = undefined
+electricFieldButton = None
 
 # electric field opacity button
 electricOpacity = False
@@ -766,7 +799,7 @@ def chanageElectricOpacityMode():
     else:
         electricOpacityButton.text = "Electric Field Opacity: Off"
 
-electricOpacityButton = undefined
+electricOpacityButton = None
 
 # electric potential button
 electricPotentialMode = 0
@@ -788,7 +821,7 @@ def changeElectricPotential():
         
     electricPotentialButton.text = "Electric Potential Mode " + str(electricPotentialMode)
 
-electricPotentialButton = undefined
+electricPotentialButton = None
 
 # grid button
 gridMode = False
@@ -807,7 +840,7 @@ def changeGridMode():
             potentialGridCols[i].visible = False
         gridButton.text = "Grid: Off"
 
-gridButton = undefined
+gridButton = None
 
 # instruction and back buttons
 def displayInstructionPage():
@@ -817,8 +850,8 @@ def displayInstructionPage():
     scene.append_to_caption("\n")
     createInstruction()
 
-instructionButton = undefined
-backButton = undefined
+instructionButton = None
+backButton = None
 
 # endregion
 
@@ -874,7 +907,7 @@ def createCaptionSpawnScreen():
 def spawnRadio():
     global chargeMenu 
 
-chargeMenu = undefined
+chargeMenu = None
 
 # spawn charge slider
 spawnCharge = 1E-9
@@ -884,8 +917,8 @@ def spawnChargeShift():
     spawnCharge = spawnChargeSlider.value * 1E-9
     spawnChargeText.text = '<center>Charge: '+'{:1.2f}'.format(spawnChargeSlider.value) + " nC </center>"
 
-spawnChargeSlider = undefined
-spawnChargeText = undefined
+spawnChargeSlider = None
+spawnChargeText = None
 
 # spawn mass slider
 spawnMass = 1E-6
@@ -895,28 +928,28 @@ def massShift():
     spawnMass = massSlider.value * 1E-6
     massText.text = '<center>Mass: '+'{:1.2f}'.format(massSlider.value) + " * 10^-6 Kg <center>"
 
-massSlider = undefined
-massText = undefined
+massSlider = None
+massText = None
 
 # spawn button
 def spawnChargedObj():
     allChargedObjs.append(ChargedObj(spawnMass, spawnCharge, spawnPos, vec(0, 0, 0)))
     back()
 
-spawnButton = undefined
+spawnButton = None
 
 # back button
 def back():
     global spawnPos
     createCaptionMainScreen()
     spawnPosIndicator.visible = False
-    spawnPos = undefined
+    spawnPos = None
 
-backButton = undefined
+backButton = None
 
 # stats
-eletricFieldText = undefined
-electricPotentialText = undefined
+eletricFieldText = None
+electricPotentialText = None
 
 def updateSpawnScreen():
     global spawnPosText, electricFieldText, electricPotentialText
@@ -930,25 +963,25 @@ def updateSpawnScreen():
     electricPotentialText.text = "Electric Potential: " '{:1.2f}'.format(calculateElectricPotential(spawnPos)) + " V"
 
 # position inputs
-spawnPosText = undefined
+spawnPosText = None
 
 def spawnXInput():
     global spawnPos, spawnPosIndicator
-    if (spawnXInputField.number != undefined):
+    if (not spawnXInputField.number is None):
         spawnPos.x = spawnXInputField.number
         updateSpawnScreen()
     displaySpawnPosIndicator(spawnPos)  
 
-spawnXInputField = undefined
+spawnXInputField = None
 
 def spawnYInput():
     global spawnPos, spawnPosIndicator
-    if (spawnYInputField.number != undefined):
+    if (not spawnYInputField.number is None):
         spawnPos.y = spawnYInputField.number
         updateSpawnScreen()
     displaySpawnPosIndicator(spawnPos)
     
-spawnYInputField = undefined
+spawnYInputField = None
 
 # endregion
 
@@ -1037,10 +1070,10 @@ def createCaptionSelectCharge():
     winput(bind = spawnYInput) 
 
 # stats
-selectedChargeVelXYText = undefined
-selectedChargeVelMAText = undefined
-selectedChargeForceXYText = undefined
-selectedChargeForceMAText = undefined
+selectedChargeVelXYText = None
+selectedChargeVelMAText = None
+selectedChargeForceXYText = None
+selectedChargeForceMAText = None
 
 def updateSelectScreen():
     global selectedChargeVelXYText, selectedChargeVelMAText, selectedChargeForceXYText, selectedChargeForceMAText
@@ -1072,8 +1105,8 @@ def selectedChargeShift():
     # if (chargedObjSelected.charge == 0): 
     #     chargedObjSelected.display.color = color.black 
 
-selectedChargeSlider = undefined
-selectedChargeText = undefined
+selectedChargeSlider = None
+selectedChargeText = None
 
 # delete button
 def deleteChargedObj():
@@ -1090,10 +1123,10 @@ def deleteChargedObj():
             for j in range(electricFieldPrecision):
                 chargedObjSelected.electricFieldArrows[i][j].visible = False
     allChargedObjs.remove(chargedObjSelected)
-    chargedObjSelected = undefined
+    chargedObjSelected = None
     createCaptionMainScreen()
 
-deleteButton = undefined
+deleteButton = None
 
 # fix button
 def fixChargedObj():
@@ -1105,7 +1138,7 @@ def fixChargedObj():
 # else: 
 #     positiveChargeTexture = "https://i.imgur.com/ADy8l2o.png"
 
-fixButton = undefined
+fixButton = None
 
 # endregion 
 
@@ -1138,10 +1171,10 @@ while True:
     for charge in allChargedObjs:
         charge.checkCollision()
     for charge in allChargedObjs:
-        charge.vel = charge.tempVel
+        charge.collided = []
 
     # update force vector because it is possible that mouse is not moving
-    if (playing and mouseDown and chargedObjSelected != undefined):
+    if (playing and mouseDown and not chargedObjSelected is None):
         chargedObjSelected.forceVec.pos = chargedObjSelected.pos
         chargedObjSelected.forceVec.axis = getMousePos() - chargedObjSelected.pos 
         chargedObjSelected.createForceLabel()
