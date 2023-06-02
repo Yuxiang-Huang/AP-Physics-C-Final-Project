@@ -153,7 +153,7 @@ class ChargedObj:
 
         # spheres for now
         if (charge > 0):
-            self.display = vpython.sphere(pos=spawnPos, radius=spawnRadius, texture = "https://i.imgur.com/Id1Q11U.png")
+            self.display = vpython.sphere(pos=spawnPos, radius=spawnRadius, texture = "https://i.imgur.com/9c10QCm.png")
             self.velVec = vpython.arrow(axis = vpython.vec(0, 0, 0), color = vpython.color.red)
             self.forceVec = vpython.arrow(axis = vpython.vec(0, 0, 0), color = vpython.color.red)
 
@@ -165,7 +165,7 @@ class ChargedObj:
             for i in range(self.numOfLine):
                 for j in range(electricFieldPrecision):
                     self.electricFieldArrows[i][j] = vpython.arrow(axis = vpython.vec(0, 0, 0), color = vpython.color.red)
-        else:
+        elif (charge < 0):
             self.display = vpython.sphere(pos=spawnPos, radius=spawnRadius, texture="https://i.imgur.com/r6loarb.png")
             self.velVec = vpython.arrow(axis = vpython.vec(0, 0, 0), color = vpython.color.blue)
             self.forceVec = vpython.arrow(axis = vpython.vec(0, 0, 0), color = vpython.color.blue)
@@ -178,20 +178,11 @@ class ChargedObj:
             for i in range(self.numOfLine):
                 for j in range(electricFieldPrecision):
                     self.electricFieldArrows[i][j] = vpython.arrow(axis = vpython.vec(0, 0, 0), color = vpython.color.blue)
-        # else:
-        #     self.display = vpython.sphere(pos=spawnPos, radius=spawnRadius, color = vpython.color.black)
-        #     self.velVec = vpython.arrow(axis = vpython.vec(0, 0, 0), color = vpython.color.black)
-        #     self.forceVec = vpython.arrow(axis = vpython.vec(0, 0, 0), color = vpython.color.black)
+        else:
+             self.display = vpython.sphere(pos=spawnPos, radius=spawnRadius, texture = "https://i.imgur.com/eLOxvSS.png")
+             self.velVec = vpython.arrow(axis = vpython.vec(0, 0, 0), color = vpython.color.black)
+             self.forceVec = vpython.arrow(axis = vpython.vec(0, 0, 0), color = vpython.color.black)
 
-        #     # electric field
-        #     # possibly sliders for more variables
-        #     self.numOfLine = 8
-        #     # initialize all the arrows
-        #     self.electricFieldArrows = [ [0]*electricFieldPrecision for i in range(self.numOfLine)]
-        #     for i in range(self.numOfLine):
-        #         for j in range(electricFieldPrecision):
-        #             self.electricFieldArrows[i][j] = vpython.arrow(axis = vpython.vec(0, 0, 0), color = vpython.color.black)
-        
         # select display
         self.selectDisplay = []
         self.createSelectDisplay()
@@ -396,10 +387,10 @@ def clicked():
     # only when not playing
     if (not playing):
         # When no charge is selected
-        if (chargedObjSelected is None):
+        if (chargedObjSelected == None):
             chargedObjSelected = chargedObjOnMouse()
             # select the charge when the click is on a charged object
-            if (not chargedObjSelected is None):
+            if (chargedObjSelected != None):
                 chargedObjSelected.displaySelect()
                 spawnPosIndicator.visible = False
                 createCaptionSelectCharge()
@@ -410,12 +401,12 @@ def clicked():
                 displaySpawnPosIndicator(spawnPos)
         else:
             # reselect 
-            if (not chargedObjSelected is None):
+            if (chargedObjSelected != None):
                 chargedObjSelected.hideSelect()
             chargedObjSelected = chargedObjOnMouse()
 
             # select again or deselect
-            if (not chargedObjSelected is None):
+            if (chargedObjSelected != None):
                 chargedObjSelected.displaySelect()
                 createCaptionSelectCharge()
             else:
@@ -427,7 +418,8 @@ def chargedObjOnMouse():
     for chargedObj in allChargedObjs:
         if (vpython.mag(mousePos - chargedObj.pos) <= chargedObj.display.radius):
             return chargedObj
-        
+    return None
+
 def getMousePos():
     return vpython.scene.mouse.project(normal=vpython.vec(0, 0, 1))
 
@@ -450,7 +442,7 @@ def onMouseDown():
     mouseDown = True
 
     # initial pos of ruler
-    if (chargedObjToDrag is None and not playing):
+    if (chargedObjToDrag == None and not playing):
         ruler.modify(0, getMousePos())
         ruler.modify(1, getMousePos())
         rulerLabel.visible = False
@@ -458,7 +450,7 @@ def onMouseDown():
 def onMouseUp():
     global chargedObjToDrag, mouseDown
     # apply force vector if necessary
-    if (not chargedObjSelected is None):
+    if (chargedObjSelected != None):
         if (chargedObjSelected.forceVec.axis != vpython.vec(0, 0, 0)):
             chargedObjSelected.vel += chargedObjSelected.forceVec.axis / forceScaler / chargedObjSelected.mass 
             chargedObjSelected.forceVec.axis = vpython.vec(0, 0, 0)
@@ -477,7 +469,7 @@ def onMouseUp():
 def onMouseMove():
     global ruler
     # ruler when no object to drag and not playing
-    if chargedObjToDrag is None and not playing:
+    if chargedObjToDrag == None and not playing:
         # avoid mouse move after mouse up
         if (mouseDown):
             ruler.modify(1, getMousePos())
@@ -486,7 +478,7 @@ def onMouseMove():
         # when charge selected is not the charge you are draging
         if (chargedObjSelected != chargedObjToDrag):
             # set position
-            if (not chargedObjToDrag is None):
+            if (chargedObjToDrag != None):
                 mousePos = getMousePos()
                 chargedObjToDrag.pos = mousePos
                 chargedObjToDrag.display.pos = chargedObjToDrag.pos
@@ -496,10 +488,10 @@ def onMouseMove():
                     chargedObjToDrag.createVelLabel()
 
                 # could have impacted electric field and potential in the spawn screen
-                if (not spawnPos is None):
+                if (spawnPos != None):
                     updateSpawnScreen()
         else:
-            if not chargedObjToDrag is None:
+            if chargedObjToDrag != None:
                 # velocity vector
                 if (not playing):
                     chargedObjToDrag.velVec.pos = chargedObjToDrag.pos
@@ -967,7 +959,7 @@ spawnPosText = None
 
 def spawnXInput():
     global spawnPos, spawnPosIndicator
-    if (not spawnXInputField.number is None):
+    if (spawnXInputField.number != None):
         spawnPos.x = spawnXInputField.number
         updateSpawnScreen()
     displaySpawnPosIndicator(spawnPos)  
@@ -976,7 +968,7 @@ spawnXInputField = None
 
 def spawnYInput():
     global spawnPos, spawnPosIndicator
-    if (not spawnYInputField.number is None):
+    if (spawnYInputField.number != None):
         spawnPos.y = spawnYInputField.number
         updateSpawnScreen()
     displaySpawnPosIndicator(spawnPos)
@@ -1149,6 +1141,8 @@ def fixChargedObj():
 
 fixButton = None
 
+fixButton = None
+
 # endregion 
 
 ####################################################################################################
@@ -1183,7 +1177,7 @@ while True:
         charge.collided = []
 
     # update force vector because it is possible that mouse is not moving
-    if (playing and mouseDown and not chargedObjSelected is None):
+    if (playing and mouseDown and chargedObjSelected != None):
         chargedObjSelected.forceVec.pos = chargedObjSelected.pos
         chargedObjSelected.forceVec.axis = getMousePos() - chargedObjSelected.pos 
         chargedObjSelected.createForceLabel()
