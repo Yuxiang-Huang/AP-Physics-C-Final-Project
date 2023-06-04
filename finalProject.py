@@ -711,7 +711,7 @@ def createCaptionMainScreen():
 
     # clear trail button
     vpython.scene.append_to_caption("   ")
-    vpython.button (text = "Clear Trail", bind = changePlay)
+    vpython.button (text = "Clear All Trail", bind = changePlay)
 
     # electric field mode button
     global electricFieldButton
@@ -756,8 +756,6 @@ def changePlay():
             co.velVec.axis = co.vel
             co.createVelLabel()
 
-playButton = None
-
 # instruction button
 def displayInstructionPage():
     global startButton
@@ -766,13 +764,9 @@ def displayInstructionPage():
     vpython.scene.append_to_caption("\n")
     createInstruction()
 
-instructionButton = None
-
 # save button
 def save():
     print("!!!")
-
-saveButton = None
 
 # time slider
 time = 1
@@ -782,14 +776,15 @@ def timeShift():
     time = timeSlider.value
     timeText.text = "<center>Time in program for every second in real life:" + str(time) + "s</center>"
 
-timeSlider = None
-timeText = None
-
-# vector radio
+# vector menu
 def selectVector():
     print("!!!")
 
-vectorMenu = None
+# trail checkbox
+# def changeTrailAll():
+
+
+# trailCheckbox = None
 
 # electic field mode button
 electricFieldMode = 0
@@ -812,16 +807,12 @@ def changeElectricField():
 
     electricFieldButton.text = "Electric Field: Mode " + str(electricFieldMode)
 
-electricFieldButton = None
-
 # electric field opacity checkbox
 electricOpacityMode = False
 
 def changeElectricOpacityMode():
     global electricOpacityMode
     electricOpacityMode = not electricOpacityMode
-
-electricOpacityCheckbox = None
 
 # electric potential mode button
 electricPotentialMode = 0
@@ -843,8 +834,6 @@ def changeElectricPotential():
         
     electricPotentialButton.text = "Electric Potential Mode " + str(electricPotentialMode)
 
-electricPotentialButton = None
-
 # grid mode checkbox
 gridMode = False
 
@@ -859,8 +848,6 @@ def changeGridMode():
         for i in range(gridPrecision):
             potentialGridRows[i].visible = False
             potentialGridCols[i].visible = False
-
-gridCheckbox = None
 
 # endregion
 
@@ -924,8 +911,6 @@ def createCaptionSpawnScreen():
 def selectSpawnChargeObj():
     print("!!!")
 
-chargeMenu = None
-
 # spawn charge slider and input field
 spawnCharge = 1E-9
 
@@ -946,9 +931,6 @@ def spawnChargeInput():
         spawnChargeInputField.text = num
     else:
         spawnChargeInputField.text = spawnCharge / 1E-9
-
-spawnChargeSlider = None
-spawnChargeInputField = None
 
 # spawn mass slider and input field
 spawnMass = 1E-6
@@ -971,15 +953,10 @@ def spawnMassInput():
     else:
         spawnMassInputField.text = spawnMass / 1E-6
 
-spawnMassSlider = None
-spawnMassInputField = None
-
 # spawn button
 def spawnChargedObj():
     allChargedObjs.append(ChargedObj(spawnMass, spawnCharge, spawnPos, vpython.vec(0, 0, 0)))
     back()
-
-spawnButton = None
 
 # back button
 def back():
@@ -987,8 +964,6 @@ def back():
     createCaptionMainScreen()
     spawnPosIndicator.visible = False
     spawnPos = None
-
-backButton = None
 
 # spawn position input fields
 def spawnXInput():
@@ -999,8 +974,6 @@ def spawnXInput():
         updateSpawnScreen()
         displaySpawnPosIndicator(spawnPos)  
 
-spawnXInputField = None
-
 def spawnYInput():
     global spawnPos, spawnPosIndicator
     # change the y value of spawn position
@@ -1008,8 +981,6 @@ def spawnYInput():
         spawnPos.y = spawnYInputField.number
         updateSpawnScreen()
         displaySpawnPosIndicator(spawnPos)
-    
-spawnYInputField = None
 
 # electric field and potential texts
 def updateSpawnScreen():
@@ -1022,9 +993,6 @@ def updateSpawnScreen():
                                         '{:1.2f}'.format((vpython.mag(electricField))) + " N/C @ " +
                                         '{:1.2f}'.format(vpython.atan2(electricField.y, electricField.x) / vpython.pi * 180) + " degree")
     electricPotentialText.text = "Electric Potential: " '{:1.2f}'.format(calculateElectricPotential(spawnPos)) + " V"
-
-eletricFieldText = None
-electricPotentialText = None
 
 # endregion
 
