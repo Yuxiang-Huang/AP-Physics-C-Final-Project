@@ -664,6 +664,8 @@ Controls:
 
 createInstruction()
 
+backButton = None
+
 # endregion
 
 ####################################################################################################
@@ -671,49 +673,55 @@ createInstruction()
 # region Main Screen Caption
 
 def createCaptionMainScreen():
-    global playButton, timeSlider, timeText
-    global electricFieldButton, electricPotentialButton
-    global instructionButton
-
     vpython.scene.caption = ""
 
+    # play button
+    global playButton
     vpython.scene.append_to_caption("   ")
     if (playing):
         playButton = vpython.button(text="Stop", bind = changePlay)
     else:
         playButton = vpython.button(text="Play", bind = changePlay)
 
+    # instruction button
+    global instructionButton
+    vpython.scene.append_to_caption("   ")
+    instructionButton = vpython.button(text="Instructions", bind = displayInstructionPage)
+
     vpython.scene.append_to_caption("   ")
     vpython.button (text = "Trail: False", bind = changePlay)
 
-    vpython.scene.append_to_caption("   ")
+    vpython.scene.append_to_caption("\n   ")
     vpython.button (text = "Save", bind = changePlay)
 
+    # time slider
+    global timeSlider, timeText
     vpython.scene.append_to_caption("\n\n")
     timeSlider = vpython.slider(bind=timeShift, min = 0.1, max = 5, value = time, step = 0.1, length = sliderLength) 
     vpython.scene.append_to_caption("\n")
     timeText = vpython.wtext(text = "<center>Time in program for every second in real life:" + str(time) + "s</center>")
 
-    vpython.scene.append_to_caption("\n\n   ")
+    # electric field mode button
+    global electricFieldButton
+    vpython.scene.append_to_caption("\n   ")
     electricFieldButton = vpython.button(text="Electric Field: Mode " + str(electricFieldMode), bind = changeElectricField)
 
-    # electric field opacity
+    # electric field opacity checkbox
     global electricOpacityCheckbox
     vpython.scene.append_to_caption("   ")
     electricOpacityCheckbox = vpython.checkbox(text = "Electric Field Opacity", bind = changeElectricOpacityMode, checked = electricOpacityMode)
 
+    # electric potential mode button
+    global electricPotentialButton
     vpython.scene.append_to_caption("\n\n   ")
     electricPotentialButton = vpython.button(text="Electric Potential Mode " + str(electricPotentialMode), bind = changeElectricPotential)
     
+    # grid mode checkbox
     global gridCheckbox
     vpython.scene.append_to_caption("   ")  
     gridCheckbox = vpython.checkbox(text="Grid", bind = changeGridMode, checked = gridMode)
 
-
-    vpython.scene.append_to_caption("\n\n\n\n   ")
-    instructionButton = vpython.button(text="Instructions", bind = displayInstructionPage)
-
-# playing button
+# play button
 playing = False
 
 def changePlay():
@@ -737,6 +745,16 @@ def changePlay():
             co.createVelLabel()
 
 playButton = None
+
+# instruction button
+def displayInstructionPage():
+    global startButton
+    vpython.scene.caption = ""
+    startButton = vpython.button(text = "Back", bind = createCaptionMainScreen)
+    vpython.scene.append_to_caption("\n")
+    createInstruction()
+
+instructionButton = None
 
 # time slider
 time = 1
@@ -772,7 +790,7 @@ def changeElectricField():
 
 electricFieldButton = None
 
-# electric field opacity
+# electric field opacity checkbox
 electricOpacityMode = False
 
 def changeElectricOpacityMode():
@@ -781,7 +799,7 @@ def changeElectricOpacityMode():
 
 electricOpacityCheckbox = None
 
-# electric potential button
+# electric potential mode button
 electricPotentialMode = 0
 
 def changeElectricPotential():
@@ -803,7 +821,7 @@ def changeElectricPotential():
 
 electricPotentialButton = None
 
-# grid
+# grid mode checkbox
 gridMode = False
 
 def changeGridMode():
@@ -820,17 +838,6 @@ def changeGridMode():
 
 gridCheckbox = None
 
-# instruction and back buttons
-def displayInstructionPage():
-    global startButton
-    vpython.scene.caption = ""
-    startButton = vpython.button(text = "Back", bind = createCaptionMainScreen)
-    vpython.scene.append_to_caption("\n")
-    createInstruction()
-
-instructionButton = None
-backButton = None
-
 # endregion
 
 ####################################################################################################
@@ -840,12 +847,12 @@ backButton = None
 def createCaptionSpawnScreen():
     vpython.scene.caption = ""
 
-    # spawn radio
+    # spawn charge radio
     global chargeMenu
     vpython.scene.append_to_caption("   Spawn Charge Object Menu: ")
     chargeMenu = vpython.menu(text = "Charge Menu", choices = ["Sphere", "Cyllinder", "Plate"], bind = spawnRadio) 
     
-    # spawn charge
+    # spawn charge slider and input field
     global spawnChargeSlider, spawnChargeInputField
     vpython.scene.append_to_caption("\n\n")
     spawnChargeSlider = vpython.slider(bind = spawnChargeShift, min = -5, max = 5, value = spawnCharge / 1E-9, step = 0.1, length = sliderLength)
@@ -853,7 +860,7 @@ def createCaptionSpawnScreen():
     spawnChargeInputField = vpython.winput(bind = spawnChargeInput, text = spawnChargeSlider.value, width = 35)
     vpython.scene.append_to_caption(" nC")
 
-    # spawn mass
+    # spawn mass slider and input field
     global spawnMassSlider, spawnMassInputField
     vpython.scene.append_to_caption("\n\n")
     spawnMassSlider = vpython.slider(bind = spawnMassShift, min = 1, max = 5, value = spawnMass / 1E-6, step = 0.1, length = sliderLength)
@@ -868,7 +875,7 @@ def createCaptionSpawnScreen():
     vpython.scene.append_to_caption("   ")
     backButton = vpython.button(text = "Back", bind = back)
 
-    # position input fields
+    # spawn position input fields
     global spawnPosText, spawnXInputField, spawnYInputField
     vpython.scene.append_to_caption("\n\n   Position: <")
     spawnXInputField = vpython.winput(bind = spawnXInput, text = '{:1.2f}'.format(spawnPos.x), width = 50)
@@ -876,7 +883,7 @@ def createCaptionSpawnScreen():
     spawnYInputField = vpython.winput(bind = spawnYInput, text = '{:1.2f}'.format(spawnPos.y), width = 50) 
     vpython.scene.append_to_caption(">")
 
-    # electric field and potential
+    # electric field and potential texts
     global electricFieldText, electricPotentialText
     vpython.scene.append_to_caption("\n\n   ")
     electricField = calculateElectricField(spawnPos)
@@ -889,13 +896,13 @@ def createCaptionSpawnScreen():
     vpython.scene.append_to_caption("\n\n   ")
     electricPotentialText = vpython.wtext(text = "Electric Potential: " '{:1.2f}'.format(calculateElectricPotential(spawnPos)) + " V")
 
-# spawn menu
+# spawn charge radio
 def spawnRadio():
     global chargeMenu 
 
 chargeMenu = None
 
-# spawn charge
+# spawn charge slider and input field
 spawnCharge = 1E-9
 
 def spawnChargeShift():
@@ -919,7 +926,7 @@ def spawnChargeInput():
 spawnChargeSlider = None
 spawnChargeInputField = None
 
-# spawn mass
+# spawn mass slider and input field
 spawnMass = 1E-6
 
 def spawnMassShift():
@@ -959,7 +966,7 @@ def back():
 
 backButton = None
 
-# position input fields
+# spawn position input fields
 def spawnXInput():
     global spawnPos, spawnPosIndicator
     # change the x value of spawn position
@@ -980,12 +987,10 @@ def spawnYInput():
     
 spawnYInputField = None
 
-# electric field and potential
-eletricFieldText = None
-electricPotentialText = None
-
+# electric field and potential texts
 def updateSpawnScreen():
     global electricFieldText, electricPotentialText
+    # recalculate electric field and potential
     electricField = calculateElectricField(spawnPos)
     electricFieldText.text = ("Electric Field: <" + 
                                         '{:1.2f}'.format(electricField.x) + ", " + 
@@ -993,6 +998,9 @@ def updateSpawnScreen():
                                         '{:1.2f}'.format((vpython.mag(electricField))) + " N/C @ " +
                                         '{:1.2f}'.format(vpython.atan2(electricField.y, electricField.x) / vpython.pi * 180) + " degree")
     electricPotentialText.text = "Electric Potential: " '{:1.2f}'.format(calculateElectricPotential(spawnPos)) + " V"
+
+eletricFieldText = None
+electricPotentialText = None
 
 # endregion
 
