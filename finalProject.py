@@ -17,10 +17,17 @@ steps = 10
 epsilon = 0.01
 numOfRate = 1000
 sliderLength = 450
-
-# electric field stuff
 electricFieldOpacitySetter = 1
 forceScaler = 1E6
+
+# texture links
+positiveSphereTexture = "https://i.imgur.com/9c10QCm.png"
+negativeSphereTexture = "https://i.imgur.com/r6loarb.png"
+neutralSphereTexture = "https://i.imgur.com/eLOxvSS.png"
+
+fixedPositiveSphereTexture = "https://i.imgur.com/ADy8l2o.png"
+fixedNegativeSphereTexture = "https://i.imgur.com/ReG5wU7.png"
+fixedNeutralSphereTexture = "https://i.imgur.com/b80Axoa.png"
 
 # Test place
 
@@ -146,8 +153,8 @@ class ChargedObj:
         self.vel = spawnVel
         self.fixed = False
         self.collided = []
-        self.velLabel = vpython.label(text="0", visible = False)
-        self.forceLabel = vpython.label(text="0", visible = False)
+        self.velLabel = vpython.label(text = "0", visible = False)
+        self.forceLabel = vpython.label(text = "0", visible = False)
         # Displays
         spawnRadius = ((mass) / (((4/3)* vpython.pi*spawnDensity)))**(1/3)
 
@@ -156,7 +163,7 @@ class ChargedObj:
 
         # spheres for now
         if (charge > 0):
-            self.display = vpython.sphere(pos=spawnPos, radius=spawnRadius, texture = "https://i.imgur.com/9c10QCm.png")
+            self.display = vpython.sphere(pos = spawnPos, radius = spawnRadius, texture = positiveSphereTexture)
             self.velVec = vpython.arrow(axis = vpython.vec(0, 0, 0), color = vpython.color.red)
             self.forceVec = vpython.arrow(axis = vpython.vec(0, 0, 0), color = vpython.color.red)
 
@@ -167,7 +174,7 @@ class ChargedObj:
                 for j in range(electricFieldPrecision):
                     self.electricFieldArrows[i][j] = vpython.arrow(axis = vpython.vec(0, 0, 0), color = vpython.color.red)
         elif (charge < 0):
-            self.display = vpython.sphere(pos=spawnPos, radius=spawnRadius, texture="https://i.imgur.com/r6loarb.png")
+            self.display = vpython.sphere(pos=spawnPos, radius=spawnRadius, texture = negativeSphereTexture)
             self.velVec = vpython.arrow(axis = vpython.vec(0, 0, 0), color = vpython.color.blue)
             self.forceVec = vpython.arrow(axis = vpython.vec(0, 0, 0), color = vpython.color.blue)
 
@@ -178,7 +185,7 @@ class ChargedObj:
                 for j in range(electricFieldPrecision):
                     self.electricFieldArrows[i][j] = vpython.arrow(axis = vpython.vec(0, 0, 0), color = vpython.color.blue)
         else:
-            self.display = vpython.sphere(pos=spawnPos, radius=spawnRadius, texture = "https://i.imgur.com/eLOxvSS.png")
+            self.display = vpython.sphere(pos=spawnPos, radius=spawnRadius, texture = neutralSphereTexture)
             self.velVec = vpython.arrow(axis = vpython.vec(0, 0, 0), color = vpython.color.black)
             self.forceVec = vpython.arrow(axis = vpython.vec(0, 0, 0), color = vpython.color.black)
 
@@ -604,24 +611,6 @@ vpython.scene.append_to_caption("   ")
 vpython.button(text = "draw dragonfly", bind = dragonflyPreset) 
 vpython.scene.append_to_caption("\n\n   ")
 vpython.button(text = "draw something", bind = somethingPreset)
-
-def collisionTest():
-    start()
-    allChargedObjs.append(ChargedObj(1E-6, 1E-9, vpython.vec(2.5,0,0), vpython.vec(0, 1, 0)))
-    allChargedObjs.append(ChargedObj(1E-6, 0, vpython.vec(0,5,0), vpython.vec(1, -1, 0)))
-    allChargedObjs.append(ChargedObj(1E-6, 0, vpython.vec(5,5,0), vpython.vec(-1, -1, 0)))
-    
-vpython.scene.append_to_caption("\n\n   ")
-vpython.button(text = "Collision test", bind = collisionTest)
-
-def collisionTest2():
-    start()
-    allChargedObjs.append(ChargedObj(1E-6, 1E-9, vpython.vec(0,0,0), vpython.vec(0, 0, 0)))
-    allChargedObjs.append(ChargedObj(1E-6, 0, vpython.vec(5,0,0), vpython.vec(-1, 0, 0)))
-    allChargedObjs.append(ChargedObj(1E-6, 0, vpython.vec(-5, 0,0), vpython.vec(1, 0, 0)))
-
-vpython.scene.append_to_caption("\n\n   ")
-vpython.button(text = "Collision test", bind = collisionTest2)
 
 # electric field Slider
 electricFieldPrecision = 10
@@ -1092,12 +1081,22 @@ def selectedChargeShift():
     global chargedObjSelected, selectedChargeSlider, selectedChargeText
     chargedObjSelected.charge = selectedChargeSlider.value * 10E-9      
     selectedChargeText.text = 'Charge (nC):'+'{:1.2f}'.format(selectedChargeSlider.value)
+    # change the texture
     if (chargedObjSelected.charge > 0):
-        chargedObjSelected.display.texture = "https://i.imgur.com/Id1Q11U.png"
-    if (chargedObjSelected.charge < 0): 
-        chargedObjSelected.display.texture = "https://i.imgur.com/r6loarb.png"
-    # if (chargedObjSelected.charge == 0): 
-    #     chargedObjSelected.display.color = vpython.color.black 
+        if (chargedObjSelected.fixed):
+            chargedObjSelected.display.texture = fixedPositiveSphereTexture
+        else:
+            chargedObjSelected.display.texture = positiveSphereTexture
+    elif (chargedObjSelected.charge < 0): 
+        if (chargedObjSelected.fixed):
+            chargedObjSelected.display.texture = fixedNegativeSphereTexture
+        else:
+            chargedObjSelected.display.texture = negativeSphereTexture
+    else:
+        if (chargedObjSelected.fixed):
+            chargedObjSelected.display.texture = fixedNeutralSphereTexture
+        else:
+            chargedObjSelected.display.texture = neutralSphereTexture
 
 selectedChargeSlider = None
 selectedChargeText = None
@@ -1126,22 +1125,28 @@ deleteButton = None
 def fixChargedObj():
     global chargedObjSelected
     chargedObjSelected.fixed = not chargedObjSelected.fixed
+
+    # text
+    if (chargedObjSelected.fixed):
+        fixButton.text = "Unfix"
+    else:
+        fixButton.text = "Fix"
+
+    # texture
     if (chargedObjSelected.fixed): 
         if chargedObjSelected.charge > 0:
-            chargedObjSelected.display.texture = "https://i.imgur.com/ADy8l2o.png"
+            chargedObjSelected.display.texture = fixedPositiveSphereTexture
         elif chargedObjSelected.charge < 0:
-            chargedObjSelected.display.texture = "https://i.imgur.com/ReG5wU7.png"
+            chargedObjSelected.display.texture = fixedNegativeSphereTexture
         else: 
-            chargedObjSelected.display.texture = "https://i.imgur.com/b80Axoa.png"
+            chargedObjSelected.display.texture = fixedNeutralSphereTexture
     else:
         if chargedObjSelected.charge > 0:
-            chargedObjSelected.display.texture = "https://i.imgur.com/9c10QCm.png" 
+            chargedObjSelected.display.texture = positiveSphereTexture 
         elif chargedObjSelected.charge < 0:
-            chargedObjSelected.display.texture = "https://i.imgur.com/r6loarb.png"
+            chargedObjSelected.display.texture = negativeSphereTexture
         else: 
-            chargedObjSelected.display.texture = "https://i.imgur.com/eLOxvSS.png"
-
-fixButton = None
+            chargedObjSelected.display.texture = neutralSphereTexture
 
 fixButton = None
 
