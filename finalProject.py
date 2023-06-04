@@ -847,12 +847,14 @@ backButton = None
 # region Spawn Screen Caption
 
 def createCaptionSpawnScreen():
-    global massSlider, massText, chargeMenu, spawnButton, backButton
+    global spawnButton, backButton
     global spawnPosText, spawnXInputField, spawnYInputField
     global electricFieldText, electricPotentialText
 
     vpython.scene.caption = ""
 
+    # spawn radio
+    global chargeMenu
     vpython.scene.append_to_caption("   Spawn Charge Object Menu: ")
     chargeMenu = vpython.menu(text = "Charge Menu", choices = ["Sphere", "Cyllinder", "Plate"], bind = spawnRadio) 
     
@@ -864,12 +866,15 @@ def createCaptionSpawnScreen():
     spawnChargeInputField = vpython.winput(bind = spawnChargeInput, text = spawnChargeSlider.value, width = 35)
     vpython.scene.append_to_caption(" nC")
 
-    vpython.scene.append_to_caption("\n")
-    massSlider = vpython.slider(bind=massShift, min = 1, max = 2, value = spawnMass / 1E-6, step = 0.1, length = sliderLength) 
-    vpython.scene.append_to_caption("\n")
-    massText = vpython.wtext(text = '<center>Mass: '+'{:1.2f}'.format(massSlider.value) + " * 10^-6 Kg</center>")
+    # spawn mass
+    global spawnMassSlider, spawnMassInputField
+    vpython.scene.append_to_caption("\n\n")
+    spawnMassSlider = vpython.slider(bind = spawnMassShift, min = 1, max = 5, value = spawnMass / 1E-6, step = 0.1, length = sliderLength)
+    vpython.scene.append_to_caption("\n                          Mass: ")
+    spawnMassInputField = vpython.winput(bind = spawnMassInput, text = spawnMassSlider.value, width = 35)
+    vpython.scene.append_to_caption(" * 10^-6 Kg")
 
-    vpython.scene.append_to_caption("\n   ")
+    vpython.scene.append_to_caption("\n\n   ")
     spawnButton = vpython.button(text = "Spawn", bind = spawnChargedObj)
 
     vpython.scene.append_to_caption("   ")
@@ -911,26 +916,41 @@ def spawnChargeInput():
     global spawnCharge, spawnChargeSlider, spawnChargeInputField
     if (spawnChargeInputField.number != None):
         # min max
-        num = max(-5, spawnChargeInputField.number)
-        num = min(5, num)
+        num = max(spawnChargeSlider.min, spawnChargeInputField.number)
+        num = min(spawnChargeSlider.max, num)
         # set values
         spawnCharge = num * 1E-9
         spawnChargeSlider.value = num
         spawnChargeInputField.text = num
+    else:
+        spawnChargeInputField.text = spawnCharge / 1E-9
 
 spawnChargeSlider = None
 spawnChargeInputField = None
 
-# spawn mass slider
+# spawn mass
 spawnMass = 1E-6
 
-def massShift():
-    global spawnMass, massText
-    spawnMass = massSlider.value * 1E-6
-    massText.text = '<center>Mass: '+'{:1.2f}'.format(massSlider.value) + " * 10^-6 Kg <center>"
+def spawnMassShift():
+    global spawnMass, spawnMassInputField
+    spawnMass = spawnMassSlider.value * 1E-6
+    spawnMassInputField.text = spawnMassSlider.value
 
-massSlider = None
-massText = None
+def spawnMassInput():
+    global spawnMass, spawnMassSlider, spawnMassInputField
+    if (spawnMassInputField.number != None):
+        # min max
+        num = max(spawnMassSlider.min, spawnMassInputField.number)
+        num = min(spawnMassSlider.max, num)
+        # set values
+        spawnMass = num * 1E-6
+        spawnMassSlider.value = num
+        spawnMassInputField.text = num
+    else:
+        spawnMassInputField.text = spawnMass / 1E-6
+
+spawnMassSlider = None
+spawnMassInputField = None
 
 # spawn button
 def spawnChargedObj():
