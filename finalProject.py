@@ -1,5 +1,9 @@
 import vpython
 
+####################################################################################################
+
+# region Variables
+
 # set scene
 vpython.scene.background = vpython.color.white
 vpython.scene.width = 1000
@@ -29,11 +33,11 @@ fixedPositiveSphereTexture = "https://i.imgur.com/ADy8l2o.png"
 fixedNegativeSphereTexture = "https://i.imgur.com/ReG5wU7.png"
 fixedNeutralSphereTexture = "https://i.imgur.com/b80Axoa.png"
 
-# Test place
+# endregion
 
 ####################################################################################################
 
-# region initilization
+# region Initilization
 
 unitWidth = None
 unitHeight = None
@@ -843,19 +847,22 @@ backButton = None
 # region Spawn Screen Caption
 
 def createCaptionSpawnScreen():
-    global spawnChargeSlider, spawnChargeText, massSlider, massText, chargeMenu, spawnButton, backButton
+    global massSlider, massText, chargeMenu, spawnButton, backButton
     global spawnPosText, spawnXInputField, spawnYInputField
     global electricFieldText, electricPotentialText
 
     vpython.scene.caption = ""
 
     vpython.scene.append_to_caption("   Spawn Charge Object Menu: ")
-    chargeMenu = vpython.menu(text = "Charge Menu", choices = ["Sphere", "Cyllinder", "Plate", "Box"], bind = spawnRadio) 
+    chargeMenu = vpython.menu(text = "Charge Menu", choices = ["Sphere", "Cyllinder", "Plate"], bind = spawnRadio) 
     
+    # spawn charge
+    global spawnChargeSlider, spawnChargeInputField
     vpython.scene.append_to_caption("\n\n")
     spawnChargeSlider = vpython.slider(bind = spawnChargeShift, min = -5, max = 5, value = spawnCharge / 1E-9, step = 0.1, length = sliderLength)
-    vpython.scene.append_to_caption("\n")
-    spawnChargeText = vpython.wtext(text = '<center>Charge: '+'{:1.2f}'.format(spawnChargeSlider.value) + " nC </center>")
+    vpython.scene.append_to_caption("\n                             Charge: ")
+    spawnChargeInputField = vpython.winput(bind = spawnChargeInput, text = spawnChargeSlider.value, width = 35)
+    vpython.scene.append_to_caption(" nC")
 
     vpython.scene.append_to_caption("\n")
     massSlider = vpython.slider(bind=massShift, min = 1, max = 2, value = spawnMass / 1E-6, step = 0.1, length = sliderLength) 
@@ -892,16 +899,27 @@ def spawnRadio():
 
 chargeMenu = None
 
-# spawn charge slider
+# spawn charge
 spawnCharge = 1E-9
 
 def spawnChargeShift():
-    global spawnCharge, spawnChargeText
+    global spawnCharge, spawnChargeInputField
     spawnCharge = spawnChargeSlider.value * 1E-9
-    spawnChargeText.text = '<center>Charge: '+'{:1.2f}'.format(spawnChargeSlider.value) + " nC </center>"
+    spawnChargeInputField.text = spawnChargeSlider.value
+
+def spawnChargeInput():
+    global spawnCharge, spawnChargeSlider, spawnChargeInputField
+    if (spawnChargeInputField.number != None):
+        # min max
+        num = max(-5, spawnChargeInputField.number)
+        num = min(5, num)
+        # set values
+        spawnCharge = num * 1E-9
+        spawnChargeSlider.value = num
+        spawnChargeInputField.text = num
 
 spawnChargeSlider = None
-spawnChargeText = None
+spawnChargeInputField = None
 
 # spawn mass slider
 spawnMass = 1E-6
@@ -950,19 +968,21 @@ spawnPosText = None
 
 def spawnXInput():
     global spawnPos, spawnPosIndicator
+    # change the x value of spawn position
     if (spawnXInputField.number != None):
         spawnPos.x = spawnXInputField.number
         updateSpawnScreen()
-    displaySpawnPosIndicator(spawnPos)  
+        displaySpawnPosIndicator(spawnPos)  
 
 spawnXInputField = None
 
 def spawnYInput():
     global spawnPos, spawnPosIndicator
+    # change the y value of spawn position
     if (spawnYInputField.number != None):
         spawnPos.y = spawnYInputField.number
         updateSpawnScreen()
-    displaySpawnPosIndicator(spawnPos)
+        displaySpawnPosIndicator(spawnPos)
     
 spawnYInputField = None
 
@@ -1155,6 +1175,9 @@ def deleteChargedObj():
             for j in range(electricFieldPrecision):
                 chargedObjSelected.electricFieldArrows[i][j].visible = False
     allChargedObjs.remove(chargedObjSelected)
+    if (chargedObjSelected == cameraFollowedObj):
+        vpython.scene.camera.follow(None)
+        cameraFollowedObj = None
     chargedObjSelected = None
     createCaptionMainScreen()
 
