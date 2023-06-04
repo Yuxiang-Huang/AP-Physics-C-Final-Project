@@ -1,5 +1,9 @@
 Web VPython 3.2
 
+####################################################################################################
+
+# region Variables
+
 # set scene
 scene.background = color.white
 scene.width = 1000
@@ -29,11 +33,11 @@ fixedPositiveSphereTexture = "https://i.imgur.com/ADy8l2o.png"
 fixedNegativeSphereTexture = "https://i.imgur.com/ReG5wU7.png"
 fixedNeutralSphereTexture = "https://i.imgur.com/b80Axoa.png"
 
-# Test place
+# endregion
 
 ####################################################################################################
 
-# region initilization
+# region Initilization
 
 unitWidth = None
 unitHeight = None
@@ -843,38 +847,46 @@ backButton = None
 # region Spawn Screen Caption
 
 def createCaptionSpawnScreen():
-    global spawnChargeSlider, spawnChargeText, massSlider, massText, chargeMenu, spawnButton, backButton
-    global spawnPosText, spawnXInputField, spawnYInputField
-    global electricFieldText, electricPotentialText
-
     scene.caption = ""
 
+    # spawn radio
+    global chargeMenu
     scene.append_to_caption("   Spawn Charge Object Menu: ")
-    chargeMenu = menu(text = "Charge Menu", choices = ["Sphere", "Cyllinder", "Plate", "Box"], bind = spawnRadio) 
+    chargeMenu = menu(text = "Charge Menu", choices = ["Sphere", "Cyllinder", "Plate"], bind = spawnRadio) 
     
+    # spawn charge
+    global spawnChargeSlider, spawnChargeInputField
     scene.append_to_caption("\n\n")
     spawnChargeSlider = slider(bind = spawnChargeShift, min = -5, max = 5, value = spawnCharge / 1E-9, step = 0.1, length = sliderLength)
-    scene.append_to_caption("\n")
-    spawnChargeText = wtext(text = '<center>Charge: '+'{:1.2f}'.format(spawnChargeSlider.value) + " nC </center>")
+    scene.append_to_caption("\n                             Charge: ")
+    spawnChargeInputField = winput(bind = spawnChargeInput, text = spawnChargeSlider.value, width = 35)
+    scene.append_to_caption(" nC")
 
-    scene.append_to_caption("\n")
-    massSlider = slider(bind=massShift, min = 1, max = 2, value = spawnMass / 1E-6, step = 0.1, length = sliderLength) 
-    scene.append_to_caption("\n")
-    massText = wtext(text = '<center>Mass: '+'{:1.2f}'.format(massSlider.value) + " * 10^-6 Kg</center>")
+    # spawn mass
+    global spawnMassSlider, spawnMassInputField
+    scene.append_to_caption("\n\n")
+    spawnMassSlider = slider(bind = spawnMassShift, min = 1, max = 5, value = spawnMass / 1E-6, step = 0.1, length = sliderLength)
+    scene.append_to_caption("\n                          Mass: ")
+    spawnMassInputField = winput(bind = spawnMassInput, text = spawnMassSlider.value, width = 35)
+    scene.append_to_caption(" * 10^-6 Kg")
 
-    scene.append_to_caption("\n   ")
+    # spawn and back buttons
+    global spawnButton, backButton
+    scene.append_to_caption("\n\n   ")
     spawnButton = button(text = "Spawn", bind = spawnChargedObj)
-
     scene.append_to_caption("   ")
     backButton = button(text = "Back", bind = back)
 
-    scene.append_to_caption("\n\n   ")
-    spawnPosText = wtext(text = "Position: <" + '{:1.2f}'.format(spawnPos.x) + ", " + '{:1.2f}'.format(spawnPos.y) + ">")
-    scene.append_to_caption("\n   x:")
-    spawnXInputField = winput(bind = spawnXInput)
-    scene.append_to_caption("\n   y:")
-    spawnYInputField = winput(bind = spawnYInput) 
+    # position input fields
+    global spawnPosText, spawnXInputField, spawnYInputField
+    scene.append_to_caption("\n\n   Position: <")
+    spawnXInputField = winput(bind = spawnXInput, text = '{:1.2f}'.format(spawnPos.x), width = 50)
+    scene.append_to_caption(", ")
+    spawnYInputField = winput(bind = spawnYInput, text = '{:1.2f}'.format(spawnPos.y), width = 50) 
+    scene.append_to_caption(">")
 
+    # electric field and potential
+    global electricFieldText, electricPotentialText
     scene.append_to_caption("\n\n   ")
     electricField = calculateElectricField(spawnPos)
     electricFieldText = wtext(text = "Electric Field: <" + 
@@ -892,27 +904,53 @@ def spawnRadio():
 
 chargeMenu = None
 
-# spawn charge slider
+# spawn charge
 spawnCharge = 1E-9
 
 def spawnChargeShift():
-    global spawnCharge, spawnChargeText
+    global spawnCharge, spawnChargeInputField
     spawnCharge = spawnChargeSlider.value * 1E-9
-    spawnChargeText.text = '<center>Charge: '+'{:1.2f}'.format(spawnChargeSlider.value) + " nC </center>"
+    spawnChargeInputField.text = spawnChargeSlider.value
+
+def spawnChargeInput():
+    global spawnCharge, spawnChargeSlider, spawnChargeInputField
+    if (spawnChargeInputField.number != None):
+        # min max
+        num = max(spawnChargeSlider.min, spawnChargeInputField.number)
+        num = min(spawnChargeSlider.max, num)
+        # set values
+        spawnCharge = num * 1E-9
+        spawnChargeSlider.value = num
+        spawnChargeInputField.text = num
+    else:
+        spawnChargeInputField.text = spawnCharge / 1E-9
 
 spawnChargeSlider = None
-spawnChargeText = None
+spawnChargeInputField = None
 
-# spawn mass slider
+# spawn mass
 spawnMass = 1E-6
 
-def massShift():
-    global spawnMass, massText
-    spawnMass = massSlider.value * 1E-6
-    massText.text = '<center>Mass: '+'{:1.2f}'.format(massSlider.value) + " * 10^-6 Kg <center>"
+def spawnMassShift():
+    global spawnMass, spawnMassInputField
+    spawnMass = spawnMassSlider.value * 1E-6
+    spawnMassInputField.text = spawnMassSlider.value
 
-massSlider = None
-massText = None
+def spawnMassInput():
+    global spawnMass, spawnMassSlider, spawnMassInputField
+    if (spawnMassInputField.number != None):
+        # min max
+        num = max(spawnMassSlider.min, spawnMassInputField.number)
+        num = min(spawnMassSlider.max, num)
+        # set values
+        spawnMass = num * 1E-6
+        spawnMassSlider.value = num
+        spawnMassInputField.text = num
+    else:
+        spawnMassInputField.text = spawnMass / 1E-6
+
+spawnMassSlider = None
+spawnMassInputField = None
 
 # spawn button
 def spawnChargedObj():
@@ -930,13 +968,33 @@ def back():
 
 backButton = None
 
-# stats
+# position input fields
+def spawnXInput():
+    global spawnPos, spawnPosIndicator
+    # change the x value of spawn position
+    if (spawnXInputField.number != None):
+        spawnPos.x = spawnXInputField.number
+        updateSpawnScreen()
+        displaySpawnPosIndicator(spawnPos)  
+
+spawnXInputField = None
+
+def spawnYInput():
+    global spawnPos, spawnPosIndicator
+    # change the y value of spawn position
+    if (spawnYInputField.number != None):
+        spawnPos.y = spawnYInputField.number
+        updateSpawnScreen()
+        displaySpawnPosIndicator(spawnPos)
+    
+spawnYInputField = None
+
+# electric field and potential
 eletricFieldText = None
 electricPotentialText = None
 
 def updateSpawnScreen():
-    global spawnPosText, electricFieldText, electricPotentialText
-    spawnPosText.text = "Position: <" + '{:1.2f}'.format(spawnPos.x) + ", " + '{:1.2f}'.format(spawnPos.y) + ">"
+    global electricFieldText, electricPotentialText
     electricField = calculateElectricField(spawnPos)
     electricFieldText.text = ("Electric Field: <" + 
                                         '{:1.2f}'.format(electricField.x) + ", " + 
@@ -944,27 +1002,6 @@ def updateSpawnScreen():
                                         '{:1.2f}'.format((mag(electricField))) + " N/C @ " +
                                         '{:1.2f}'.format(atan2(electricField.y, electricField.x) / pi * 180) + " degree")
     electricPotentialText.text = "Electric Potential: " '{:1.2f}'.format(calculateElectricPotential(spawnPos)) + " V"
-
-# position inputs
-spawnPosText = None
-
-def spawnXInput():
-    global spawnPos, spawnPosIndicator
-    if (spawnXInputField.number != None):
-        spawnPos.x = spawnXInputField.number
-        updateSpawnScreen()
-    displaySpawnPosIndicator(spawnPos)  
-
-spawnXInputField = None
-
-def spawnYInput():
-    global spawnPos, spawnPosIndicator
-    if (spawnYInputField.number != None):
-        spawnPos.y = spawnYInputField.number
-        updateSpawnScreen()
-    displaySpawnPosIndicator(spawnPos)
-    
-spawnYInputField = None
 
 # endregion
 

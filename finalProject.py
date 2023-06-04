@@ -847,10 +847,6 @@ backButton = None
 # region Spawn Screen Caption
 
 def createCaptionSpawnScreen():
-    global spawnButton, backButton
-    global spawnPosText, spawnXInputField, spawnYInputField
-    global electricFieldText, electricPotentialText
-
     vpython.scene.caption = ""
 
     # spawn radio
@@ -874,19 +870,23 @@ def createCaptionSpawnScreen():
     spawnMassInputField = vpython.winput(bind = spawnMassInput, text = spawnMassSlider.value, width = 35)
     vpython.scene.append_to_caption(" * 10^-6 Kg")
 
+    # spawn and back buttons
+    global spawnButton, backButton
     vpython.scene.append_to_caption("\n\n   ")
     spawnButton = vpython.button(text = "Spawn", bind = spawnChargedObj)
-
     vpython.scene.append_to_caption("   ")
     backButton = vpython.button(text = "Back", bind = back)
 
-    vpython.scene.append_to_caption("\n\n   ")
-    spawnPosText = vpython.wtext(text = "Position: <" + '{:1.2f}'.format(spawnPos.x) + ", " + '{:1.2f}'.format(spawnPos.y) + ">")
-    vpython.scene.append_to_caption("\n   x:")
-    spawnXInputField = vpython.winput(bind = spawnXInput)
-    vpython.scene.append_to_caption("\n   y:")
-    spawnYInputField = vpython.winput(bind = spawnYInput) 
+    # position input fields
+    global spawnPosText, spawnXInputField, spawnYInputField
+    vpython.scene.append_to_caption("\n\n   Position: <")
+    spawnXInputField = vpython.winput(bind = spawnXInput, text = '{:1.2f}'.format(spawnPos.x), width = 50)
+    vpython.scene.append_to_caption(", ")
+    spawnYInputField = vpython.winput(bind = spawnYInput, text = '{:1.2f}'.format(spawnPos.y), width = 50) 
+    vpython.scene.append_to_caption(">")
 
+    # electric field and potential
+    global electricFieldText, electricPotentialText
     vpython.scene.append_to_caption("\n\n   ")
     electricField = calculateElectricField(spawnPos)
     electricFieldText = vpython.wtext(text = "Electric Field: <" + 
@@ -968,24 +968,7 @@ def back():
 
 backButton = None
 
-# stats
-eletricFieldText = None
-electricPotentialText = None
-
-def updateSpawnScreen():
-    global spawnPosText, electricFieldText, electricPotentialText
-    spawnPosText.text = "Position: <" + '{:1.2f}'.format(spawnPos.x) + ", " + '{:1.2f}'.format(spawnPos.y) + ">"
-    electricField = calculateElectricField(spawnPos)
-    electricFieldText.text = ("Electric Field: <" + 
-                                        '{:1.2f}'.format(electricField.x) + ", " + 
-                                        '{:1.2f}'.format(electricField.y) + "> N/C \n   Electric Field: "+
-                                        '{:1.2f}'.format((vpython.mag(electricField))) + " N/C @ " +
-                                        '{:1.2f}'.format(vpython.atan2(electricField.y, electricField.x) / vpython.pi * 180) + " degree")
-    electricPotentialText.text = "Electric Potential: " '{:1.2f}'.format(calculateElectricPotential(spawnPos)) + " V"
-
-# position inputs
-spawnPosText = None
-
+# position input fields
 def spawnXInput():
     global spawnPos, spawnPosIndicator
     # change the x value of spawn position
@@ -1005,6 +988,20 @@ def spawnYInput():
         displaySpawnPosIndicator(spawnPos)
     
 spawnYInputField = None
+
+# electric field and potential
+eletricFieldText = None
+electricPotentialText = None
+
+def updateSpawnScreen():
+    global electricFieldText, electricPotentialText
+    electricField = calculateElectricField(spawnPos)
+    electricFieldText.text = ("Electric Field: <" + 
+                                        '{:1.2f}'.format(electricField.x) + ", " + 
+                                        '{:1.2f}'.format(electricField.y) + "> N/C \n   Electric Field: "+
+                                        '{:1.2f}'.format((vpython.mag(electricField))) + " N/C @ " +
+                                        '{:1.2f}'.format(vpython.atan2(electricField.y, electricField.x) / vpython.pi * 180) + " degree")
+    electricPotentialText.text = "Electric Potential: " '{:1.2f}'.format(calculateElectricPotential(spawnPos)) + " V"
 
 # endregion
 
