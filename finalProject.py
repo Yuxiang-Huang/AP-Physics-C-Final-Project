@@ -208,6 +208,9 @@ class ChargedObj:
         self.selectDisplay = []
         self.createSelectDisplay()
 
+        # trail
+        self.trail = attach_trail(self.display, color = self.color)
+
     def createSelectDisplay(self):
         # Math with a circle to create arcs
         thetaRange = pi / 4
@@ -800,12 +803,15 @@ def changeTrailStateAll():
     global trailStateAll, allChargedObjs
     trailStateAll = not trailStateAll
     for co in allChargedObjs:
-        attach_trail(co.display, color = co.color)
+        if (trailStateAll):
+            co.trail.start()
+        else:
+            co.trail.stop()
 
 # clear trail button
 def clearTrailAll():
     for co in allChargedObjs:
-        co.display.clear_trail()
+        co.trail.clear()
 
 # electic field mode button
 electricFieldMode = 0
