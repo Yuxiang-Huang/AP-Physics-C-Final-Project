@@ -1150,6 +1150,11 @@ def addCaptionSelectScreen():
     winput(bind = spawnYInput) 
 
     # select force stats
+    global selectedChargeForceXYText, selectedChargeForceMAText
+    scene.append_to_caption("\n\n   ")
+    selectedChargeForceXYText = wtext() 
+    scene.append_to_caption("\n\n   ")
+    selectedChargeForceMAText= wtext()
     updateForceStatSelectScreen()
 
 # camera follow button
@@ -1306,21 +1311,28 @@ def deleteChargedObj():
 
 # select position input fields
 def selectXInput():
-    global chargedObjSelected
+    global chargedObjSelected, selectXInputField
     # change the x value of select position
     if (selectXInputField.number != None):
         chargedObjSelected.pos.x = selectXInputField.number
         chargedObjSelected.display.pos.x = chargedObjSelected.pos.x
-    
+        chargedObjSelected.displaySelect()
         updateForceStatSelectScreen()
+    else: 
+        # invalid input
+        selectXInputField.text = '{:1.2f}'.format(chargedObjSelected.pos.x)
 
 def selectYInput():
     global chargedObjSelected
     # change the y value of select position
     if (selectYInputField.number != None):
         chargedObjSelected.pos.y = selectYInputField.number
-        chargedObjSelected.display.pos.y = chargedObjSelected.pos.x
-    updateForceStatSelectScreen()
+        chargedObjSelected.display.pos.y = chargedObjSelected.pos.y
+        chargedObjSelected.displaySelect()
+        updateForceStatSelectScreen()
+    else: 
+        # invalid input
+        selectYInputField.text = '{:1.2f}'.format(chargedObjSelected.pos.y)
 
 # select stats
 def updateForceStatSelectScreen():
