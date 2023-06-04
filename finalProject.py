@@ -161,8 +161,9 @@ class ChargedObj:
         # force labels
         self.velLabel = label(text = "0", visible = False)
         self.forceLabel = label(text = "0", visible = False)
+        self.impulseLabel = label(text = "0", visible = False)
 
-        # displays
+        # radius
         spawnRadius = ((mass) / (((4/3)* pi*spawnDensity)))**(1/3)
 
         # possibly sliders for more variables
@@ -170,9 +171,11 @@ class ChargedObj:
 
         # spheres for now
         if (charge > 0):
+            # display and vectors
             self.display = sphere(pos = spawnPos, radius = spawnRadius, texture = positiveSphereTexture)
             self.velVec = arrow(axis = vec(0, 0, 0), color = color.red)
             self.forceVec = arrow(axis = vec(0, 0, 0), color = color.red)
+            self.impulseVec = arrow(axis = vec(0, 0, 0), color = color.red)
 
             # initialize all electric field arrows
             self.electricFieldArrows = [ [0]*electricFieldPrecision for i in range(self.numOfLine)]
@@ -183,9 +186,11 @@ class ChargedObj:
             self.trail = attach_trail(self.display, color = color.red)
 
         elif (charge < 0):
+            # display and vectors
             self.display = sphere(pos=spawnPos, radius=spawnRadius, texture = negativeSphereTexture)
             self.velVec = arrow(axis = vec(0, 0, 0), color = color.blue)
             self.forceVec = arrow(axis = vec(0, 0, 0), color = color.blue)
+            self.impulseVec = arrow(axis = vec(0, 0, 0), color = color.blue)
 
             # initialize all electric field arrows
             self.electricFieldArrows = [ [0]*electricFieldPrecision for i in range(self.numOfLine)]
@@ -196,9 +201,11 @@ class ChargedObj:
             self.trail = attach_trail(self.display, color = color.blue)
         
         else:
+            # display and vectors
             self.display = sphere(pos=spawnPos, radius=spawnRadius, texture = neutralSphereTexture)
             self.velVec = arrow(axis = vec(0, 0, 0), color = color.black)
             self.forceVec = arrow(axis = vec(0, 0, 0), color = color.black)
+            self.impulseVec = arrow(axis = vec(0, 0, 0), color = color.black)
 
             # initialize all electric field arrows
             self.electricFieldArrows = [ [0]*electricFieldPrecision for i in range(self.numOfLine)]
@@ -213,6 +220,8 @@ class ChargedObj:
         # select display
         self.selectDisplay = []
         self.createSelectDisplay()
+
+    # region select display
 
     def createSelectDisplay(self):
         # Math with a circle to create arcs
@@ -246,6 +255,9 @@ class ChargedObj:
             arc = self.selectDisplay[x]
             arc.visible = False
 
+    # endregion
+
+    # region force & velocity
     def calculateNetForce(self):
         force = vec(0, 0, 0)
         for chargedObj in allChargedObjs:
@@ -260,6 +272,11 @@ class ChargedObj:
             # apply force
             self.vel += self.calculateNetForce() / self.mass
 
+    def createForceLabel(self):    
+        self.forceLabel.text = "{0:.3f}".format(mag(self.forceVec.axis)) + "μN"
+        self.forceLabel.pos = self.forceVec.pos + self.forceVec.axis
+        self.forceLabel.visible = True
+
     def applyVel(self):
         if (not self.fixed):
             self.pos += self.vel / numOfRate
@@ -272,10 +289,12 @@ class ChargedObj:
         self.velLabel.pos = self.velVec.pos + self.velVec.axis
         self.velLabel.visible = True
 
-    def createForceLabel(self):
-        self.forceLabel.text = "{0:.3f}".format(mag(self.forceVec.axis)) + "μN"
-        self.forceLabel.pos = self.forceVec.pos + self.forceVec.axis
-        self.forceLabel.visible = True
+    def createImpulseLabel(self):
+        self.impulseLabel.text = "{0:.3f}".format(mag(self.impulseVec.axis)) + "μN"
+        self.impulseLabel.pos = self.impulseVec.pos + self.impulseVec.axis
+        self.impulseLabel.visible = True
+
+    # endregion
 
     def checkCollision(self):
         for chargedObj in allChargedObjs:
@@ -481,10 +500,10 @@ def onMouseUp():
     global chargedObjToDrag, mouseDown
     # apply force vector if necessary
     if (chargedObjSelected != None):
-        if (chargedObjSelected.forceVec.axis != vec(0, 0, 0)):
-            chargedObjSelected.vel += chargedObjSelected.forceVec.axis / forceScaler / chargedObjSelected.mass 
-            chargedObjSelected.forceVec.axis = vec(0, 0, 0)
-            chargedObjSelected.forceLabel.visible = False
+        if (chargedObjSelected.impulseVec.axis != vec(0, 0, 0)):
+            chargedObjSelected.vel += chargedObjSelected.impulseVec.axis / forceScaler / chargedObjSelected.mass 
+            chargedObjSelected.impulseVec.axis = vec(0, 0, 0)
+            chargedObjSelected.impulseLabel.visible = False
 
     # minimum length check for the ruler
     if (mag(ruler.point(1)['pos'] - ruler.point(0)['pos']) < epsilon * scene.range):
@@ -720,7 +739,7 @@ def createCaptionMainScreen():
     # vector menu
     global vectorMenu
     scene.append_to_caption("\n   Show Vectors: ")
-    vectorMenu = menu(choices = ["Velocity", "Force", "Neither"], bind = selectVector)
+    vectorMenu = menu(choices = ["Velocity", "Force", "Neither"], bind = selectVector, selected = vectorToShow)
 
     # trail checkbox
     global trailCheckbox
@@ -763,17 +782,29 @@ def changePlay():
     else:
         playButton.text = "Play"
 
-    #set velocity vector visibilities
-    if (playing):
-        for co in allChargedObjs:
-            co.velVec.visible = False
-            co.velLabel.visible = False
-    else:
-        for co in allChargedObjs:
-            co.velVec.visible = True
-            co.velVec.pos = co.pos
-            co.velVec.axis = co.vel
-            co.createVelLabel()
+    # for every object that is not fixed
+    for co in allChargedObjs:
+        if (not co.fixed):
+            #set vector visibilities
+            if (vectorToShow == "Velocity"):
+                if (playing):
+                    co.velVec.visible = False
+                    co.velLabel.visible = False
+                else:
+                    co.velVec.visible = True
+                    co.velVec.pos = co.pos
+                    co.velVec.axis = co.vel
+                    co.createVelLabel()
+            elif (vectorToShow == "Force"):
+                if (playing):
+                    co.forceVec.visible = False
+                    co.forceLabel.visible = False
+                else:
+                    co.forceVec.visible = True
+                    co.forceVec.pos = co.pos
+                    print(co.calculateNetForce())
+                    co.forceVec.axis = co.calculateNetForce() * forceScaler
+                    co.createForceLabel()
 
 # instruction button
 def displayInstructionPage():
@@ -796,8 +827,11 @@ def timeShift():
     timeText.text = "<center>Time in program for every second in real life:" + str(time) + "s</center>"
 
 # vector menu
+vectorToShow = "Velocity"
+
 def selectVector():
-    print("!!!")
+    global vectorToShow
+    vectorToShow = vectorMenu.selected
 
 # trail checkbox
 trailStateAll = False
@@ -1192,7 +1226,7 @@ def selectedChargeShift():
         curColor = color.black
 
     chargedObjSelected.velVec.color = curColor
-    chargedObjSelected.forceVec.color = curColor
+    chargedObjSelected.impulseVec.color = curColor
 
     for i in range(chargedObjSelected.numOfLine):
         for j in range(electricFieldPrecision):
@@ -1222,9 +1256,9 @@ def deleteChargedObj():
     # hide everything, remove from list, reset chargedObjSelected
     chargedObjSelected.display.visible = False
     chargedObjSelected.velVec.visible = False
-    chargedObjSelected.forceVec.visible = False
+    chargedObjSelected.impulseVec.visible = False
     chargedObjSelected.velLabel.visible = False
-    chargedObjSelected.forceLabel.visible = False
+    chargedObjSelected.impulseLabel.visible = False
     chargedObjSelected.hideSelect()
     for i in range(chargedObjSelected.numOfLine):   
             for j in range(electricFieldPrecision):
@@ -1302,8 +1336,8 @@ while True:
 
     # update force vector because it is possible that mouse is not moving
     if (playing and mouseDown and chargedObjSelected != None):
-        chargedObjSelected.forceVec.pos = chargedObjSelected.pos
-        chargedObjSelected.forceVec.axis = getMousePos() - chargedObjSelected.pos 
-        chargedObjSelected.createForceLabel()
+        chargedObjSelected.impulseVec.pos = chargedObjSelected.pos
+        chargedObjSelected.impulseVec.axis = getMousePos() - chargedObjSelected.pos 
+        chargedObjSelected.createImpulseLabel()
 
 # endregion
