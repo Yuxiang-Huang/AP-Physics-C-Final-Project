@@ -312,7 +312,7 @@ class ChargedObj:
                         self.electricFieldArrows[i][j].axis = arrowLength
 
                         # opacity
-                        if (electricOpacity):
+                        if (electricOpacityMode):
                             self.electricFieldArrows[i][j].opacity = vpython.mag(electricField) / electricFieldOpacitySetter
                         else:
                             self.electricFieldArrows[i][j].opacity = 1
@@ -346,7 +346,7 @@ def displayElectricFieldAll():
             for j in range(gridPrecision):
                 electricField = calculateElectricField(electricFieldArrowsAll[i][j].pos)
                 electricFieldArrowsAll[i][j].axis = vpython.norm(electricField) * size
-                if (electricOpacity):
+                if (electricOpacityMode):
                     electricFieldArrowsAll[i][j].opacity = vpython.mag(electricField) / electricFieldOpacitySetter
                 else:
                     electricFieldArrowsAll[i][j].opacity = 1
@@ -672,8 +672,8 @@ createInstruction()
 
 def createCaptionMainScreen():
     global playButton, timeSlider, timeText
-    global electricFieldButton, electricOpacityButton, electricPotentialButton
-    global gridButton, instructionButton
+    global electricFieldButton, electricPotentialButton
+    global instructionButton
 
     vpython.scene.caption = ""
 
@@ -682,9 +682,6 @@ def createCaptionMainScreen():
         playButton = vpython.button(text="Stop", bind = changePlay)
     else:
         playButton = vpython.button(text="Play", bind = changePlay)
-
-    vpython.scene.append_to_caption("   ")
-    vpython.button (text = "Collision: True", bind = changePlay)
 
     vpython.scene.append_to_caption("   ")
     vpython.button (text = "Trail: False", bind = changePlay)
@@ -700,19 +697,19 @@ def createCaptionMainScreen():
     vpython.scene.append_to_caption("\n\n   ")
     electricFieldButton = vpython.button(text="Electric Field: Mode " + str(electricFieldMode), bind = changeElectricField)
 
+    # electric field opacity
+    global electricOpacityCheckbox
     vpython.scene.append_to_caption("   ")
-    if (electricOpacity):
-        electricOpacityButton = vpython.button(text = "Electric Field Opacity: On", bind = chanageElectricOpacityMode)
-    else:
-        electricOpacityButton = vpython.button(text = "Electric Field Opacity: Off", bind = chanageElectricOpacityMode)
+    electricOpacityCheckbox = vpython.checkbox(text = "Electric Field Opacity", bind = changeElectricOpacityMode, checked = electricOpacityMode)
+
     vpython.scene.append_to_caption("\n\n   ")
     electricPotentialButton = vpython.button(text="Electric Potential Mode " + str(electricPotentialMode), bind = changeElectricPotential)
     
+    global gridCheckbox
     vpython.scene.append_to_caption("   ")  
-    if (gridMode):
-        gridButton = vpython.button(text="Grid: On", bind = changeGridMode)
-    else:
-        gridButton = vpython.button(text="Grid: Off", bind = changeGridMode)
+    gridCheckbox = vpython.checkbox(text="Grid", bind = changeGridMode, checked = gridMode)
+
+
     vpython.scene.append_to_caption("\n\n\n\n   ")
     instructionButton = vpython.button(text="Instructions", bind = displayInstructionPage)
 
@@ -775,18 +772,14 @@ def changeElectricField():
 
 electricFieldButton = None
 
-# electric field opacity button
-electricOpacity = False
+# electric field opacity
+electricOpacityMode = False
 
-def chanageElectricOpacityMode():
-    global electricOpacity, electricFieldButton
-    electricOpacity = not electricOpacity
-    if (electricOpacity):
-        electricOpacityButton.text = "Electric Field Opacity: On"
-    else:
-        electricOpacityButton.text = "Electric Field Opacity: Off"
+def changeElectricOpacityMode():
+    global electricOpacityMode
+    electricOpacityMode = not electricOpacityMode
 
-electricOpacityButton = None
+electricOpacityCheckbox = None
 
 # electric potential button
 electricPotentialMode = 0
@@ -810,7 +803,7 @@ def changeElectricPotential():
 
 electricPotentialButton = None
 
-# grid button
+# grid
 gridMode = False
 
 def changeGridMode():
@@ -820,14 +813,12 @@ def changeGridMode():
         for i in range(gridPrecision):
             potentialGridRows[i].visible = True
             potentialGridCols[i].visible = True
-        gridButton.text = "Grid: On"
     else:
         for i in range(gridPrecision):
             potentialGridRows[i].visible = False
             potentialGridCols[i].visible = False
-        gridButton.text = "Grid: Off"
 
-gridButton = None
+gridCheckbox = None
 
 # instruction and back buttons
 def displayInstructionPage():
