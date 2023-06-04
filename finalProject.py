@@ -976,7 +976,9 @@ def createCaptionSelectCharge():
     global playButton, deleteButton, fixButton
     global selectedChargeVelXYText, selectedChargeVelMAText
     global selectedChargeForceXYText, selectedChargeForceMAText
+
     global selectedChargeSlider, selectedChargeText
+    global selectedMassSlider, selectedMassText
 
     vpython.scene.caption = ""
 
@@ -987,14 +989,14 @@ def createCaptionSelectCharge():
         playButton = vpython.button(text="Play", bind = changePlay)
 
     vpython.scene.append_to_caption("\n\n")
-    selectedChargeSlider = vpython.slider(bind = selectedChargeShift, min = -5, max = 5, value = 1, step = 0.1, length = sliderLength)
+    selectedChargeSlider = vpython.slider(bind = selectedChargeShift, min = -5, max = 5, value = chargedObjSelected.charge / 1E-9, step = 0.1, length = sliderLength)
     vpython.scene.append_to_caption("\n")
-    selectedChargeText = vpython.wtext(text = '<center>Charge: '+'{:1.2f}'.format(1) + " nC </center>")
+    selectedChargeText = vpython.wtext(text = '<center>Charge: '+'{:1.2f}'.format(selectedChargeSlider.value) + " nC </center>")
 
     vpython.scene.append_to_caption("\n")
-    vpython.slider(bind=massShift, min = 1, max = 2, value = 1, step = 0.1, length = sliderLength) 
+    selectedMassSlider = vpython.slider(bind = selectedMassShift, min = 1, max = 2, value = chargedObjSelected.mass / 1E-6, step = 0.1, length = sliderLength) 
     vpython.scene.append_to_caption("\n")
-    vpython.wtext(text = '<center>Mass: '+'{:1.2f}'.format(1) + " * 10^-6 Kg</center>")
+    selectedMassText = vpython.wtext(text = '<center>Mass: '+'{:1.2f}'.format(selectedMassSlider.value) + " * 10^-6 Kg</center>")
 
     vpython.scene.append_to_caption("\n   ")
     vpython.button(text="Show Velocity: True", bind=fixChargedObj)
@@ -1076,11 +1078,10 @@ def updateSelectScreen():
                     '{:1.2f}'.format(vpython.atan2(force.y, force.x) / vpython.pi * 180) + " degree")
 
 # select charge slider
-
 def selectedChargeShift(): 
     global chargedObjSelected, selectedChargeSlider, selectedChargeText
-    chargedObjSelected.charge = selectedChargeSlider.value * 10E-9      
-    selectedChargeText.text = 'Charge (nC):'+'{:1.2f}'.format(selectedChargeSlider.value)
+    chargedObjSelected.charge = selectedChargeSlider.value * 1E-9      
+    selectedChargeText.text = '<center>Charge: '+'{:1.2f}'.format(selectedChargeSlider.value) + " nC </center>"
     # change the texture
     if (chargedObjSelected.charge > 0):
         if (chargedObjSelected.fixed):
@@ -1100,6 +1101,18 @@ def selectedChargeShift():
 
 selectedChargeSlider = None
 selectedChargeText = None
+
+# select mass slider
+def selectedMassShift(): 
+    global chargedObjSelected, selectedMassSlider, selectedMassText
+    chargedObjSelected.mass = selectedMassSlider.value * 1E-6   
+    selectedMassText.text = '<center>Mass: '+'{:1.2f}'.format(selectedMassSlider.value) + " * 10^-6 Kg</center>"
+    # change radius
+    chargedObjSelected.display.radius = ((chargedObjSelected.mass) / (((4/3)* vpython.pi*spawnDensity)))**(1/3)
+    chargedObjSelected.displaySelect()
+
+selectedMassSlider = None
+selectedMassText = None
 
 # delete button
 def deleteChargedObj():
