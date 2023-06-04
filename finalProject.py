@@ -982,11 +982,19 @@ def createCaptionSelectCharge():
 
     vpython.scene.caption = ""
 
+    global playButton
     vpython.scene.append_to_caption("   ")
     if (playing):
         playButton = vpython.button(text="Stop", bind = changePlay)
     else:
         playButton = vpython.button(text="Play", bind = changePlay)
+
+    global cameraFollowButton
+    vpython.scene.append_to_caption("   ")
+    if (cameraFollowedObj == chargedObjSelected.display):
+        cameraFollowButton = vpython.button(text = "Camera Unfollow", bind = cameraFollow)
+    else:
+        cameraFollowButton = vpython.button(text = "Camera Follow", bind = cameraFollow)
 
     vpython.scene.append_to_caption("\n\n")
     selectedChargeSlider = vpython.slider(bind = selectedChargeShift, min = -5, max = 5, value = chargedObjSelected.charge / 1E-9, step = 0.1, length = sliderLength)
@@ -1076,6 +1084,24 @@ def updateSelectScreen():
     selectedChargeForceMAText.text = ("Force: "+
                     '{:1.5f}'.format((vpython.mag(force))) + " nN @ " +
                     '{:1.2f}'.format(vpython.atan2(force.y, force.x) / vpython.pi * 180) + " degree")
+
+# camera follow button
+cameraFollowedObj = None
+
+def cameraFollow():
+    global cameraFollowButton, cameraFollowedObj
+    # unfollow
+    if (cameraFollowedObj == chargedObjSelected.display):
+        vpython.scene.camera.follow(None)
+        cameraFollowedObj = None
+        cameraFollowButton.text = "Camera Follow"
+    # follow
+    else:
+        vpython.scene.camera.follow(chargedObjSelected.display)
+        cameraFollowedObj = chargedObjSelected.display
+        cameraFollowButton.text = "Camera Unfollow"
+
+cameraFollowButton = None
 
 # select charge slider
 def selectedChargeShift(): 
