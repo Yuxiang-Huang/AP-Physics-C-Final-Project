@@ -151,6 +151,9 @@ class ChargedObj:
         # Displays
         spawnRadius = ((mass) / (((4/3)* vpython.pi*spawnDensity)))**(1/3)
 
+        # possibly sliders for more variables
+        self.numOfLine = 8
+
         # spheres for now
         if (charge > 0):
             self.display = vpython.sphere(pos=spawnPos, radius=spawnRadius, texture = "https://i.imgur.com/9c10QCm.png")
@@ -158,8 +161,6 @@ class ChargedObj:
             self.forceVec = vpython.arrow(axis = vpython.vec(0, 0, 0), color = vpython.color.red)
 
             # electric field
-            # possibly sliders for more variables
-            self.numOfLine = 8
             # initialize all the arrows
             self.electricFieldArrows = [ [0]*electricFieldPrecision for i in range(self.numOfLine)]
             for i in range(self.numOfLine):
@@ -171,17 +172,15 @@ class ChargedObj:
             self.forceVec = vpython.arrow(axis = vpython.vec(0, 0, 0), color = vpython.color.blue)
 
             # electric field
-            # possibly sliders for more variables
-            self.numOfLine = 8
             # initialize all the arrows
             self.electricFieldArrows = [ [0]*electricFieldPrecision for i in range(self.numOfLine)]
             for i in range(self.numOfLine):
                 for j in range(electricFieldPrecision):
                     self.electricFieldArrows[i][j] = vpython.arrow(axis = vpython.vec(0, 0, 0), color = vpython.color.blue)
         else:
-             self.display = vpython.sphere(pos=spawnPos, radius=spawnRadius, texture = "https://i.imgur.com/eLOxvSS.png")
-             self.velVec = vpython.arrow(axis = vpython.vec(0, 0, 0), color = vpython.color.black)
-             self.forceVec = vpython.arrow(axis = vpython.vec(0, 0, 0), color = vpython.color.black)
+            self.display = vpython.sphere(pos=spawnPos, radius=spawnRadius, texture = "https://i.imgur.com/eLOxvSS.png")
+            self.velVec = vpython.arrow(axis = vpython.vec(0, 0, 0), color = vpython.color.black)
+            self.forceVec = vpython.arrow(axis = vpython.vec(0, 0, 0), color = vpython.color.black)
 
         # select display
         self.selectDisplay = []
@@ -254,7 +253,7 @@ class ChargedObj:
         for chargedObj in allChargedObjs:
             if (self != chargedObj):
                 if (vpython.mag(self.pos - chargedObj.pos) <= self.display.radius + chargedObj.display.radius):
-                    if (not chargedObj in self.collided):
+                    if (not (chargedObj in self.collided)):
                         # v1 = 2 * m2 / (m1 + m2) * v2 + (m1 - m2) / (m1 + m2) * v1
                         tempvel = (2 * chargedObj.mass / (chargedObj.mass + self.mass) * chargedObj.vel +
                         (self.mass - chargedObj.mass) / (chargedObj.mass + self.mass) * self.vel)
@@ -275,6 +274,9 @@ class ChargedObj:
                         chargedObj.collided.append(self)
 
     def displayElectricField(self):
+        if (self.charge == 0):
+            return
+        
         if (electricFieldMode == 1):
             # determine size
             size = vpython.scene.range / 10
