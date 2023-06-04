@@ -450,7 +450,7 @@ def clicked():
             if (chargedObjSelected != None):
                 chargedObjSelected.displaySelect()
                 spawnPosIndicator.visible = False
-                addCaptionSelectCharge()
+                addCaptionSelectScreen()
             # spawn screen when the click is not on a charged object
             else:
                 spawnPos = getMousePos()
@@ -464,7 +464,7 @@ def clicked():
             # select again or deselect
             if (chargedObjSelected != None):
                 chargedObjSelected.displaySelect()
-                addCaptionSelectCharge()
+                addCaptionSelectScreen()
             else:
                 createCaptionMainScreen()
 
@@ -1083,7 +1083,7 @@ def updateSpawnScreen():
 
 # region Select ChargedObj Screen Caption
 
-def addCaptionSelectCharge():
+def addCaptionSelectScreen():
     createCaptionMainScreen()
 
     # camera follow button
@@ -1095,11 +1095,12 @@ def addCaptionSelectCharge():
         cameraFollowButton = button(text = "Camera Follow", bind = cameraFollow)
 
     # select charge slider
-    global selectedChargeSlider, selectedChargeText
+    global selectedChargeSlider, selectedChargeInputField
     scene.append_to_caption("\n\n")
     selectedChargeSlider = slider(bind = selectedChargeShift, min = -5, max = 5, value = chargedObjSelected.charge / 1E-9, step = 0.1, length = sliderLength)
-    scene.append_to_caption("\n")
-    selectedChargeText = wtext(text = '<center>Charge: '+'{:1.2f}'.format(selectedChargeSlider.value) + " nC </center>")
+    scene.append_to_caption("\n                             Charge: ")
+    selectedChargeInputField = winput(bind = selectedChargeInput, text = selectedChargeSlider.value, width = 35)
+    scene.append_to_caption(" nC")
 
     # select mass slider
     global selectedMassSlider, selectedMassText
@@ -1197,11 +1198,9 @@ def cameraFollow():
         cameraFollowedObj = chargedObjSelected.display
         cameraFollowButton.text = "Camera Unfollow"
 
-# select charge slider
-def selectedChargeShift(): 
-    global chargedObjSelected, selectedChargeSlider, selectedChargeText
-    chargedObjSelected.charge = selectedChargeSlider.value * 1E-9      
-    selectedChargeText.text = '<center>Charge: '+'{:1.2f}'.format(selectedChargeSlider.value) + " nC </center>"
+# select charge slider and input field
+def selectedChargeModified():
+    global chargedObjSelected
     # change the texture
     if (chargedObjSelected.charge > 0):
         if (chargedObjSelected.fixed):
@@ -1235,6 +1234,26 @@ def selectedChargeShift():
             chargedObjSelected.electricFieldArrows[i][j].color = curColor
 
     chargedObjSelected.trail.color = curColor
+
+def selectedChargeShift(): 
+    global chargedObjSelected, selectedChargeSlider, selectedChargeInputField
+    chargedObjSelected.charge = selectedChargeSlider.value * 1E-9      
+    selectedChargeInputField.text = selectedChargeSlider.value
+    selectedChargeModified()
+    
+def selectedChargeInput():
+    global chargedObjSelected, selectedChargeSlider, selectedChargeInputField
+    if (selectedChargeInputField.number != None):
+        # min max
+        num = max(selectedChargeSlider.min, selectedChargeInputField.number)
+        num = min(selectedChargeSlider.max, num)
+        # set values
+        selectCharge = num * 1E-9
+        selectedChargeSlider.value = num
+        selectedChargeInputField.text = num
+    else:
+        selectedChargeInputField.text = chargedObjSelected.charge / 1E-9
+    selectedChargeModified()
 
 # select mass slider
 def selectedMassShift(): 
