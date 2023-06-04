@@ -291,6 +291,21 @@ class ChargedObj:
             self.pos += self.vel / numOfRate
         self.updateDisplay()
 
+    def createVelVec(self):
+        # arrow    
+        self.velVec.visible = True
+        self.velVec.pos = self.pos
+        self.velVec.axis = self.vel
+        # label
+        self.velLabel.text = "{0:.3f}".format(mag(self.velVec.axis)) + "m/s"
+        self.velLabel.pos = self.velVec.pos + self.velVec.axis
+        self.velLabel.visible = True
+
+    def createImpulseLabel(self):
+        self.impulseLabel.text = "{0:.3f}".format(mag(self.impulseVec.axis)) + "μN * " + str(1 / numOfRate) + "s"
+        self.impulseLabel.pos = self.impulseVec.pos + self.impulseVec.axis
+        self.impulseLabel.visible = True
+
     def updateDisplay(self):
         self.display.pos = self.pos
         if (self == chargedObjSelected):
@@ -314,43 +329,40 @@ class ChargedObj:
         self.forceVec.visible = False
         self.forceLabel.visible = False
 
-    def createVelVec(self):
-        # arrow    
-        self.velVec.visible = True
-        self.velVec.pos = self.pos
-        self.velVec.axis = self.vel
-        # label
-        self.velLabel.text = "{0:.3f}".format(mag(self.velVec.axis)) + "m/s"
-        self.velLabel.pos = self.velVec.pos + self.velVec.axis
-        self.velLabel.visible = True
-
-    def createImpulseLabel(self):
-        self.impulseLabel.text = "{0:.3f}".format(mag(self.impulseVec.axis)) + "μN * " + str(1 / numOfRate) + "s"
-        self.impulseLabel.pos = self.impulseVec.pos + self.impulseVec.axis
-        self.impulseLabel.visible = True
-
     # endregion
 
     def checkCollision(self):
+        # skip if fixed
+        if (self.fixed):
+            return
+        
         for chargedObj in allChargedObjs:
             if (self != chargedObj):
                 if (mag(self.pos - chargedObj.pos) <= self.display.radius + chargedObj.display.radius):
                     if (not (chargedObj in self.collided)):
-                        # v1 = 2 * m2 / (m1 + m2) * v2 + (m1 - m2) / (m1 + m2) * v1
-                        tempvel = (2 * chargedObj.mass / (chargedObj.mass + self.mass) * chargedObj.vel +
-                        (self.mass - chargedObj.mass) / (chargedObj.mass + self.mass) * self.vel)
+                        # collide with fixed obj
+                        if (chargedObj.fixed):
+                            # reverse velocity
+                            self.vel = - self.vel
 
-                        # v2 = 2 * m1 / (m1 + m2) * v1 + (m2 - m1) / (m1 + m2) * v2
-                        chargedObj.vel = (2 * self.mass / (chargedObj.mass + self.mass) * self.vel +
-                        (chargedObj.mass - self.mass) / (chargedObj.mass + self.mass) * chargedObj.vel)
+                            # position check
+                            self.pos = chargedObj.pos + norm(self.pos - chargedObj.pos) * (self.display.radius + chargedObj.display.radius)
+                        else:
+                            # v1 = 2 * m2 / (m1 + m2) * v2 + (m1 - m2) / (m1 + m2) * v1
+                            tempvel = (2 * chargedObj.mass / (chargedObj.mass + self.mass) * chargedObj.vel +
+                            (self.mass - chargedObj.mass) / (chargedObj.mass + self.mass) * self.vel)
 
-                        self.vel = tempvel
+                            # v2 = 2 * m1 / (m1 + m2) * v1 + (m2 - m1) / (m1 + m2) * v2
+                            chargedObj.vel = (2 * self.mass / (chargedObj.mass + self.mass) * self.vel +
+                            (chargedObj.mass - self.mass) / (chargedObj.mass + self.mass) * chargedObj.vel)
 
-                        # position check
-                        dif = self.display.radius + chargedObj.display.radius - mag(self.pos - chargedObj.pos) 
-                        tempPos = self.pos + norm(self.pos - chargedObj.pos) * dif / 2
-                        chargedObj.pos = chargedObj.pos + norm(chargedObj.pos - self.pos) * dif / 2
-                        self.pos = tempPos
+                            self.vel = tempvel
+
+                            # position check
+                            dif = self.display.radius + chargedObj.display.radius - mag(self.pos - chargedObj.pos) 
+                            tempPos = self.pos + norm(self.pos - chargedObj.pos) * dif / 2
+                            chargedObj.pos = chargedObj.pos + norm(chargedObj.pos - self.pos) * dif / 2
+                            self.pos = tempPos
 
                         # prevent collision calculation twice
                         chargedObj.collided.append(self)
