@@ -1,4 +1,4 @@
-Web VPython 3.2
+Web VPython 3.2from vpython import *
 
 ####################################################################################################
 
@@ -167,7 +167,8 @@ class ChargedObj:
 
         # spheres for now
         if (charge > 0):
-            self.display = sphere(pos = spawnPos, radius = spawnRadius, texture = positiveSphereTexture)
+            self.display = sphere(pos = spawnPos, radius = spawnRadius, texture = positiveSphereTexture, 
+                                          trail_color = color.red, make_trail = True)
             self.velVec = arrow(axis = vec(0, 0, 0), color = color.red)
             self.forceVec = arrow(axis = vec(0, 0, 0), color = color.red)
 
@@ -178,7 +179,8 @@ class ChargedObj:
                 for j in range(electricFieldPrecision):
                     self.electricFieldArrows[i][j] = arrow(axis = vec(0, 0, 0), color = color.red)
         elif (charge < 0):
-            self.display = sphere(pos=spawnPos, radius=spawnRadius, texture = negativeSphereTexture)
+            self.display = sphere(pos=spawnPos, radius=spawnRadius, texture = negativeSphereTexture, 
+                                          trail_color = color.red)
             self.velVec = arrow(axis = vec(0, 0, 0), color = color.blue)
             self.forceVec = arrow(axis = vec(0, 0, 0), color = color.blue)
 
@@ -189,7 +191,8 @@ class ChargedObj:
                 for j in range(electricFieldPrecision):
                     self.electricFieldArrows[i][j] = arrow(axis = vec(0, 0, 0), color = color.blue)
         else:
-            self.display = sphere(pos=spawnPos, radius=spawnRadius, texture = neutralSphereTexture)
+            self.display = sphere(pos=spawnPos, radius=spawnRadius, texture = neutralSphereTexture,
+                                          trail_color = color.black)
             self.velVec = arrow(axis = vec(0, 0, 0), color = color.black)
             self.forceVec = arrow(axis = vec(0, 0, 0), color = color.black)
 
@@ -706,12 +709,14 @@ def createCaptionMainScreen():
     vectorMenu = menu(choices = ["Velocity", "Force", "Neither"], bind = selectVector)
 
     # trail checkbox
+    global trailCheckbox
     scene.append_to_caption("   ")
-    checkbox(text = "Trail", bind = changePlay)
+    trailCheckbox = checkbox(text = "Trail", bind = changeTrailStateAll, checked = trailStateAll)
 
     # clear trail button
+    global clearTrailButton
     scene.append_to_caption("   ")
-    button (text = "Clear All Trail", bind = changePlay)
+    clearTrailButton = button (text = "Clear All Trail", bind = clearTrailAll)
 
     # electric field mode button
     global electricFieldButton
@@ -781,10 +786,21 @@ def selectVector():
     print("!!!")
 
 # trail checkbox
-# def changeTrailAll():
+trailStateAll = False
 
+def changeTrailStateAll():
+    global trailStateAll, allChargedObjs
+    trailStateAll = not trailStateAll
+    # for co in allChargedObjs:
+    #     co.display.make_trail = trailStateAll
+    #     print(co.display.make_trail)
+    # print("reached")
 
-# trailCheckbox = None
+# clear trail button
+def clearTrailAll():
+    for co in allChargedObjs:
+        co.display.clear_trail()
+        co.display.make_trail = True 
 
 # electic field mode button
 electricFieldMode = 0

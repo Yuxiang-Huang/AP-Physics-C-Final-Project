@@ -1,18 +1,18 @@
-import vpython
+from vpython import *
 
 ####################################################################################################
 
 # region Variables
 
 # set scene
-vpython.scene.background = vpython.color.white
-vpython.scene.width = 1000
-vpython.scene.height = 650
-vpython.scene.range = 10
-vpython.scene.userzoom = False
-vpython.scene.userspin = False
-vpython.scene.fov = vpython.pi / 50
-vpython.scene.align = "left"
+scene.background = color.white
+scene.width = 1000
+scene.height = 650
+scene.range = 10
+scene.userzoom = False
+scene.userspin = False
+scene.fov = pi / 50
+scene.align = "left"
 
 #constants
 K = 9E9
@@ -45,8 +45,8 @@ unitHeight = None
 # Math for rescaling (assume height > width)
 def setUnits():
     global unitWidth, unitHeight
-    unitWidth = 2 * vpython.scene.width / vpython.scene.height * vpython.scene.range / gridPrecision
-    unitHeight = 2 * vpython.scene.range / gridPrecision
+    unitWidth = 2 * scene.width / scene.height * scene.range / gridPrecision
+    unitHeight = 2 * scene.range / gridPrecision
 
 # region electric field for mode 2
 electricFieldArrowsAll = None
@@ -58,14 +58,14 @@ def createElectricFieldArrowsAll():
     electricFieldArrowsAll = [ [0]*gridPrecision for i in range(gridPrecision)]
     for i in range(gridPrecision):
         for j in range(gridPrecision):
-            electricFieldArrowsAll[i][j] = vpython.arrow(axis = vpython.vec(0, 0, 0), color = vpython.color.orange)
+            electricFieldArrowsAll[i][j] = arrow(axis = vec(0, 0, 0), color = color.orange)
 
 # method for rescaling
 def setElectricFieldArrowsAll():
     for i in range(gridPrecision):
         for j in range(gridPrecision):
             electricFieldArrowsAll[i][j].visible = True
-            electricFieldArrowsAll[i][j].pos = vpython.vec((i - gridPrecision / 2 + 1/2) * unitWidth,
+            electricFieldArrowsAll[i][j].pos = vec((i - gridPrecision / 2 + 1/2) * unitWidth,
                                                            (j - gridPrecision / 2 + 1/2) * unitHeight, 0)
 
 # endregion
@@ -80,48 +80,48 @@ def createPotentialGrid():
     global potentialGridRows, potentialGridCols, electricPotentialLabels
     # dimension = gridPrecision
     for i in range(gridPrecision):
-        potentialGridRows.append(vpython.box(axis=vpython.vec(1, 0, 0), color = vpython.color.black, visible = False))
-        potentialGridCols.append(vpython.box(axis=vpython.vec(0, 0, 1), color = vpython.color.black, visible = False))
+        potentialGridRows.append(box(axis=vec(1, 0, 0), color = color.black, visible = False))
+        potentialGridCols.append(box(axis=vec(0, 0, 1), color = color.black, visible = False))
     # dimension = (gridPrecions - 1) * (gridPrecions - 1)
     electricPotentialLabels = [ [0]* (gridPrecision - 1) for i in range(gridPrecision - 1)]
     for i in range(gridPrecision-1):
         for j in range(gridPrecision-1):
-            electricPotentialLabels[i][j] = vpython.label(text = "0", visible = False, box = False)
+            electricPotentialLabels[i][j] = label(text = "0", visible = False, box = False)
 
 # method for rescaling
 def setElectricPotentialGrid():
     global potentialGridRows, potentialGridCols, electricPotentialLabels
     # determine thickness
-    thickness = vpython.scene.range / 200
+    thickness = scene.range / 200
     # grids
     for i in range(gridPrecision):
         # rows
-        potentialGridRows[i].size = vpython.vec(unitWidth * gridPrecision, thickness, thickness)
-        potentialGridRows[i].pos = vpython.vec(0, (i - gridPrecision / 2 + 1/2) * unitHeight, 0)
+        potentialGridRows[i].size = vec(unitWidth * gridPrecision, thickness, thickness)
+        potentialGridRows[i].pos = vec(0, (i - gridPrecision / 2 + 1/2) * unitHeight, 0)
 
         # cols
-        potentialGridCols[i].size = vpython.vec(thickness, unitHeight * gridPrecision, thickness)
-        potentialGridCols[i].pos = vpython.vec((i - gridPrecision / 2 + 1/2) * unitWidth, 0, 0)
+        potentialGridCols[i].size = vec(thickness, unitHeight * gridPrecision, thickness)
+        potentialGridCols[i].pos = vec((i - gridPrecision / 2 + 1/2) * unitWidth, 0, 0)
 
     # labels
     for i in range(gridPrecision-1):
         for j in range(gridPrecision-1):
-            electricPotentialLabels[i][j].pos = vpython.vec((i - gridPrecision / 2 + 1) * unitWidth, 
+            electricPotentialLabels[i][j].pos = vec((i - gridPrecision / 2 + 1) * unitWidth, 
                                                             (j - gridPrecision / 2 + 1) * unitHeight, 0)
             electricPotentialLabels[i][j].height = 10
 
 # endregion 
 
 # region ruler
-ruler = vpython.curve({"pos": vpython.vector(0, 0, 0), "color": vpython.color.cyan},
-                      {"pos": vpython.vector(0, 0, 0), "color": vpython.color.cyan})
-rulerLabel = vpython.label(text="0", visible = False, color = vpython.color.magenta)
+ruler = curve({"pos": vector(0, 0, 0), "color": color.cyan},
+                      {"pos": vector(0, 0, 0), "color": color.cyan})
+rulerLabel = label(text="0", visible = False, color = color.magenta)
 
 def createRulerLabel():
     global ruler, rulerLabel
 
     # create new ruler label in the middle of the ruler
-    rulerLabel.text = "{0:.3f}".format(vpython.mag(ruler.point(1)['pos'] - ruler.point(0)['pos'])) + "m"
+    rulerLabel.text = "{0:.3f}".format(mag(ruler.point(1)['pos'] - ruler.point(0)['pos'])) + "m"
     rulerLabel.pos = ruler.point(0)['pos'] + (ruler.point(1)['pos'] - ruler.point(0)['pos']) / 2
     rulerLabel.visible = True
          
@@ -131,12 +131,12 @@ allChargedObjs = []
 #endregion
 
 # region select display
-spawnPosIndicator = vpython.curve()
+spawnPosIndicator = curve()
 for i in range(steps * 8):
-    theta = i * 2 * vpython.pi / steps 
-    radius = vpython.scene.range / 75
-    spawnPosIndicator.append({"pos": vpython.vec(vpython.cos(theta) * radius, vpython.sin(theta) * radius, 0)
-                        , "color": vpython.color.yellow})
+    theta = i * 2 * pi / steps 
+    radius = scene.range / 75
+    spawnPosIndicator.append({"pos": vec(cos(theta) * radius, sin(theta) * radius, 0)
+                        , "color": color.yellow})
 spawnPosIndicator.visible = False
 
 #endregion
@@ -157,41 +157,44 @@ class ChargedObj:
         self.vel = spawnVel
         self.fixed = False
         self.collided = []
-        self.velLabel = vpython.label(text = "0", visible = False)
-        self.forceLabel = vpython.label(text = "0", visible = False)
+        self.velLabel = label(text = "0", visible = False)
+        self.forceLabel = label(text = "0", visible = False)
         # Displays
-        spawnRadius = ((mass) / (((4/3)* vpython.pi*spawnDensity)))**(1/3)
+        spawnRadius = ((mass) / (((4/3)* pi*spawnDensity)))**(1/3)
 
         # possibly sliders for more variables
         self.numOfLine = 8
 
         # spheres for now
         if (charge > 0):
-            self.display = vpython.sphere(pos = spawnPos, radius = spawnRadius, texture = positiveSphereTexture)
-            self.velVec = vpython.arrow(axis = vpython.vec(0, 0, 0), color = vpython.color.red)
-            self.forceVec = vpython.arrow(axis = vpython.vec(0, 0, 0), color = vpython.color.red)
+            self.display = sphere(pos = spawnPos, radius = spawnRadius, texture = positiveSphereTexture, 
+                                          trail_color = color.red, make_trail = True)
+            self.velVec = arrow(axis = vec(0, 0, 0), color = color.red)
+            self.forceVec = arrow(axis = vec(0, 0, 0), color = color.red)
 
             # electric field
             # initialize all the arrows
             self.electricFieldArrows = [ [0]*electricFieldPrecision for i in range(self.numOfLine)]
             for i in range(self.numOfLine):
                 for j in range(electricFieldPrecision):
-                    self.electricFieldArrows[i][j] = vpython.arrow(axis = vpython.vec(0, 0, 0), color = vpython.color.red)
+                    self.electricFieldArrows[i][j] = arrow(axis = vec(0, 0, 0), color = color.red)
         elif (charge < 0):
-            self.display = vpython.sphere(pos=spawnPos, radius=spawnRadius, texture = negativeSphereTexture)
-            self.velVec = vpython.arrow(axis = vpython.vec(0, 0, 0), color = vpython.color.blue)
-            self.forceVec = vpython.arrow(axis = vpython.vec(0, 0, 0), color = vpython.color.blue)
+            self.display = sphere(pos=spawnPos, radius=spawnRadius, texture = negativeSphereTexture, 
+                                          trail_color = color.red)
+            self.velVec = arrow(axis = vec(0, 0, 0), color = color.blue)
+            self.forceVec = arrow(axis = vec(0, 0, 0), color = color.blue)
 
             # electric field
             # initialize all the arrows
             self.electricFieldArrows = [ [0]*electricFieldPrecision for i in range(self.numOfLine)]
             for i in range(self.numOfLine):
                 for j in range(electricFieldPrecision):
-                    self.electricFieldArrows[i][j] = vpython.arrow(axis = vpython.vec(0, 0, 0), color = vpython.color.blue)
+                    self.electricFieldArrows[i][j] = arrow(axis = vec(0, 0, 0), color = color.blue)
         else:
-            self.display = vpython.sphere(pos=spawnPos, radius=spawnRadius, texture = neutralSphereTexture)
-            self.velVec = vpython.arrow(axis = vpython.vec(0, 0, 0), color = vpython.color.black)
-            self.forceVec = vpython.arrow(axis = vpython.vec(0, 0, 0), color = vpython.color.black)
+            self.display = sphere(pos=spawnPos, radius=spawnRadius, texture = neutralSphereTexture,
+                                          trail_color = color.black)
+            self.velVec = arrow(axis = vec(0, 0, 0), color = color.black)
+            self.forceVec = arrow(axis = vec(0, 0, 0), color = color.black)
 
         # select display
         self.selectDisplay = []
@@ -199,29 +202,29 @@ class ChargedObj:
 
     def createSelectDisplay(self):
         # Math with a circle to create arcs
-        thetaRange = vpython.pi / 4
+        thetaRange = pi / 4
         for x in range(4):
-            arc = vpython.curve()
-            initialTheta = x * vpython.pi / 2 + vpython.pi / 4
+            arc = curve()
+            initialTheta = x * pi / 2 + pi / 4
             for i in range(steps):
                 theta = i * thetaRange / steps + initialTheta - thetaRange / 2 
-                arc.append({"pos": vpython.vec(vpython.cos(theta) * (self.display.radius + epsilon * vpython.scene.range), 
-                                    vpython.sin(theta) * (self.display.radius + epsilon * vpython.scene.range), 0) + self.pos
-                                    , "color": vpython.color.yellow})
+                arc.append({"pos": vec(cos(theta) * (self.display.radius + epsilon * scene.range), 
+                                    sin(theta) * (self.display.radius + epsilon * scene.range), 0) + self.pos
+                                    , "color": color.yellow})
             
             self.selectDisplay.append(arc)
         for arc in self.selectDisplay:
             arc.visible = False
     
     def displaySelect(self):
-        thetaRange = vpython.pi / 4
+        thetaRange = pi / 4
         for x in range(4):
             arc = self.selectDisplay[x]
-            initialTheta = x * vpython.pi / 2 + vpython.pi / 4
+            initialTheta = x * pi / 2 + pi / 4
             for i in range(steps):
                 theta = i * thetaRange / steps + initialTheta - thetaRange / 2 
-                arc.modify(i, pos = vpython.vec(vpython.cos(theta) * (self.display.radius + epsilon * vpython.scene.range), 
-                                    vpython.sin(theta) * (self.display.radius + epsilon * vpython.scene.range), 0) + self.pos)
+                arc.modify(i, pos = vec(cos(theta) * (self.display.radius + epsilon * scene.range), 
+                                    sin(theta) * (self.display.radius + epsilon * scene.range), 0) + self.pos)
             arc.visible = True
     
     def hideSelect(self):
@@ -230,10 +233,10 @@ class ChargedObj:
             arc.visible = False
 
     def calculateNetForce(self):
-        force = vpython.vec(0, 0, 0)
+        force = vec(0, 0, 0)
         for chargedObj in allChargedObjs:
             if (chargedObj != self):
-                if (vpython.mag(self.pos - chargedObj.pos) > 2 * self.display.radius):
+                if (mag(self.pos - chargedObj.pos) > 2 * self.display.radius):
                     force += calculateForce(self, chargedObj)
         return force
 
@@ -251,19 +254,19 @@ class ChargedObj:
                 self.displaySelect()
 
     def createVelLabel(self):    
-        self.velLabel.text = "{0:.3f}".format(vpython.mag(self.velVec.axis)) + "m/s"
+        self.velLabel.text = "{0:.3f}".format(mag(self.velVec.axis)) + "m/s"
         self.velLabel.pos = self.velVec.pos + self.velVec.axis
         self.velLabel.visible = True
 
     def createForceLabel(self):
-        self.forceLabel.text = "{0:.3f}".format(vpython.mag(self.forceVec.axis)) + "μN"
+        self.forceLabel.text = "{0:.3f}".format(mag(self.forceVec.axis)) + "μN"
         self.forceLabel.pos = self.forceVec.pos + self.forceVec.axis
         self.forceLabel.visible = True
 
     def checkCollision(self):
         for chargedObj in allChargedObjs:
             if (self != chargedObj):
-                if (vpython.mag(self.pos - chargedObj.pos) <= self.display.radius + chargedObj.display.radius):
+                if (mag(self.pos - chargedObj.pos) <= self.display.radius + chargedObj.display.radius):
                     if (not (chargedObj in self.collided)):
                         # v1 = 2 * m2 / (m1 + m2) * v2 + (m1 - m2) / (m1 + m2) * v1
                         tempvel = (2 * chargedObj.mass / (chargedObj.mass + self.mass) * chargedObj.vel +
@@ -276,9 +279,9 @@ class ChargedObj:
                         self.vel = tempvel
 
                         # position check
-                        dif = self.display.radius + chargedObj.display.radius - vpython.mag(self.pos - chargedObj.pos) 
-                        tempPos = self.pos + vpython.norm(self.pos - chargedObj.pos) * dif / 2
-                        chargedObj.pos = chargedObj.pos + vpython.norm(chargedObj.pos - self.pos) * dif / 2
+                        dif = self.display.radius + chargedObj.display.radius - mag(self.pos - chargedObj.pos) 
+                        tempPos = self.pos + norm(self.pos - chargedObj.pos) * dif / 2
+                        chargedObj.pos = chargedObj.pos + norm(chargedObj.pos - self.pos) * dif / 2
                         self.pos = tempPos
 
                         # prevent collision calculation twice
@@ -290,12 +293,12 @@ class ChargedObj:
         
         if (electricFieldMode == 1):
             # determine size
-            size = vpython.scene.range / 10
+            size = scene.range / 10
             # for every direction
             for i in range(self.numOfLine):
                 # determine starting position
-                theta = i * 2 * vpython.pi / self.numOfLine
-                curPos = self.pos + vpython.vec(vpython.cos(theta), vpython.sin(theta), 0) * self.display.radius
+                theta = i * 2 * pi / self.numOfLine
+                curPos = self.pos + vec(cos(theta), sin(theta), 0) * self.display.radius
                 #for every step
                 for j in range(electricFieldPrecision):
                     # don't display if too close to a charge
@@ -304,7 +307,7 @@ class ChargedObj:
                     else:
                         # determine the arrow 
                         electricField = calculateElectricField(curPos)
-                        arrowLength = vpython.norm(electricField) * size
+                        arrowLength = norm(electricField) * size
                         self.electricFieldArrows[i][j].visible = True
                         self.electricFieldArrows[i][j].pos = curPos
                         if (self.charge < 0):
@@ -313,7 +316,7 @@ class ChargedObj:
 
                         # opacity
                         if (electricOpacityMode):
-                            self.electricFieldArrows[i][j].opacity = vpython.mag(electricField) / electricFieldOpacitySetter
+                            self.electricFieldArrows[i][j].opacity = mag(electricField) / electricFieldOpacitySetter
                         else:
                             self.electricFieldArrows[i][j].opacity = 1
 
@@ -328,7 +331,7 @@ class ChargedObj:
 # Coulomb's Law for force of q2 on q1
 def calculateForce(q1, q2):
     r12 = q1.pos - q2.pos
-    return vpython.norm(r12) * K * q1.charge * q2.charge / (vpython.mag(r12)**2)
+    return norm(r12) * K * q1.charge * q2.charge / (mag(r12)**2)
 
 # endregion
 
@@ -341,29 +344,29 @@ def calculateForce(q1, q2):
 def displayElectricFieldAll():
     # calculate electric field for each arrow
     if (electricFieldMode == 2):
-        size = vpython.scene.range / 10
+        size = scene.range / 10
         for i in range(gridPrecision):
             for j in range(gridPrecision):
                 electricField = calculateElectricField(electricFieldArrowsAll[i][j].pos)
-                electricFieldArrowsAll[i][j].axis = vpython.norm(electricField) * size
+                electricFieldArrowsAll[i][j].axis = norm(electricField) * size
                 if (electricOpacityMode):
-                    electricFieldArrowsAll[i][j].opacity = vpython.mag(electricField) / electricFieldOpacitySetter
+                    electricFieldArrowsAll[i][j].opacity = mag(electricField) / electricFieldOpacitySetter
                 else:
                     electricFieldArrowsAll[i][j].opacity = 1
     
 def calculateElectricField(pos):
-    electricField = vpython.vec(0, 0, 0)
+    electricField = vec(0, 0, 0)
     for chargedObj in allChargedObjs:
         r = pos - chargedObj.pos
         # just check for now before I figure out what to do in this case
-        if (vpython.mag(r) != 0):
-            electricField += vpython.norm(r) * K * chargedObj.charge / (vpython.mag(r)**2)
+        if (mag(r) != 0):
+            electricField += norm(r) * K * chargedObj.charge / (mag(r)**2)
     return electricField
 
 def tooClose(owner, pos, size):
     for chargedObj in allChargedObjs:
             if (chargedObj != owner):
-                if vpython.mag(pos - chargedObj.pos) < chargedObj.display.radius + size:
+                if mag(pos - chargedObj.pos) < chargedObj.display.radius + size:
                     return True
     return False
 
@@ -381,8 +384,8 @@ def calculateElectricPotential(pos):
     for chargedObj in allChargedObjs:
         r = pos - chargedObj.pos
         # just check for now before I figure out what to do in this case
-        if (vpython.mag(r) != 0):
-            electricPotential +=  K * chargedObj.charge / vpython.mag(r)
+        if (mag(r) != 0):
+            electricPotential +=  K * chargedObj.charge / mag(r)
     return electricPotential
 
 # endregion
@@ -429,19 +432,19 @@ def clicked():
 def chargedObjOnMouse():
     mousePos = getMousePos()
     for chargedObj in allChargedObjs:
-        if (vpython.mag(mousePos - chargedObj.pos) <= chargedObj.display.radius):
+        if (mag(mousePos - chargedObj.pos) <= chargedObj.display.radius):
             return chargedObj
     return None
 
 def getMousePos():
-    return vpython.scene.mouse.project(normal=vpython.vec(0, 0, 1))
+    return scene.mouse.project(normal=vec(0, 0, 1))
 
 def displaySpawnPosIndicator(pos):
     global spawnPosIndicator
     for i in range(steps * 8):
-        theta = i * 2 * vpython.pi / steps 
-        radius = vpython.scene.range / 75
-        spawnPosIndicator.modify(i, pos = vpython.vec(vpython.cos(theta) * radius, vpython.sin(theta) * radius, 0) + pos)
+        theta = i * 2 * pi / steps 
+        radius = scene.range / 75
+        spawnPosIndicator.modify(i, pos = vec(cos(theta) * radius, sin(theta) * radius, 0) + pos)
     spawnPosIndicator.visible = True
 
 # dragging
@@ -464,16 +467,16 @@ def onMouseUp():
     global chargedObjToDrag, mouseDown
     # apply force vector if necessary
     if (chargedObjSelected != None):
-        if (chargedObjSelected.forceVec.axis != vpython.vec(0, 0, 0)):
+        if (chargedObjSelected.forceVec.axis != vec(0, 0, 0)):
             chargedObjSelected.vel += chargedObjSelected.forceVec.axis / forceScaler / chargedObjSelected.mass 
-            chargedObjSelected.forceVec.axis = vpython.vec(0, 0, 0)
+            chargedObjSelected.forceVec.axis = vec(0, 0, 0)
             chargedObjSelected.forceLabel.visible = False
 
     # minimum length check for the ruler
-    if (vpython.mag(ruler.point(1)['pos'] - ruler.point(0)['pos']) < epsilon * vpython.scene.range):
+    if (mag(ruler.point(1)['pos'] - ruler.point(0)['pos']) < epsilon * scene.range):
         rulerLabel.visible = False
-        ruler.modify(0, vpython.vec(0, 0, 0))
-        ruler.modify(1, vpython.vec(0, 0, 0))
+        ruler.modify(0, vec(0, 0, 0))
+        ruler.modify(1, vec(0, 0, 0))
     
     # reset variables
     chargedObjToDrag = None
@@ -497,7 +500,7 @@ def onMouseMove():
                 chargedObjToDrag.display.pos = chargedObjToDrag.pos
                 chargedObjToDrag.velVec.pos = chargedObjToDrag.pos
                 # create velocity label only if velocity not too small
-                if (vpython.mag(chargedObjToDrag.velVec.axis) > chargedObjToDrag.display.radius):
+                if (mag(chargedObjToDrag.velVec.axis) > chargedObjToDrag.display.radius):
                     chargedObjToDrag.createVelLabel()
 
                 # could have impacted electric field and potential in the spawn screen
@@ -511,8 +514,8 @@ def onMouseMove():
                     chargedObjToDrag.velVec.axis = getMousePos() - chargedObjToDrag.pos
                     chargedObjToDrag.createVelLabel()
                     # velocity too small reset
-                    if (vpython.mag(chargedObjToDrag.velVec.axis) < chargedObjToDrag.display.radius):
-                        chargedObjToDrag.velVec.axis = vpython.vec(0, 0, 0)
+                    if (mag(chargedObjToDrag.velVec.axis) < chargedObjToDrag.display.radius):
+                        chargedObjToDrag.velVec.axis = vec(0, 0, 0)
                         chargedObjToDrag.velLabel.visible = False
                     chargedObjToDrag.vel = chargedObjToDrag.velVec.axis
                     updateSelectScreen()
@@ -524,13 +527,13 @@ def onMouseMove():
 # region Intro Screen
 
 # Intro text
-startText = vpython.text(pos = vpython.vec(0, -3, 0), text="JackXiang", align='center', color = vpython.color.cyan)
+startText = text(pos = vec(0, -3, 0), text="JackXiang", align='center', color = color.cyan)
 startText.height = 10
 startText.length = 25
 
 # Start Button
 def start():
-    vpython.scene.userzoom = True
+    scene.userzoom = True
     startText.visible = False
 
     # initialize the electric field arrows and grids
@@ -545,76 +548,76 @@ def start():
     createCaptionMainScreen()
 
     # bind events
-    vpython.scene.bind('click', clicked)
-    vpython.scene.bind('mousedown', onMouseDown)
-    vpython.scene.bind('mouseup', onMouseUp)
-    vpython.scene.bind('mousemove', onMouseMove)
+    scene.bind('click', clicked)
+    scene.bind('mousedown', onMouseDown)
+    scene.bind('mouseup', onMouseUp)
+    scene.bind('mousemove', onMouseMove)
 
-vpython.scene.append_to_caption("   ")
-startButton = vpython.button(text = "Start without preset", bind = start)
-vpython.scene.append_to_caption("\n\n   ")
+scene.append_to_caption("   ")
+startButton = button(text = "Start without preset", bind = start)
+scene.append_to_caption("\n\n   ")
 
 #Dipole
 def dipolePreset():
     start()
-    allChargedObjs.append(ChargedObj(1E-6, 1E-9, vpython.vec(5,0,0), vpython.vec(0, 0, 0)))
-    allChargedObjs.append(ChargedObj(1E-6, -1E-9, vpython.vec(-5, 0, 0) , vpython.vec(0, 0, 0)))
+    allChargedObjs.append(ChargedObj(1E-6, 1E-9, vec(5,0,0), vec(0, 0, 0)))
+    allChargedObjs.append(ChargedObj(1E-6, -1E-9, vec(-5, 0, 0) , vec(0, 0, 0)))
     
 def threeChargePreset(): 
     start()
-    allChargedObjs.append(ChargedObj(1E-6, 1E-9, vpython.vec(0,5,0), vpython.vec(0, 0, 0)))
-    allChargedObjs.append(ChargedObj(1E-6, 1E-9, vpython.vec(5*vpython.cos(vpython.pi/6),-5*vpython.sin(vpython.pi/6),0), vpython.vec(0, 0, 0)))
-    allChargedObjs.append(ChargedObj(1E-6, -1.5E-9, vpython.vec(-5*vpython.cos(vpython.pi/6),-5*vpython.sin(vpython.pi/6),0), vpython.vec(0, 0, 0)))
+    allChargedObjs.append(ChargedObj(1E-6, 1E-9, vec(0,5,0), vec(0, 0, 0)))
+    allChargedObjs.append(ChargedObj(1E-6, 1E-9, vec(5*cos(pi/6),-5*sin(pi/6),0), vec(0, 0, 0)))
+    allChargedObjs.append(ChargedObj(1E-6, -1.5E-9, vec(-5*cos(pi/6),-5*sin(pi/6),0), vec(0, 0, 0)))
 
 def butterflyPreset():
     start()
-    allChargedObjs.append(ChargedObj(1E-6, -1E-9, vpython.vec(0,5,0), vpython.vec(1, -1, 0)))
-    allChargedObjs.append(ChargedObj(1E-6, -1E-9, vpython.vec(5,5,0), vpython.vec(-1, -1, 0)))
-    allChargedObjs.append(ChargedObj(1E-6, 5E-9, vpython.vec(2.5,0,0), vpython.vec(0, 1, 0)))
+    allChargedObjs.append(ChargedObj(1E-6, -1E-9, vec(0,5,0), vec(1, -1, 0)))
+    allChargedObjs.append(ChargedObj(1E-6, -1E-9, vec(5,5,0), vec(-1, -1, 0)))
+    allChargedObjs.append(ChargedObj(1E-6, 5E-9, vec(2.5,0,0), vec(0, 1, 0)))
 
 def helixPreset(): 
     start()
-    allChargedObjs.append(ChargedObj(1E-6, -1E-9, vpython.vec(-1.5,10,0), vpython.vec(.25, -2, 0)))
-    allChargedObjs.append(ChargedObj(1E-6, 1E-9, vpython.vec(1.5,10,0), vpython.vec(-.25, -2, 0)))
+    allChargedObjs.append(ChargedObj(1E-6, -1E-9, vec(-1.5,10,0), vec(.25, -2, 0)))
+    allChargedObjs.append(ChargedObj(1E-6, 1E-9, vec(1.5,10,0), vec(-.25, -2, 0)))
 
 def helixGunPreset ():
     start()
-    allChargedObjs.append(ChargedObj(1E-6, -1E-9, vpython.vec(-15,1.5,0), vpython.vec(2, -.25, 0)))
-    allChargedObjs.append(ChargedObj(1E-6, 1E-9, vpython.vec(-15,-1.5,0), vpython.vec(2, .25, 0)))
-    allChargedObjs.append(ChargedObj(1E-6, -1E-9, vpython.vec(0,1.5,0), vpython.vec(0, 0, 0)))
-    allChargedObjs.append(ChargedObj(1E-6, 1E-9, vpython.vec(0,-1.5,0), vpython.vec(0, 0, 0)))
+    allChargedObjs.append(ChargedObj(1E-6, -1E-9, vec(-15,1.5,0), vec(2, -.25, 0)))
+    allChargedObjs.append(ChargedObj(1E-6, 1E-9, vec(-15,-1.5,0), vec(2, .25, 0)))
+    allChargedObjs.append(ChargedObj(1E-6, -1E-9, vec(0,1.5,0), vec(0, 0, 0)))
+    allChargedObjs.append(ChargedObj(1E-6, 1E-9, vec(0,-1.5,0), vec(0, 0, 0)))
     
 def dragonflyPreset ():
     start()
-    allChargedObjs.append(ChargedObj(1E-6, 1E-9, vpython.vec(0,5,0), vpython.vec(0, 0, 0)))
-    allChargedObjs.append(ChargedObj(1E-6, 1E-9, vpython.vec(4.33,-2.5,0), vpython.vec(0, 0, 0)))
-    allChargedObjs.append(ChargedObj(1E-6, 1E-9, vpython.vec(-4.33,-2.5,0), vpython.vec(0, 0, 0)))
-    allChargedObjs.append(ChargedObj(1E-6, -5E-9, vpython.vec(0,0,0), vpython.vec(0, 0, 0)))
+    allChargedObjs.append(ChargedObj(1E-6, 1E-9, vec(0,5,0), vec(0, 0, 0)))
+    allChargedObjs.append(ChargedObj(1E-6, 1E-9, vec(4.33,-2.5,0), vec(0, 0, 0)))
+    allChargedObjs.append(ChargedObj(1E-6, 1E-9, vec(-4.33,-2.5,0), vec(0, 0, 0)))
+    allChargedObjs.append(ChargedObj(1E-6, -5E-9, vec(0,0,0), vec(0, 0, 0)))
     
 def somethingPreset():
     start()
-    allChargedObjs.append(ChargedObj(1E-6, -5E-9, vpython.vec(0,5,0), vpython.vec(3, 0, 0)))
-    allChargedObjs.append(ChargedObj(1E-6, 1E-9, vpython.vec(5*vpython.cos(30),-5*vpython.sin(30),0), vpython.vec(-1, 2, 0)))
-    allChargedObjs.append(ChargedObj(1E-6, 5E-9, vpython.vec(-5*vpython.cos(30),-5*vpython.sin(30),0), vpython.vec(1, 2, 0)))
+    allChargedObjs.append(ChargedObj(1E-6, -5E-9, vec(0,5,0), vec(3, 0, 0)))
+    allChargedObjs.append(ChargedObj(1E-6, 1E-9, vec(5*cos(30),-5*sin(30),0), vec(-1, 2, 0)))
+    allChargedObjs.append(ChargedObj(1E-6, 5E-9, vec(-5*cos(30),-5*sin(30),0), vec(1, 2, 0)))
 
 # Presets
-vpython.button(text = "Dipole", bind = dipolePreset)
-vpython.scene.append_to_caption("   ")
-vpython.button(text = "Three-Charge Motion", bind = threeChargePreset)
-vpython.scene.append_to_caption("\n\n   ")
-vpython.button(text = "Parallel Plates", bind = start)
-vpython.scene.append_to_caption("   ")
-vpython.button(text = "Faraday Bucket", bind = start)
-vpython.scene.append_to_caption("\n\n   ")
-vpython.button(text = "Draw Butterfly", bind = butterflyPreset) 
-vpython.scene.append_to_caption("   ")
-vpython.button(text = "Draw Helix", bind = helixPreset) 
-vpython.scene.append_to_caption("\n\n   ")
-vpython.button(text = "helix gun (kinda)", bind = helixGunPreset)
-vpython.scene.append_to_caption("   ")
-vpython.button(text = "draw dragonfly", bind = dragonflyPreset) 
-vpython.scene.append_to_caption("\n\n   ")
-vpython.button(text = "draw something", bind = somethingPreset)
+button(text = "Dipole", bind = dipolePreset)
+scene.append_to_caption("   ")
+button(text = "Three-Charge Motion", bind = threeChargePreset)
+scene.append_to_caption("\n\n   ")
+button(text = "Parallel Plates", bind = start)
+scene.append_to_caption("   ")
+button(text = "Faraday Bucket", bind = start)
+scene.append_to_caption("\n\n   ")
+button(text = "Draw Butterfly", bind = butterflyPreset) 
+scene.append_to_caption("   ")
+button(text = "Draw Helix", bind = helixPreset) 
+scene.append_to_caption("\n\n   ")
+button(text = "helix gun (kinda)", bind = helixGunPreset)
+scene.append_to_caption("   ")
+button(text = "draw dragonfly", bind = dragonflyPreset) 
+scene.append_to_caption("\n\n   ")
+button(text = "draw something", bind = somethingPreset)
 
 # electric field Slider
 electricFieldPrecision = 10
@@ -624,9 +627,9 @@ def electricFieldPrecisionShift():
     electricFieldPrecision = electricFieldPrecisionSlider.value
     electricFieldPrecisionText.text = "<center>Electric Field Precision: " + str(electricFieldPrecision) + "</center>"
 
-vpython.scene.append_to_caption("\n\n")
-electricFieldPrecisionSlider = vpython.slider(min = 5, max = 20, value = 10, step = 1, bind = electricFieldPrecisionShift, length = sliderLength)
-electricFieldPrecisionText = vpython.wtext(text = "<center>Electric Field Precision: 10</center>")
+scene.append_to_caption("\n\n")
+electricFieldPrecisionSlider = slider(min = 5, max = 20, value = 10, step = 1, bind = electricFieldPrecisionShift, length = sliderLength)
+electricFieldPrecisionText = wtext(text = "<center>Electric Field Precision: 10</center>")
 
 # gridPrecision Slider
 gridPrecision = 10
@@ -636,13 +639,13 @@ def gridPrecisionShift():
     gridPrecision = gridPrecisionSlider.value
     gridPrecisionText.text = "<center>Grid Precision: " + str(gridPrecision) + "</center>"
 
-vpython.scene.append_to_caption("\n")
-gridPrecisionSlider = vpython.slider(min = 5, max = 20, value = 10, step = 1, bind = gridPrecisionShift, length = sliderLength)
-gridPrecisionText = vpython.wtext(text = "<center>Grid Precision: 10</center>")
+scene.append_to_caption("\n")
+gridPrecisionSlider = slider(min = 5, max = 20, value = 10, step = 1, bind = gridPrecisionShift, length = sliderLength)
+gridPrecisionText = wtext(text = "<center>Grid Precision: 10</center>")
 
 # Instruction
 def createInstruction():
-    vpython.scene.append_to_caption(""" 
+    scene.append_to_caption(""" 
 Instruction: 
 
 Controls:
@@ -673,65 +676,67 @@ backButton = None
 # region Main Screen Caption
 
 def createCaptionMainScreen():
-    vpython.scene.caption = ""
+    scene.caption = ""
 
     # play button
     global playButton
-    vpython.scene.append_to_caption("   ")
+    scene.append_to_caption("   ")
     if (playing):
-        playButton = vpython.button(text="Stop", bind = changePlay)
+        playButton = button(text="Stop", bind = changePlay)
     else:
-        playButton = vpython.button(text="Play", bind = changePlay)
+        playButton = button(text="Play", bind = changePlay)
 
     # instruction button
     global instructionButton
-    vpython.scene.append_to_caption("   ")
-    instructionButton = vpython.button(text="Instructions", bind = displayInstructionPage)
+    scene.append_to_caption("   ")
+    instructionButton = button(text="Instructions", bind = displayInstructionPage)
 
     # save button
     global saveButton
-    vpython.scene.append_to_caption("   ")
-    vpython.button (text = "Save", bind = changePlay)
+    scene.append_to_caption("   ")
+    button (text = "Save", bind = changePlay)
 
     # time slider
     global timeSlider, timeText
-    vpython.scene.append_to_caption("\n\n")
-    timeSlider = vpython.slider(bind=timeShift, min = 0.1, max = 5, value = time, step = 0.1, length = sliderLength) 
-    vpython.scene.append_to_caption("\n")
-    timeText = vpython.wtext(text = "<center>Time in program for every second in real life:" + str(time) + "s</center>")
+    scene.append_to_caption("\n\n")
+    timeSlider = slider(bind=timeShift, min = 0.1, max = 5, value = time, step = 0.1, length = sliderLength) 
+    scene.append_to_caption("\n")
+    timeText = wtext(text = "<center>Time in program for every second in real life:" + str(time) + "s</center>")
     
     # vector menu
     global vectorMenu
-    vpython.scene.append_to_caption("\n   Show Vectors: ")
-    vectorMenu = vpython.menu(choices = ["Velocity", "Force", "Neither"], bind = selectVector)
+    scene.append_to_caption("\n   Show Vectors: ")
+    vectorMenu = menu(choices = ["Velocity", "Force", "Neither"], bind = selectVector)
 
     # trail checkbox
-    vpython.scene.append_to_caption("   ")
-    vpython.checkbox(text = "Trail", bind = changePlay)
+    global trailCheckbox
+    scene.append_to_caption("   ")
+    trailCheckbox = checkbox(text = "Trail", bind = changeTrailStateAll, checked = trailStateAll)
 
     # clear trail button
-    vpython.scene.append_to_caption("   ")
-    vpython.button (text = "Clear All Trail", bind = changePlay)
+    global clearTrailButton
+    scene.append_to_caption("   ")
+    clearTrailButton = button (text = "Clear All Trail", bind = clearTrailAll)
 
     # electric field mode button
     global electricFieldButton
-    vpython.scene.append_to_caption("\n\n   ")
-    electricFieldButton = vpython.button(text="Electric Field: Mode " + str(electricFieldMode), bind = changeElectricField)
+    scene.append_to_caption("\n\n   ")
+    electricFieldButton = button(text="Electric Field: Mode " + str(electricFieldMode), bind = changeElectricField)
 
     # electric field opacity checkbox
     global electricOpacityCheckbox
-    vpython.scene.append_to_caption("   ")
-    electricOpacityCheckbox = vpython.checkbox(text = "Electric Field Opacity", bind = changeElectricOpacityMode, checked = electricOpacityMode)
+    scene.append_to_caption("   ")
+    electricOpacityCheckbox = checkbox(text = "Electric Field Opacity", bind = changeElectricOpacityMode, checked = electricOpacityMode)
 
     # electric potential mode button
     global electricPotentialButton
-    vpython.scene.append_to_caption("\n\n   ")
-    electricPotentialButton = vpython.button(text="Electric Potential Mode " + str(electricPotentialMode), bind = changeElectricPotential)
+    scene.append_to_caption("\n\n   ")
+    electricPotentialButton = button(text="Electric Potential Mode " + str(electricPotentialMode), bind = changeElectricPotential)
     
     # grid mode checkbox
     global gridCheckbox
-    vpython.scene.append_to_caption("   ")  
-    gridCheckbox = vpython.checkbox(text="Grid", bind = changeGridMode, checked = gridMode)
+    scene.append_to_caption("   ")  
+    gridCheckbox = checkbox(text="Grid", bind = changeGridMode, checked = gridMode)
 
 # play button
 playing = False
@@ -759,9 +764,9 @@ def changePlay():
 # instruction button
 def displayInstructionPage():
     global startButton
-    vpython.scene.caption = ""
-    startButton = vpython.button(text = "Back", bind = createCaptionMainScreen)
-    vpython.scene.append_to_caption("\n")
+    scene.caption = ""
+    startButton = button(text = "Back", bind = createCaptionMainScreen)
+    scene.append_to_caption("\n")
     createInstruction()
 
 # save button
@@ -781,10 +786,21 @@ def selectVector():
     print("!!!")
 
 # trail checkbox
-# def changeTrailAll():
+trailStateAll = False
 
+def changeTrailStateAll():
+    global trailStateAll, allChargedObjs
+    trailStateAll = not trailStateAll
+    # for co in allChargedObjs:
+    #     co.display.make_trail = trailStateAll
+    #     print(co.display.make_trail)
+    # print("reached")
 
-# trailCheckbox = None
+# clear trail button
+def clearTrailAll():
+    for co in allChargedObjs:
+        co.display.clear_trail()
+        co.display.make_trail = True 
 
 # electic field mode button
 electricFieldMode = 0
@@ -856,56 +872,56 @@ def changeGridMode():
 # region Spawn Screen Caption
 
 def createCaptionSpawnScreen():
-    vpython.scene.caption = ""
+    scene.caption = ""
 
     # spawn charge menu
     global chargeMenu
-    vpython.scene.append_to_caption("   Spawn Charge Object Menu: ")
-    chargeMenu = vpython.menu(choices = ["Sphere", "Cyllinder", "Plate"], bind = selectSpawnChargeObj) 
+    scene.append_to_caption("   Spawn Charge Object Menu: ")
+    chargeMenu = menu(choices = ["Sphere", "Cyllinder", "Plate"], bind = selectSpawnChargeObj) 
     
     # spawn charge slider and input field
     global spawnChargeSlider, spawnChargeInputField
-    vpython.scene.append_to_caption("\n\n")
-    spawnChargeSlider = vpython.slider(bind = spawnChargeShift, min = -5, max = 5, value = spawnCharge / 1E-9, step = 0.1, length = sliderLength)
-    vpython.scene.append_to_caption("\n                             Charge: ")
-    spawnChargeInputField = vpython.winput(bind = spawnChargeInput, text = spawnChargeSlider.value, width = 35)
-    vpython.scene.append_to_caption(" nC")
+    scene.append_to_caption("\n\n")
+    spawnChargeSlider = slider(bind = spawnChargeShift, min = -5, max = 5, value = spawnCharge / 1E-9, step = 0.1, length = sliderLength)
+    scene.append_to_caption("\n                             Charge: ")
+    spawnChargeInputField = winput(bind = spawnChargeInput, text = spawnChargeSlider.value, width = 35)
+    scene.append_to_caption(" nC")
 
     # spawn mass slider and input field
     global spawnMassSlider, spawnMassInputField
-    vpython.scene.append_to_caption("\n\n")
-    spawnMassSlider = vpython.slider(bind = spawnMassShift, min = 1, max = 5, value = spawnMass / 1E-6, step = 0.1, length = sliderLength)
-    vpython.scene.append_to_caption("\n                          Mass: ")
-    spawnMassInputField = vpython.winput(bind = spawnMassInput, text = spawnMassSlider.value, width = 35)
-    vpython.scene.append_to_caption(" * 10^-6 Kg")
+    scene.append_to_caption("\n\n")
+    spawnMassSlider = slider(bind = spawnMassShift, min = 1, max = 5, value = spawnMass / 1E-6, step = 0.1, length = sliderLength)
+    scene.append_to_caption("\n                          Mass: ")
+    spawnMassInputField = winput(bind = spawnMassInput, text = spawnMassSlider.value, width = 35)
+    scene.append_to_caption(" * 10^-6 Kg")
 
     # spawn and back buttons
     global spawnButton, backButton
-    vpython.scene.append_to_caption("\n\n   ")
-    spawnButton = vpython.button(text = "Spawn", bind = spawnChargedObj)
-    vpython.scene.append_to_caption("   ")
-    backButton = vpython.button(text = "Back", bind = back)
+    scene.append_to_caption("\n\n   ")
+    spawnButton = button(text = "Spawn", bind = spawnChargedObj)
+    scene.append_to_caption("   ")
+    backButton = button(text = "Back", bind = back)
 
     # spawn position input fields
     global spawnPosText, spawnXInputField, spawnYInputField
-    vpython.scene.append_to_caption("\n\n   Position: <")
-    spawnXInputField = vpython.winput(bind = spawnXInput, text = '{:1.2f}'.format(spawnPos.x), width = 50)
-    vpython.scene.append_to_caption(", ")
-    spawnYInputField = vpython.winput(bind = spawnYInput, text = '{:1.2f}'.format(spawnPos.y), width = 50) 
-    vpython.scene.append_to_caption(">")
+    scene.append_to_caption("\n\n   Position: <")
+    spawnXInputField = winput(bind = spawnXInput, text = '{:1.2f}'.format(spawnPos.x), width = 50)
+    scene.append_to_caption(", ")
+    spawnYInputField = winput(bind = spawnYInput, text = '{:1.2f}'.format(spawnPos.y), width = 50) 
+    scene.append_to_caption(">")
 
     # electric field and potential texts
     global electricFieldText, electricPotentialText
-    vpython.scene.append_to_caption("\n\n   ")
+    scene.append_to_caption("\n\n   ")
     electricField = calculateElectricField(spawnPos)
-    electricFieldText = vpython.wtext(text = "Electric Field: <" + 
+    electricFieldText = wtext(text = "Electric Field: <" + 
                                         '{:1.2f}'.format(electricField.x) + ", " + 
                                         '{:1.2f}'.format(electricField.y) + "> N/C \n   Electric Field: "+
-                                        '{:1.2f}'.format((vpython.mag(electricField))) + " N/C @ " +
-                                        '{:1.2f}'.format(vpython.atan2(electricField.y, electricField.x) / vpython.pi * 180) + " degree")
+                                        '{:1.2f}'.format((mag(electricField))) + " N/C @ " +
+                                        '{:1.2f}'.format(atan2(electricField.y, electricField.x) / pi * 180) + " degree")
 
-    vpython.scene.append_to_caption("\n\n   ")
-    electricPotentialText = vpython.wtext(text = "Electric Potential: " '{:1.2f}'.format(calculateElectricPotential(spawnPos)) + " V")
+    scene.append_to_caption("\n\n   ")
+    electricPotentialText = wtext(text = "Electric Potential: " '{:1.2f}'.format(calculateElectricPotential(spawnPos)) + " V")
 
 # spawn charge menu
 def selectSpawnChargeObj():
@@ -955,7 +971,7 @@ def spawnMassInput():
 
 # spawn button
 def spawnChargedObj():
-    allChargedObjs.append(ChargedObj(spawnMass, spawnCharge, spawnPos, vpython.vec(0, 0, 0)))
+    allChargedObjs.append(ChargedObj(spawnMass, spawnCharge, spawnPos, vec(0, 0, 0)))
     back()
 
 # back button
@@ -990,8 +1006,8 @@ def updateSpawnScreen():
     electricFieldText.text = ("Electric Field: <" + 
                                         '{:1.2f}'.format(electricField.x) + ", " + 
                                         '{:1.2f}'.format(electricField.y) + "> N/C \n   Electric Field: "+
-                                        '{:1.2f}'.format((vpython.mag(electricField))) + " N/C @ " +
-                                        '{:1.2f}'.format(vpython.atan2(electricField.y, electricField.x) / vpython.pi * 180) + " degree")
+                                        '{:1.2f}'.format((mag(electricField))) + " N/C @ " +
+                                        '{:1.2f}'.format(atan2(electricField.y, electricField.x) / pi * 180) + " degree")
     electricPotentialText.text = "Electric Potential: " '{:1.2f}'.format(calculateElectricPotential(spawnPos)) + " V"
 
 # endregion
@@ -1008,87 +1024,87 @@ def createCaptionSelectCharge():
     global selectedChargeSlider, selectedChargeText
     global selectedMassSlider, selectedMassText
 
-    vpython.scene.caption = ""
+    scene.caption = ""
 
     global playButton
-    vpython.scene.append_to_caption("   ")
+    scene.append_to_caption("   ")
     if (playing):
-        playButton = vpython.button(text="Stop", bind = changePlay)
+        playButton = button(text="Stop", bind = changePlay)
     else:
-        playButton = vpython.button(text="Play", bind = changePlay)
+        playButton = button(text="Play", bind = changePlay)
 
     global cameraFollowButton
-    vpython.scene.append_to_caption("   ")
+    scene.append_to_caption("   ")
     if (cameraFollowedObj == chargedObjSelected.display):
-        cameraFollowButton = vpython.button(text = "Camera Unfollow", bind = cameraFollow)
+        cameraFollowButton = button(text = "Camera Unfollow", bind = cameraFollow)
     else:
-        cameraFollowButton = vpython.button(text = "Camera Follow", bind = cameraFollow)
+        cameraFollowButton = button(text = "Camera Follow", bind = cameraFollow)
 
-    vpython.scene.append_to_caption("\n\n")
-    selectedChargeSlider = vpython.slider(bind = selectedChargeShift, min = -5, max = 5, value = chargedObjSelected.charge / 1E-9, step = 0.1, length = sliderLength)
-    vpython.scene.append_to_caption("\n")
-    selectedChargeText = vpython.wtext(text = '<center>Charge: '+'{:1.2f}'.format(selectedChargeSlider.value) + " nC </center>")
+    scene.append_to_caption("\n\n")
+    selectedChargeSlider = slider(bind = selectedChargeShift, min = -5, max = 5, value = chargedObjSelected.charge / 1E-9, step = 0.1, length = sliderLength)
+    scene.append_to_caption("\n")
+    selectedChargeText = wtext(text = '<center>Charge: '+'{:1.2f}'.format(selectedChargeSlider.value) + " nC </center>")
 
-    vpython.scene.append_to_caption("\n")
-    selectedMassSlider = vpython.slider(bind = selectedMassShift, min = 1, max = 2, value = chargedObjSelected.mass / 1E-6, step = 0.1, length = sliderLength) 
-    vpython.scene.append_to_caption("\n")
-    selectedMassText = vpython.wtext(text = '<center>Mass: '+'{:1.2f}'.format(selectedMassSlider.value) + " * 10^-6 Kg</center>")
+    scene.append_to_caption("\n")
+    selectedMassSlider = slider(bind = selectedMassShift, min = 1, max = 2, value = chargedObjSelected.mass / 1E-6, step = 0.1, length = sliderLength) 
+    scene.append_to_caption("\n")
+    selectedMassText = wtext(text = '<center>Mass: '+'{:1.2f}'.format(selectedMassSlider.value) + " * 10^-6 Kg</center>")
 
-    vpython.scene.append_to_caption("\n   ")
-    vpython.button(text="Show Velocity: True", bind=fixChargedObj)
+    scene.append_to_caption("\n   ")
+    button(text="Show Velocity: True", bind=fixChargedObj)
 
-    vpython.scene.append_to_caption("\n\n   ")
-    vpython.button(text="Show Force: False", bind=deleteChargedObj)
+    scene.append_to_caption("\n\n   ")
+    button(text="Show Force: False", bind=deleteChargedObj)
 
-    vpython.scene.append_to_caption("\n\n   ")
-    fixButton = vpython.button(text="Fix", bind=fixChargedObj)
+    scene.append_to_caption("\n\n   ")
+    fixButton = button(text="Fix", bind=fixChargedObj)
 
-    vpython.scene.append_to_caption("\n\n   ")
-    deleteButton = vpython.button(text="Delete", bind=deleteChargedObj)
+    scene.append_to_caption("\n\n   ")
+    deleteButton = button(text="Delete", bind=deleteChargedObj)
 
-    vpython.scene.append_to_caption("\n\n   ")
-    vpython.wtext(text = "Position: <" + '{:1.2f}'.format(chargedObjSelected.pos.x) + ", " + '{:1.2f}'.format(chargedObjSelected.pos.y) + ">")
-    vpython.scene.append_to_caption("\n   x:")
-    vpython.winput(bind = spawnXInput)
-    vpython.scene.append_to_caption("\n   y:")
-    vpython.winput(bind = spawnYInput) 
+    scene.append_to_caption("\n\n   ")
+    wtext(text = "Position: <" + '{:1.2f}'.format(chargedObjSelected.pos.x) + ", " + '{:1.2f}'.format(chargedObjSelected.pos.y) + ">")
+    scene.append_to_caption("\n   x:")
+    winput(bind = spawnXInput)
+    scene.append_to_caption("\n   y:")
+    winput(bind = spawnYInput) 
 
-    vpython.scene.append_to_caption("\n\n   ")
-    selectedChargeVelXYText = vpython.wtext(text = "Velocity: <" + 
+    scene.append_to_caption("\n\n   ")
+    selectedChargeVelXYText = wtext(text = "Velocity: <" + 
                     '{:1.2f}'.format(chargedObjSelected.vel.x) + ", " + 
                     '{:1.2f}'.format(chargedObjSelected.vel.y) + "> m/s")
-    vpython.scene.append_to_caption("\n   x:")
-    vpython.winput(bind = spawnXInput)
-    vpython.scene.append_to_caption("\n   y:")
-    vpython.winput(bind = spawnYInput) 
+    scene.append_to_caption("\n   x:")
+    winput(bind = spawnXInput)
+    scene.append_to_caption("\n   y:")
+    winput(bind = spawnYInput) 
 
-    vpython.scene.append_to_caption("\n\n   ")
-    selectedChargeVelMAText = vpython.wtext(text = "Velocity: "+
-                    '{:1.2f}'.format((vpython.mag(chargedObjSelected.vel))) + " m/s @ " +
-                    '{:1.2f}'.format(vpython.atan2(chargedObjSelected.vel.y, chargedObjSelected.vel.x) / vpython.pi * 180) + " degree")
-    vpython.scene.append_to_caption("\n   mag:")
-    vpython.winput(bind = spawnXInput)
-    vpython.scene.append_to_caption("\n   angle:")
-    vpython.winput(bind = spawnYInput) 
+    scene.append_to_caption("\n\n   ")
+    selectedChargeVelMAText = wtext(text = "Velocity: "+
+                    '{:1.2f}'.format((mag(chargedObjSelected.vel))) + " m/s @ " +
+                    '{:1.2f}'.format(atan2(chargedObjSelected.vel.y, chargedObjSelected.vel.x) / pi * 180) + " degree")
+    scene.append_to_caption("\n   mag:")
+    winput(bind = spawnXInput)
+    scene.append_to_caption("\n   angle:")
+    winput(bind = spawnYInput) 
 
     force = chargedObjSelected.calculateNetForce() / 1E-9
-    vpython.scene.append_to_caption("\n\n   ")
-    selectedChargeForceXYText = vpython.wtext(text = "Force: <" + 
+    scene.append_to_caption("\n\n   ")
+    selectedChargeForceXYText = wtext(text = "Force: <" + 
                     '{:1.5f}'.format(force.x) + ", " + 
                     '{:1.5f}'.format(force.y) + "> nN") 
-    vpython.scene.append_to_caption("\n   x:")
-    vpython.winput(bind = spawnXInput)
-    vpython.scene.append_to_caption("\n   y:")
-    vpython.winput(bind = spawnYInput) 
+    scene.append_to_caption("\n   x:")
+    winput(bind = spawnXInput)
+    scene.append_to_caption("\n   y:")
+    winput(bind = spawnYInput) 
 
-    vpython.scene.append_to_caption("\n\n   ")
-    selectedChargeForceMAText= vpython.wtext(text = "Force: "+
-                    '{:1.5f}'.format((vpython.mag(force))) + " nN @ " +
-                    '{:1.2f}'.format(vpython.atan2(force.y, force.x) / vpython.pi * 180) + " degree")
-    vpython.scene.append_to_caption("\n   mag:")
-    vpython.winput(bind = spawnXInput)
-    vpython.scene.append_to_caption("\n   angle:")
-    vpython.winput(bind = spawnYInput) 
+    scene.append_to_caption("\n\n   ")
+    selectedChargeForceMAText= wtext(text = "Force: "+
+                    '{:1.5f}'.format((mag(force))) + " nN @ " +
+                    '{:1.2f}'.format(atan2(force.y, force.x) / pi * 180) + " degree")
+    scene.append_to_caption("\n   mag:")
+    winput(bind = spawnXInput)
+    scene.append_to_caption("\n   angle:")
+    winput(bind = spawnYInput) 
 
 # stats
 selectedChargeVelXYText = None
@@ -1102,16 +1118,16 @@ def updateSelectScreen():
                     '{:1.2f}'.format(chargedObjSelected.vel.x) + ", " + 
                     '{:1.2f}'.format(chargedObjSelected.vel.y) + "> m/s")
     selectedChargeVelMAText.text = ("Velocity: "+
-                    '{:1.2f}'.format((vpython.mag(chargedObjSelected.vel))) + " m/s @ " +
-                    '{:1.2f}'.format(vpython.atan2(chargedObjSelected.vel.y, chargedObjSelected.vel.x) / vpython.pi * 180) + " degree")
+                    '{:1.2f}'.format((mag(chargedObjSelected.vel))) + " m/s @ " +
+                    '{:1.2f}'.format(atan2(chargedObjSelected.vel.y, chargedObjSelected.vel.x) / pi * 180) + " degree")
     force = chargedObjSelected.calculateNetForce() / 1E-9
 
     selectedChargeForceXYText.text = ("Force: <" + 
                     '{:1.5f}'.format(force.x) + ", " + 
                     '{:1.5f}'.format(force.y) + "> nN") 
     selectedChargeForceMAText.text = ("Force: "+
-                    '{:1.5f}'.format((vpython.mag(force))) + " nN @ " +
-                    '{:1.2f}'.format(vpython.atan2(force.y, force.x) / vpython.pi * 180) + " degree")
+                    '{:1.5f}'.format((mag(force))) + " nN @ " +
+                    '{:1.2f}'.format(atan2(force.y, force.x) / pi * 180) + " degree")
 
 # camera follow button
 cameraFollowedObj = None
@@ -1120,12 +1136,12 @@ def cameraFollow():
     global cameraFollowButton, cameraFollowedObj
     # unfollow
     if (cameraFollowedObj == chargedObjSelected.display):
-        vpython.scene.camera.follow(None)
+        scene.camera.follow(None)
         cameraFollowedObj = None
         cameraFollowButton.text = "Camera Follow"
     # follow
     else:
-        vpython.scene.camera.follow(chargedObjSelected.display)
+        scene.camera.follow(chargedObjSelected.display)
         cameraFollowedObj = chargedObjSelected.display
         cameraFollowButton.text = "Camera Unfollow"
 
@@ -1162,7 +1178,7 @@ def selectedMassShift():
     chargedObjSelected.mass = selectedMassSlider.value * 1E-6   
     selectedMassText.text = '<center>Mass: '+'{:1.2f}'.format(selectedMassSlider.value) + " * 10^-6 Kg</center>"
     # change radius
-    chargedObjSelected.display.radius = ((chargedObjSelected.mass) / (((4/3)* vpython.pi*spawnDensity)))**(1/3)
+    chargedObjSelected.display.radius = ((chargedObjSelected.mass) / (((4/3)* pi*spawnDensity)))**(1/3)
     chargedObjSelected.displaySelect()
 
 selectedMassSlider = None
@@ -1184,7 +1200,7 @@ def deleteChargedObj():
                 chargedObjSelected.electricFieldArrows[i][j].visible = False
     allChargedObjs.remove(chargedObjSelected)
     if (chargedObjSelected == cameraFollowedObj):
-        vpython.scene.camera.follow(None)
+        scene.camera.follow(None)
         cameraFollowedObj = None
     chargedObjSelected = None
     createCaptionMainScreen()
@@ -1225,10 +1241,10 @@ fixButton = None
 ####################################################################################################
 
 # region Program Runs Here
-curRange = vpython.scene.range
+curRange = scene.range
 
 while True:
-    vpython.rate(numOfRate * time)
+    rate(numOfRate * time)
     if (playing):
         for chargedObj in allChargedObjs:
             chargedObj.applyForce()
@@ -1238,8 +1254,8 @@ while True:
         chargedObj.displayElectricField()
 
     # reset electric field arrows and electric potential grid for all if user zooms
-    if (curRange != vpython.scene.range):
-        curRange = vpython.scene.range
+    if (curRange != scene.range):
+        curRange = scene.range
         setUnits()
         setElectricFieldArrowsAll()
         setElectricPotentialGrid()
