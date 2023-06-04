@@ -287,9 +287,16 @@ class ChargedObj:
     def applyVel(self):
         if (not self.fixed):
             self.pos += self.vel / numOfRate
-            self.display.pos = self.pos
-            if (self == chargedObjSelected):
-                self.displaySelect()
+            self.updateDisplay()
+
+    def updateDisplay(self):
+        self.display.pos = self.pos
+        if (self == chargedObjSelected):
+            self.displaySelect()
+        if (vectorToShow == "Velocity"):
+            self.createVelVec()
+        elif (vectorToShow == "Force"):
+            self.createForceVec()
 
     def createVelVec(self):
         # arrow    
@@ -789,23 +796,6 @@ def changePlay():
         playButton.text = "Stop"
     else:
         playButton.text = "Play"
-
-    # for every object that is not fixed
-    for co in allChargedObjs:
-        if (not co.fixed):
-            #set vector visibilities
-            if (vectorToShow == "Velocity"):
-                if (playing):
-                    co.velVec.visible = False
-                    co.velLabel.visible = False
-                else:
-                    co.createVelVec()
-            elif (vectorToShow == "Force"):
-                if (playing):
-                    co.forceVec.visible = False
-                    co.forceLabel.visible = False
-                else:
-                    co.createForceVec()
 
 # instruction button
 def displayInstructionPage():
@@ -1340,7 +1330,7 @@ def selectPosXInput():
     if (selectPosXInputField.number != None):
         chargedObjSelected.pos.x = selectPosXInputField.number
         chargedObjSelected.display.pos.x = chargedObjSelected.pos.x
-        chargedObjSelected.displaySelect()
+        chargedObjSelected.updateDisplay()
         updateForceStatSelectScreen()
     else: 
         # invalid input
@@ -1352,14 +1342,14 @@ def selectPosYInput():
     if (selectPosYInputField.number != None):
         chargedObjSelected.pos.y = selectPosYInputField.number
         chargedObjSelected.display.pos.y = chargedObjSelected.pos.y
-        chargedObjSelected.displaySelect()
+        chargedObjSelected.updateDisplay()
         updateForceStatSelectScreen()
     else: 
         # invalid input
         selectPosYInputField.text = '{:1.2f}'.format(chargedObjSelected.pos.y)
 
 # select velocity input field
-def updateVelocityStatsSelectScreen():
+def updateVelocityStatsSelectScreen(): 
     global selectedVelXInputField, selectedVelYInputField, selectedVelMagInputField, selectedVelAngleInputField
     selectedVelXInputField.text = '{:1.2f}'.format(chargedObjSelected.vel.x)
     selectedVelYInputField.text = '{:1.2f}'.format(chargedObjSelected.vel.y)
