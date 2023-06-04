@@ -269,10 +269,11 @@ class ChargedObj:
     def applyForce(self):
         # calculate force from every other charge
         if (not self.fixed):
-            # apply force
+            # apply force: F * ∆t = m * ∆v
             self.vel += self.calculateNetForce() / self.mass
 
-    def showForceVec(self):
+    def createForceVec(self):
+        # arrow
         self.forceVec.visible = True
         self.forceVec.pos = self.pos
         self.forceVec.axis = self.calculateNetForce() * 1E9
@@ -297,11 +298,6 @@ class ChargedObj:
         self.velLabel.text = "{0:.3f}".format(mag(self.velVec.axis)) + "m/s"
         self.velLabel.pos = self.velVec.pos + self.velVec.axis
         self.velLabel.visible = True
-
-        # reset if velocity vector is too small
-        if (mag(self.velVec.axis) < self.display.radius):
-            self.velVec.visible = False
-            self.velLabel.visible = False
 
     def createImpulseLabel(self):
         self.impulseLabel.text = "{0:.3f}".format(mag(self.impulseVec.axis)) + "μN * " + str(1 / numOfRate) + "s"
@@ -511,7 +507,7 @@ def onMouseDown():
 
 def onMouseUp():
     global chargedObjToDrag, mouseDown
-    # apply force vector if necessary
+    # apply impulse vector if necessary
     if (chargedObjSelected != None):
         if (chargedObjSelected.impulseVec.axis != vec(0, 0, 0)):
             chargedObjSelected.vel += chargedObjSelected.impulseVec.axis / 1E6 / chargedObjSelected.mass 
@@ -550,13 +546,18 @@ def onMouseMove():
                 if (spawnPos != None):
                     updateSpawnScreen()
         else:
-            if chargedObjToDrag != None:
+            # conditions for setting vectors: not playing, dragging, and obj not fixed
+            if not playing and chargedObjToDrag != None and not chargedObjToDrag.fixed:
                 # set velocity vector
-                if (not playing):
-                    chargedObjToDrag.velVec.axis = getMousePos() - chargedObjToDrag.pos
-                    chargedObjToDrag.vel = chargedObjToDrag.velVec.axis
-                    chargedObjToDrag.createVelVec()
-                    updateSelectScreen()
+                chargedObjToDrag.velVec.axis = getMousePos() - chargedObjToDrag.pos
+                chargedObjToDrag.vel = chargedObjToDrag.velVec.axis
+                chargedObjToDrag.createVelVec()
+                # reset if velocity vector is too small
+                if (mag(chargedObjToDrag.velVec.axis) < chargedObjToDrag.display.radius):
+                    chargedObjToDrag.vel = vec(0, 0, 0)
+                    chargedObjToDrag.velVec.visible = False
+                    chargedObjToDrag.velLabel.visible = False
+                updateSelectScreen()
 
 # endregion
 
@@ -802,7 +803,7 @@ def changePlay():
                     co.forceVec.visible = False
                     co.forceLabel.visible = False
                 else:
-                    co.showForceVec()
+                    co.createForceVec()
 
 # instruction button
 def displayInstructionPage():
@@ -848,7 +849,7 @@ def selectVector():
                 if (vectorToShow == "Velocity"):
                     co.createVelVec()
                 elif (vectorToShow == "Force"):
-                    co.showForceVec()
+                    co.createForceVec()
 
 # trail checkbox
 trailStateAll = False
@@ -1288,6 +1289,7 @@ def fixChargedObj():
     if (chargedObjSelected.fixed):
         fixButton.text = "Unfix"
         # reset vectors
+        chargedObjSelected.vel = vec(0, 0, 0)
         chargedObjSelected.velVec.visible = False
         chargedObjSelected.velLabel.visible = False
         chargedObjSelected.forceVec.visible = False
@@ -1366,7 +1368,7 @@ while True:
         charge.collided = []
 
     # update force vector because it is possible that mouse is not moving
-    if (playing and mouseDown and chargedObjSelected != None):
+    if (playing and mouseDown and chargedObjSelected != None and not chargedObjSelected.fixed):
         chargedObjSelected.impulseVec.pos = chargedObjSelected.pos
         chargedObjSelected.impulseVec.axis = getMousePos() - chargedObjSelected.pos 
         chargedObjSelected.createImpulseLabel()
