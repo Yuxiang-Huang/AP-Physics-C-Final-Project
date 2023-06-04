@@ -157,9 +157,12 @@ class ChargedObj:
         self.vel = spawnVel
         self.fixed = False
         self.collided = []
+
+        # force labels
         self.velLabel = label(text = "0", visible = False)
         self.forceLabel = label(text = "0", visible = False)
-        # Displays
+
+        # displays
         spawnRadius = ((mass) / (((4/3)* pi*spawnDensity)))**(1/3)
 
         # possibly sliders for more variables
@@ -167,8 +170,7 @@ class ChargedObj:
 
         # spheres for now
         if (charge > 0):
-            self.display = sphere(pos = spawnPos, radius = spawnRadius, texture = positiveSphereTexture, 
-                                          trail_color = color.red, make_trail = True)
+            self.display = sphere(pos = spawnPos, radius = spawnRadius, texture = positiveSphereTexture)
             self.velVec = arrow(axis = vec(0, 0, 0), color = color.red)
             self.forceVec = arrow(axis = vec(0, 0, 0), color = color.red)
 
@@ -178,9 +180,11 @@ class ChargedObj:
             for i in range(self.numOfLine):
                 for j in range(electricFieldPrecision):
                     self.electricFieldArrows[i][j] = arrow(axis = vec(0, 0, 0), color = color.red)
+
+            self.color = color.red
+
         elif (charge < 0):
-            self.display = sphere(pos=spawnPos, radius=spawnRadius, texture = negativeSphereTexture, 
-                                          trail_color = color.red)
+            self.display = sphere(pos=spawnPos, radius=spawnRadius, texture = negativeSphereTexture)
             self.velVec = arrow(axis = vec(0, 0, 0), color = color.blue)
             self.forceVec = arrow(axis = vec(0, 0, 0), color = color.blue)
 
@@ -190,11 +194,15 @@ class ChargedObj:
             for i in range(self.numOfLine):
                 for j in range(electricFieldPrecision):
                     self.electricFieldArrows[i][j] = arrow(axis = vec(0, 0, 0), color = color.blue)
+            
+            self.color = color.blue
+        
         else:
-            self.display = sphere(pos=spawnPos, radius=spawnRadius, texture = neutralSphereTexture,
-                                          trail_color = color.black)
+            self.display = sphere(pos=spawnPos, radius=spawnRadius, texture = neutralSphereTexture)
             self.velVec = arrow(axis = vec(0, 0, 0), color = color.black)
             self.forceVec = arrow(axis = vec(0, 0, 0), color = color.black)
+
+            self.color = color.black
 
         # select display
         self.selectDisplay = []
@@ -791,16 +799,13 @@ trailStateAll = False
 def changeTrailStateAll():
     global trailStateAll, allChargedObjs
     trailStateAll = not trailStateAll
-    # for co in allChargedObjs:
-    #     co.display.make_trail = trailStateAll
-    #     print(co.display.make_trail)
-    # print("reached")
+    for co in allChargedObjs:
+        attach_trail(co.display, color = co.color)
 
 # clear trail button
 def clearTrailAll():
     for co in allChargedObjs:
         co.display.clear_trail()
-        co.display.make_trail = True 
 
 # electic field mode button
 electricFieldMode = 0
