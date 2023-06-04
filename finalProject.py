@@ -688,10 +688,9 @@ def createCaptionMainScreen():
     vpython.scene.append_to_caption("   ")
     instructionButton = vpython.button(text="Instructions", bind = displayInstructionPage)
 
+    # save button
+    global saveButton
     vpython.scene.append_to_caption("   ")
-    vpython.button (text = "Trail: False", bind = changePlay)
-
-    vpython.scene.append_to_caption("\n   ")
     vpython.button (text = "Save", bind = changePlay)
 
     # time slider
@@ -700,10 +699,23 @@ def createCaptionMainScreen():
     timeSlider = vpython.slider(bind=timeShift, min = 0.1, max = 5, value = time, step = 0.1, length = sliderLength) 
     vpython.scene.append_to_caption("\n")
     timeText = vpython.wtext(text = "<center>Time in program for every second in real life:" + str(time) + "s</center>")
+    
+    # vector menu
+    global vectorMenu
+    vpython.scene.append_to_caption("\n   Show Vectors: ")
+    vectorMenu = vpython.menu(choices = ["Velocity", "Force", "Neither"], bind = selectVector)
+
+    # trail checkbox
+    vpython.scene.append_to_caption("   ")
+    vpython.checkbox(text = "Trail", bind = changePlay)
+
+    # clear trail button
+    vpython.scene.append_to_caption("   ")
+    vpython.button (text = "Clear Trail", bind = changePlay)
 
     # electric field mode button
     global electricFieldButton
-    vpython.scene.append_to_caption("\n   ")
+    vpython.scene.append_to_caption("\n\n   ")
     electricFieldButton = vpython.button(text="Electric Field: Mode " + str(electricFieldMode), bind = changeElectricField)
 
     # electric field opacity checkbox
@@ -756,6 +768,12 @@ def displayInstructionPage():
 
 instructionButton = None
 
+# save button
+def save():
+    print("!!!")
+
+saveButton = None
+
 # time slider
 time = 1
 
@@ -766,6 +784,12 @@ def timeShift():
 
 timeSlider = None
 timeText = None
+
+# vector radio
+def selectVector():
+    print("!!!")
+
+vectorMenu = None
 
 # electic field mode button
 electricFieldMode = 0
@@ -847,10 +871,10 @@ gridCheckbox = None
 def createCaptionSpawnScreen():
     vpython.scene.caption = ""
 
-    # spawn charge radio
+    # spawn charge menu
     global chargeMenu
     vpython.scene.append_to_caption("   Spawn Charge Object Menu: ")
-    chargeMenu = vpython.menu(text = "Charge Menu", choices = ["Sphere", "Cyllinder", "Plate"], bind = spawnRadio) 
+    chargeMenu = vpython.menu(choices = ["Sphere", "Cyllinder", "Plate"], bind = selectSpawnChargeObj) 
     
     # spawn charge slider and input field
     global spawnChargeSlider, spawnChargeInputField
@@ -896,9 +920,9 @@ def createCaptionSpawnScreen():
     vpython.scene.append_to_caption("\n\n   ")
     electricPotentialText = vpython.wtext(text = "Electric Potential: " '{:1.2f}'.format(calculateElectricPotential(spawnPos)) + " V")
 
-# spawn charge radio
-def spawnRadio():
-    global chargeMenu 
+# spawn charge menu
+def selectSpawnChargeObj():
+    print("!!!")
 
 chargeMenu = None
 

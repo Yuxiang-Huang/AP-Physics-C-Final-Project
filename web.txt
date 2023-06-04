@@ -312,7 +312,7 @@ class ChargedObj:
                         self.electricFieldArrows[i][j].axis = arrowLength
 
                         # opacity
-                        if (electricOpacity):
+                        if (electricOpacityMode):
                             self.electricFieldArrows[i][j].opacity = mag(electricField) / electricFieldOpacitySetter
                         else:
                             self.electricFieldArrows[i][j].opacity = 1
@@ -346,7 +346,7 @@ def displayElectricFieldAll():
             for j in range(gridPrecision):
                 electricField = calculateElectricField(electricFieldArrowsAll[i][j].pos)
                 electricFieldArrowsAll[i][j].axis = norm(electricField) * size
-                if (electricOpacity):
+                if (electricOpacityMode):
                     electricFieldArrowsAll[i][j].opacity = mag(electricField) / electricFieldOpacitySetter
                 else:
                     electricFieldArrowsAll[i][j].opacity = 1
@@ -664,6 +664,8 @@ Controls:
 
 createInstruction()
 
+backButton = None
+
 # endregion
 
 ####################################################################################################
@@ -671,52 +673,67 @@ createInstruction()
 # region Main Screen Caption
 
 def createCaptionMainScreen():
-    global playButton, timeSlider, timeText
-    global electricFieldButton, electricOpacityButton, electricPotentialButton
-    global gridButton, instructionButton
-
     scene.caption = ""
 
+    # play button
+    global playButton
     scene.append_to_caption("   ")
     if (playing):
         playButton = button(text="Stop", bind = changePlay)
     else:
         playButton = button(text="Play", bind = changePlay)
 
+    # instruction button
+    global instructionButton
     scene.append_to_caption("   ")
-    button (text = "Collision: True", bind = changePlay)
+    instructionButton = button(text="Instructions", bind = displayInstructionPage)
 
-    scene.append_to_caption("   ")
-    button (text = "Trail: False", bind = changePlay)
-
+    # save button
+    global saveButton
     scene.append_to_caption("   ")
     button (text = "Save", bind = changePlay)
 
+    # time slider
+    global timeSlider, timeText
     scene.append_to_caption("\n\n")
     timeSlider = slider(bind=timeShift, min = 0.1, max = 5, value = time, step = 0.1, length = sliderLength) 
     scene.append_to_caption("\n")
     timeText = wtext(text = "<center>Time in program for every second in real life:" + str(time) + "s</center>")
+    
+    # vector menu
+    global vectorMenu
+    scene.append_to_caption("\n   Show Vectors: ")
+    vectorMenu = menu(choices = ["Velocity", "Force", "Neither"], bind = selectVector)
 
+    # trail checkbox
+    scene.append_to_caption("   ")
+    checkbox(text = "Trail", bind = changePlay)
+
+    # clear trail button
+    scene.append_to_caption("   ")
+    button (text = "Clear Trail", bind = changePlay)
+
+    # electric field mode button
+    global electricFieldButton
     scene.append_to_caption("\n\n   ")
     electricFieldButton = button(text="Electric Field: Mode " + str(electricFieldMode), bind = changeElectricField)
 
+    # electric field opacity checkbox
+    global electricOpacityCheckbox
     scene.append_to_caption("   ")
-    if (electricOpacity):
-        electricOpacityButton = button(text = "Electric Field Opacity: On", bind = chanageElectricOpacityMode)
-    else:
-        electricOpacityButton = button(text = "Electric Field Opacity: Off", bind = chanageElectricOpacityMode)
+    electricOpacityCheckbox = checkbox(text = "Electric Field Opacity", bind = changeElectricOpacityMode, checked = electricOpacityMode)
+
+    # electric potential mode button
+    global electricPotentialButton
     scene.append_to_caption("\n\n   ")
     electricPotentialButton = button(text="Electric Potential Mode " + str(electricPotentialMode), bind = changeElectricPotential)
     
+    # grid mode checkbox
+    global gridCheckbox
     scene.append_to_caption("   ")  
-    if (gridMode):
-        gridButton = button(text="Grid: On", bind = changeGridMode)
-    else:
-        gridButton = button(text="Grid: Off", bind = changeGridMode)
-    scene.append_to_caption("\n\n\n\n   ")
-    instructionButton = button(text="Instructions", bind = displayInstructionPage)
+    gridCheckbox = checkbox(text="Grid", bind = changeGridMode, checked = gridMode)
 
-# playing button
+# play button
 playing = False
 
 def changePlay():
@@ -741,6 +758,22 @@ def changePlay():
 
 playButton = None
 
+# instruction button
+def displayInstructionPage():
+    global startButton
+    scene.caption = ""
+    startButton = button(text = "Back", bind = createCaptionMainScreen)
+    scene.append_to_caption("\n")
+    createInstruction()
+
+instructionButton = None
+
+# save button
+def save():
+    print("!!!")
+
+saveButton = None
+
 # time slider
 time = 1
 
@@ -751,6 +784,12 @@ def timeShift():
 
 timeSlider = None
 timeText = None
+
+# vector radio
+def selectVector():
+    print("!!!")
+
+vectorMenu = None
 
 # electic field mode button
 electricFieldMode = 0
@@ -775,20 +814,16 @@ def changeElectricField():
 
 electricFieldButton = None
 
-# electric field opacity button
-electricOpacity = False
+# electric field opacity checkbox
+electricOpacityMode = False
 
-def chanageElectricOpacityMode():
-    global electricOpacity, electricFieldButton
-    electricOpacity = not electricOpacity
-    if (electricOpacity):
-        electricOpacityButton.text = "Electric Field Opacity: On"
-    else:
-        electricOpacityButton.text = "Electric Field Opacity: Off"
+def changeElectricOpacityMode():
+    global electricOpacityMode
+    electricOpacityMode = not electricOpacityMode
 
-electricOpacityButton = None
+electricOpacityCheckbox = None
 
-# electric potential button
+# electric potential mode button
 electricPotentialMode = 0
 
 def changeElectricPotential():
@@ -810,7 +845,7 @@ def changeElectricPotential():
 
 electricPotentialButton = None
 
-# grid button
+# grid mode checkbox
 gridMode = False
 
 def changeGridMode():
@@ -820,25 +855,12 @@ def changeGridMode():
         for i in range(gridPrecision):
             potentialGridRows[i].visible = True
             potentialGridCols[i].visible = True
-        gridButton.text = "Grid: On"
     else:
         for i in range(gridPrecision):
             potentialGridRows[i].visible = False
             potentialGridCols[i].visible = False
-        gridButton.text = "Grid: Off"
 
-gridButton = None
-
-# instruction and back buttons
-def displayInstructionPage():
-    global startButton
-    scene.caption = ""
-    startButton = button(text = "Back", bind = createCaptionMainScreen)
-    scene.append_to_caption("\n")
-    createInstruction()
-
-instructionButton = None
-backButton = None
+gridCheckbox = None
 
 # endregion
 
@@ -849,12 +871,12 @@ backButton = None
 def createCaptionSpawnScreen():
     scene.caption = ""
 
-    # spawn radio
+    # spawn charge menu
     global chargeMenu
     scene.append_to_caption("   Spawn Charge Object Menu: ")
-    chargeMenu = menu(text = "Charge Menu", choices = ["Sphere", "Cyllinder", "Plate"], bind = spawnRadio) 
+    chargeMenu = menu(choices = ["Sphere", "Cyllinder", "Plate"], bind = selectSpawnChargeObj) 
     
-    # spawn charge
+    # spawn charge slider and input field
     global spawnChargeSlider, spawnChargeInputField
     scene.append_to_caption("\n\n")
     spawnChargeSlider = slider(bind = spawnChargeShift, min = -5, max = 5, value = spawnCharge / 1E-9, step = 0.1, length = sliderLength)
@@ -862,7 +884,7 @@ def createCaptionSpawnScreen():
     spawnChargeInputField = winput(bind = spawnChargeInput, text = spawnChargeSlider.value, width = 35)
     scene.append_to_caption(" nC")
 
-    # spawn mass
+    # spawn mass slider and input field
     global spawnMassSlider, spawnMassInputField
     scene.append_to_caption("\n\n")
     spawnMassSlider = slider(bind = spawnMassShift, min = 1, max = 5, value = spawnMass / 1E-6, step = 0.1, length = sliderLength)
@@ -877,7 +899,7 @@ def createCaptionSpawnScreen():
     scene.append_to_caption("   ")
     backButton = button(text = "Back", bind = back)
 
-    # position input fields
+    # spawn position input fields
     global spawnPosText, spawnXInputField, spawnYInputField
     scene.append_to_caption("\n\n   Position: <")
     spawnXInputField = winput(bind = spawnXInput, text = '{:1.2f}'.format(spawnPos.x), width = 50)
@@ -885,7 +907,7 @@ def createCaptionSpawnScreen():
     spawnYInputField = winput(bind = spawnYInput, text = '{:1.2f}'.format(spawnPos.y), width = 50) 
     scene.append_to_caption(">")
 
-    # electric field and potential
+    # electric field and potential texts
     global electricFieldText, electricPotentialText
     scene.append_to_caption("\n\n   ")
     electricField = calculateElectricField(spawnPos)
@@ -898,13 +920,13 @@ def createCaptionSpawnScreen():
     scene.append_to_caption("\n\n   ")
     electricPotentialText = wtext(text = "Electric Potential: " '{:1.2f}'.format(calculateElectricPotential(spawnPos)) + " V")
 
-# spawn menu
-def spawnRadio():
-    global chargeMenu 
+# spawn charge menu
+def selectSpawnChargeObj():
+    print("!!!")
 
 chargeMenu = None
 
-# spawn charge
+# spawn charge slider and input field
 spawnCharge = 1E-9
 
 def spawnChargeShift():
@@ -928,7 +950,7 @@ def spawnChargeInput():
 spawnChargeSlider = None
 spawnChargeInputField = None
 
-# spawn mass
+# spawn mass slider and input field
 spawnMass = 1E-6
 
 def spawnMassShift():
@@ -968,7 +990,7 @@ def back():
 
 backButton = None
 
-# position input fields
+# spawn position input fields
 def spawnXInput():
     global spawnPos, spawnPosIndicator
     # change the x value of spawn position
@@ -989,12 +1011,10 @@ def spawnYInput():
     
 spawnYInputField = None
 
-# electric field and potential
-eletricFieldText = None
-electricPotentialText = None
-
+# electric field and potential texts
 def updateSpawnScreen():
     global electricFieldText, electricPotentialText
+    # recalculate electric field and potential
     electricField = calculateElectricField(spawnPos)
     electricFieldText.text = ("Electric Field: <" + 
                                         '{:1.2f}'.format(electricField.x) + ", " + 
@@ -1002,6 +1022,9 @@ def updateSpawnScreen():
                                         '{:1.2f}'.format((mag(electricField))) + " N/C @ " +
                                         '{:1.2f}'.format(atan2(electricField.y, electricField.x) / pi * 180) + " degree")
     electricPotentialText.text = "Electric Potential: " '{:1.2f}'.format(calculateElectricPotential(spawnPos)) + " V"
+
+eletricFieldText = None
+electricPotentialText = None
 
 # endregion
 
