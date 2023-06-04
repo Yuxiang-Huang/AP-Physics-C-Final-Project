@@ -559,7 +559,7 @@ def onMouseMove():
                     chargedObjToDrag.vel = vec(0, 0, 0)
                     chargedObjToDrag.velVec.visible = False
                     chargedObjToDrag.velLabel.visible = False
-                # updateSelectScreen() !!!
+                updateVelocityStatsSelectScreen()
 
 # endregion
 
@@ -988,7 +988,7 @@ def createCaptionSpawnScreen():
 
 # spawn charge menu
 def selectSpawnChargeObj():
-    print("!!!")
+    print(" ")
 
 # spawn charge slider and input field
 spawnCharge = chargeScalar
@@ -1334,13 +1334,6 @@ def deleteChargedObj():
     createCaptionMainScreen()
 
 # select position input fields
-def updateVelocityStatsSelectScreen():
-    global selectedVelXInputField, selectedVelYInputField, selectedVelMagInputField, selectedVelAngleInputField
-    selectedVelXInputField.text = '{:1.2f}'.format(chargedObjSelected.vel.x)
-    selectedVelYInputField.text = '{:1.2f}'.format(chargedObjSelected.vel.y)
-    selectedVelMagInputField.text = '{:1.2f}'.format((mag(chargedObjSelected.vel)))
-    selectedVelAngleInputField.text = '{:1.2f}'.format(atan2(chargedObjSelected.vel.y, chargedObjSelected.vel.x) / pi * 180)
-
 def selectPosXInput():
     global chargedObjSelected, selectPosXInputField
     # change the x value of select position
@@ -1366,35 +1359,60 @@ def selectPosYInput():
         selectPosYInputField.text = '{:1.2f}'.format(chargedObjSelected.pos.y)
 
 # select velocity input field
+def updateVelocityStatsSelectScreen():
+    global selectedVelXInputField, selectedVelYInputField, selectedVelMagInputField, selectedVelAngleInputField
+    selectedVelXInputField.text = '{:1.2f}'.format(chargedObjSelected.vel.x)
+    selectedVelYInputField.text = '{:1.2f}'.format(chargedObjSelected.vel.y)
+    selectedVelMagInputField.text = '{:1.2f}'.format((mag(chargedObjSelected.vel)))
+    selectedVelAngleInputField.text = '{:1.2f}'.format(atan2(chargedObjSelected.vel.y, chargedObjSelected.vel.x) / pi * 180)
+
 def selectVelXInput():
-    global chargedObjSelected, selectPosXInputField
-    # change the x value of select position
-    if (selectPosXInputField.number != None):
-        chargedObjSelected.pos.x = selectPosXInputField.number
-        chargedObjSelected.display.pos.x = chargedObjSelected.pos.x
-        chargedObjSelected.displaySelect()
-        updateForceStatSelectScreen()
+    global chargedObjSelected, selectedVelXInputField
+    # change the x value of select velocity
+    if (selectedVelXInputField.number != None):
+        chargedObjSelected.vel.x = selectedVelXInputField.number
+        chargedObjSelected.createVelVec()
+        updateVelocityStatsSelectScreen()
     else: 
         # invalid input
-        selectPosXInputField.text = '{:1.2f}'.format(chargedObjSelected.pos.x)
+        selectedVelXInputField.text = '{:1.2f}'.format(chargedObjSelected.vel.x)
 
 def selectVelYInput():
-    global chargedObjSelected
-    # change the y value of select position
-    if (selectPosYInputField.number != None):
-        chargedObjSelected.pos.y = selectPosYInputField.number
-        chargedObjSelected.display.pos.y = chargedObjSelected.pos.y
-        chargedObjSelected.displaySelect()
-        updateForceStatSelectScreen()
+    global chargedObjSelected, selectedVelYInputField
+    # change the y value of select velocity
+    if (selectedVelYInputField.number != None):
+        chargedObjSelected.vel.y = selectedVelYInputField.number
+        chargedObjSelected.createVelVec()
+        updateVelocityStatsSelectScreen()
     else: 
         # invalid input
-        selectPosYInputField.text = '{:1.2f}'.format(chargedObjSelected.pos.y)
+        selectedVelYInputField.text = '{:1.2f}'.format(chargedObjSelected.vel.y)
 
 def selectVelMagInput():
-    global chargedObjSelected
+    global chargedObjSelected, selectedVelMagInputField
+    # change the magnitude of select velocity
+    if (selectedVelMagInputField.number != None and selectedVelMagInputField.number >= 0):
+        angle = atan2(chargedObjSelected.vel.y, chargedObjSelected.vel.x)
+        chargedObjSelected.vel.x = selectedVelMagInputField.number * cos(angle)
+        chargedObjSelected.vel.y = selectedVelMagInputField.number * sin(angle)
+        chargedObjSelected.createVelVec()
+        updateVelocityStatsSelectScreen()
+    else: 
+        # invalid input
+        selectedVelMagInputField.text = '{:1.2f}'.format((mag(chargedObjSelected.vel)))
     
 def selectVelAngleInput():
-    global chargedObjSelected
+    global chargedObjSelected, selectedVelAngleInputField
+    # change the angle of select velocity
+    if (selectedVelAngleInputField.number != None):
+        magnitude = mag(chargedObjSelected.vel)
+        chargedObjSelected.vel.x = magnitude * cos(selectedVelAngleInputField.number * pi / 180)
+        chargedObjSelected.vel.y = magnitude * sin(selectedVelAngleInputField.number * pi / 180)
+        chargedObjSelected.createVelVec()
+        updateVelocityStatsSelectScreen()
+    else: 
+        # invalid input
+        selectedVelAngleInputField.text = '{:1.2f}'.format(atan2(chargedObjSelected.vel.y, chargedObjSelected.vel.x) / pi * 180)
 
 # select force stats
 def updateForceStatSelectScreen():
