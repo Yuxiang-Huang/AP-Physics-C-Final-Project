@@ -17,7 +17,7 @@ scene.align = "left"
 
 #constants
 K = 9E9
-spawnDensity = 2.5E-6
+massDensity = 2.5E-6
 steps = 10
 epsilon = 0.01
 numOfRate = 1000
@@ -164,7 +164,7 @@ class ChargedObj:
         self.impulseLabel = label(text = "0", visible = False)
 
         # radius
-        spawnRadius = ((mass) / (((4/3)* pi*spawnDensity)))**(1/3)
+        spawnRadius = ((mass) / (((4/3)* pi*massDensity)))**(1/3)
 
         # possibly sliders for more variables
         self.numOfLine = 8
@@ -1103,11 +1103,12 @@ def addCaptionSelectScreen():
     scene.append_to_caption(" nC")
 
     # select mass slider
-    global selectedMassSlider, selectedMassText
-    scene.append_to_caption("\n")
-    selectedMassSlider = slider(bind = selectedMassShift, min = 1, max = 2, value = chargedObjSelected.mass / 1E-6, step = 0.1, length = sliderLength) 
-    scene.append_to_caption("\n")
-    selectedMassText = wtext(text = '<center>Mass: '+'{:1.2f}'.format(selectedMassSlider.value) + " * 10^-6 Kg</center>")
+    global selectedMassSlider, selectedMassInputField
+    scene.append_to_caption("\n\n")
+    selectedMassSlider = slider(bind = selectedMassShift, min = 1, max = 5, value = chargedObjSelected.mass / 1E-6, step = 0.1, length = sliderLength) 
+    scene.append_to_caption("\n                          Mass: ")
+    selectedMassInputField = winput(bind = selectedMassInput, text = selectedMassSlider.value, width = 35)
+    scene.append_to_caption(" * 10^-6 Kg")
 
     # fix and delete button
     global deleteButton, fixButton
@@ -1248,22 +1249,37 @@ def selectedChargeInput():
         num = max(selectedChargeSlider.min, selectedChargeInputField.number)
         num = min(selectedChargeSlider.max, num)
         # set values
-        selectCharge = num * 1E-9
+        chargedObjSelected.charge = num * 1E-9
         selectedChargeSlider.value = num
         selectedChargeInputField.text = num
+        selectedChargeModified()
     else:
         selectedChargeInputField.text = chargedObjSelected.charge / 1E-9
-    selectedChargeModified()
 
 # select mass slider
 def selectedMassShift(): 
-    global chargedObjSelected, selectedMassSlider, selectedMassText
+    global chargedObjSelected, selectedMassSlider, selectedMassInputField
     chargedObjSelected.mass = selectedMassSlider.value * 1E-6   
-    selectedMassText.text = '<center>Mass: '+'{:1.2f}'.format(selectedMassSlider.value) + " * 10^-6 Kg</center>"
+    selectedMassInputField.text = selectedMassSlider.value
     # change radius
-    chargedObjSelected.display.radius = ((chargedObjSelected.mass) / (((4/3)* pi*spawnDensity)))**(1/3)
+    chargedObjSelected.display.radius = ((chargedObjSelected.mass) / (((4/3)* pi*massDensity)))**(1/3)
     chargedObjSelected.displaySelect()
 
+def selectedMassInput():
+    global chargedObjSelected, selectedMassSlider, selectedMassInputField 
+    if (selectedMassInputField.number != None):
+        # min max
+        num = max(selectedMassSlider.min, selectedMassInputField.number)
+        num = min(selectedMassSlider.max, num)
+        # set values
+        chargedObjSelected.mass = num * 1E-6
+        selectedMassSlider.value = num
+        selectedMassInputField.text = num
+        # change radius
+        chargedObjSelected.display.radius = ((chargedObjSelected.mass) / (((4/3)* pi*massDensity)))**(1/3)
+        chargedObjSelected.displaySelect()
+    else:
+        selectedMassInputField.text = chargedObjSelected.mass / 1E-6
 # fix button
 def fixChargedObj():
     global chargedObjSelected
