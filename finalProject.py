@@ -450,7 +450,7 @@ def clicked():
             if (chargedObjSelected != None):
                 chargedObjSelected.displaySelect()
                 spawnPosIndicator.visible = False
-                createCaptionSelectCharge()
+                addCaptionSelectCharge()
             # spawn screen when the click is not on a charged object
             else:
                 spawnPos = getMousePos()
@@ -458,14 +458,13 @@ def clicked():
                 displaySpawnPosIndicator(spawnPos)
         else:
             # reselect 
-            if (chargedObjSelected != None):
-                chargedObjSelected.hideSelect()
+            chargedObjSelected.hideSelect()
             chargedObjSelected = chargedObjOnMouse()
 
             # select again or deselect
             if (chargedObjSelected != None):
                 chargedObjSelected.displaySelect()
-                createCaptionSelectCharge()
+                addCaptionSelectCharge()
             else:
                 createCaptionMainScreen()
 
@@ -842,9 +841,9 @@ def selectVector():
                 co.forceVec.visible = False
                 co.forceLabel.visible = False
 
-    # show new vector if not playing
     vectorToShow = vectorMenu.selected
 
+    # show new vector if not playing
     if (not playing):
         for co in allChargedObjs:
             if (not co.fixed):
@@ -1082,25 +1081,12 @@ def updateSpawnScreen():
 
 ####################################################################################################
 
-# region Select Charge Screen Caption
+# region Select ChargedObj Screen Caption
 
-def createCaptionSelectCharge():
-    global playButton, deleteButton, fixButton
-    global selectedChargeVelXYText, selectedChargeVelMAText
-    global selectedChargeForceXYText, selectedChargeForceMAText
+def addCaptionSelectCharge():
+    createCaptionMainScreen()
 
-    global selectedChargeSlider, selectedChargeText
-    global selectedMassSlider, selectedMassText
-
-    scene.caption = ""
-
-    global playButton
-    scene.append_to_caption("   ")
-    if (playing):
-        playButton = button(text="Stop", bind = changePlay)
-    else:
-        playButton = button(text="Play", bind = changePlay)
-
+    # camera follow button
     global cameraFollowButton
     scene.append_to_caption("   ")
     if (cameraFollowedObj == chargedObjSelected.display):
@@ -1108,26 +1094,25 @@ def createCaptionSelectCharge():
     else:
         cameraFollowButton = button(text = "Camera Follow", bind = cameraFollow)
 
+    # select charge slider
+    global selectedChargeSlider, selectedChargeText
     scene.append_to_caption("\n\n")
     selectedChargeSlider = slider(bind = selectedChargeShift, min = -5, max = 5, value = chargedObjSelected.charge / 1E-9, step = 0.1, length = sliderLength)
     scene.append_to_caption("\n")
     selectedChargeText = wtext(text = '<center>Charge: '+'{:1.2f}'.format(selectedChargeSlider.value) + " nC </center>")
 
+    # select mass slider
+    global selectedMassSlider, selectedMassText
     scene.append_to_caption("\n")
     selectedMassSlider = slider(bind = selectedMassShift, min = 1, max = 2, value = chargedObjSelected.mass / 1E-6, step = 0.1, length = sliderLength) 
     scene.append_to_caption("\n")
     selectedMassText = wtext(text = '<center>Mass: '+'{:1.2f}'.format(selectedMassSlider.value) + " * 10^-6 Kg</center>")
 
-    scene.append_to_caption("\n   ")
-    button(text="Show Velocity: True", bind=fixChargedObj)
-
-    scene.append_to_caption("\n\n   ")
-    button(text="Show Force: False", bind=deleteChargedObj)
-
+    # fix and delete button
+    global deleteButton, fixButton
     scene.append_to_caption("\n\n   ")
     fixButton = button(text="Fix", bind=fixChargedObj)
-
-    scene.append_to_caption("\n\n   ")
+    scene.append_to_caption("   ")
     deleteButton = button(text="Delete", bind=deleteChargedObj)
 
     scene.append_to_caption("\n\n   ")
@@ -1137,6 +1122,8 @@ def createCaptionSelectCharge():
     scene.append_to_caption("\n   y:")
     winput(bind = spawnYInput) 
 
+    # select charge velocity setter
+    global selectedChargeVelXYText, selectedChargeVelMAText
     scene.append_to_caption("\n\n   ")
     selectedChargeVelXYText = wtext(text = "Velocity: <" + 
                     '{:1.2f}'.format(chargedObjSelected.vel.x) + ", " + 
@@ -1155,6 +1142,8 @@ def createCaptionSelectCharge():
     scene.append_to_caption("\n   angle:")
     winput(bind = spawnYInput) 
 
+    # select charge force setter
+    global selectedChargeForceXYText, selectedChargeForceMAText
     force = chargedObjSelected.calculateNetForce() / 1E-9
     scene.append_to_caption("\n\n   ")
     selectedChargeForceXYText = wtext(text = "Force: <" + 
@@ -1175,11 +1164,6 @@ def createCaptionSelectCharge():
     winput(bind = spawnYInput) 
 
 # stats
-selectedChargeVelXYText = None
-selectedChargeVelMAText = None
-selectedChargeForceXYText = None
-selectedChargeForceMAText = None
-
 def updateSelectScreen():
     global selectedChargeVelXYText, selectedChargeVelMAText, selectedChargeForceXYText, selectedChargeForceMAText
     selectedChargeVelXYText.text = ("Velocity: <" + 
@@ -1212,8 +1196,6 @@ def cameraFollow():
         scene.camera.follow(chargedObjSelected.display)
         cameraFollowedObj = chargedObjSelected.display
         cameraFollowButton.text = "Camera Unfollow"
-
-cameraFollowButton = None
 
 # select charge slider
 def selectedChargeShift(): 
@@ -1254,9 +1236,6 @@ def selectedChargeShift():
 
     chargedObjSelected.trail.color = curColor
 
-selectedChargeSlider = None
-selectedChargeText = None
-
 # select mass slider
 def selectedMassShift(): 
     global chargedObjSelected, selectedMassSlider, selectedMassText
@@ -1265,32 +1244,6 @@ def selectedMassShift():
     # change radius
     chargedObjSelected.display.radius = ((chargedObjSelected.mass) / (((4/3)* pi*spawnDensity)))**(1/3)
     chargedObjSelected.displaySelect()
-
-selectedMassSlider = None
-selectedMassText = None
-
-# delete button
-def deleteChargedObj():
-    global chargedObjSelected, cameraFollowedObj
-
-    # hide everything, remove from list, reset chargedObjSelected
-    chargedObjSelected.display.visible = False
-    chargedObjSelected.velVec.visible = False
-    chargedObjSelected.impulseVec.visible = False
-    chargedObjSelected.velLabel.visible = False
-    chargedObjSelected.impulseLabel.visible = False
-    chargedObjSelected.hideSelect()
-    for i in range(chargedObjSelected.numOfLine):   
-            for j in range(electricFieldPrecision):
-                chargedObjSelected.electricFieldArrows[i][j].visible = False
-    allChargedObjs.remove(chargedObjSelected)
-    if (chargedObjSelected == cameraFollowedObj):
-        scene.camera.follow(None)
-        cameraFollowedObj = None
-    chargedObjSelected = None
-    createCaptionMainScreen()
-
-deleteButton = None
 
 # fix button
 def fixChargedObj():
@@ -1319,7 +1272,26 @@ def fixChargedObj():
         else: 
             chargedObjSelected.display.texture = neutralSphereTexture
 
-fixButton = None
+# delete button
+def deleteChargedObj():
+    global chargedObjSelected, cameraFollowedObj
+
+    # hide everything, remove from list, reset chargedObjSelected
+    chargedObjSelected.display.visible = False
+    chargedObjSelected.velVec.visible = False
+    chargedObjSelected.impulseVec.visible = False
+    chargedObjSelected.velLabel.visible = False
+    chargedObjSelected.impulseLabel.visible = False
+    chargedObjSelected.hideSelect()
+    for i in range(chargedObjSelected.numOfLine):   
+            for j in range(electricFieldPrecision):
+                chargedObjSelected.electricFieldArrows[i][j].visible = False
+    allChargedObjs.remove(chargedObjSelected)
+    if (chargedObjSelected == cameraFollowedObj):
+        scene.camera.follow(None)
+        cameraFollowedObj = None
+    chargedObjSelected = None
+    createCaptionMainScreen()
 
 # endregion 
 
