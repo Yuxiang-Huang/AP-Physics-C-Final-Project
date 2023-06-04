@@ -17,7 +17,9 @@ scene.align = "left"
 
 #constants
 K = 9E9
-massDensity = 2.5E-6
+chargeScalar = 1E-9
+massScalar = 1E-9
+massDensity = 2.5E-9
 steps = 10
 epsilon = 0.01
 numOfRate = 1000
@@ -270,7 +272,7 @@ class ChargedObj:
         # calculate force from every other charge
         if (not self.fixed):
             # apply force: F * ∆t = m * ∆v
-            self.vel += self.calculateNetForce() / self.mass
+            self.vel += self.calculateNetForce() / numOfRate / self.mass
 
     def createForceVec(self):
         # arrow
@@ -510,7 +512,7 @@ def onMouseUp():
     # apply impulse vector if necessary
     if (chargedObjSelected != None):
         if (chargedObjSelected.impulseVec.axis != vec(0, 0, 0)):
-            chargedObjSelected.vel += chargedObjSelected.impulseVec.axis / 1E6 / chargedObjSelected.mass 
+            chargedObjSelected.vel += chargedObjSelected.impulseVec.axis / 1E6 / numOfRate / chargedObjSelected.mass 
             chargedObjSelected.impulseVec.axis = vec(0, 0, 0)
             chargedObjSelected.impulseLabel.visible = False
 
@@ -599,45 +601,45 @@ scene.append_to_caption("\n\n   ")
 #Dipole
 def dipolePreset():
     start()
-    allChargedObjs.append(ChargedObj(1E-6, 1E-9, vec(5,0,0), vec(0, 0, 0)))
-    allChargedObjs.append(ChargedObj(1E-6, -1E-9, vec(-5, 0, 0) , vec(0, 0, 0)))
+    allChargedObjs.append(ChargedObj(massScalar, chargeScalar, vec(5,0,0), vec(0, 0, 0)))
+    allChargedObjs.append(ChargedObj(massScalar, -chargeScalar, vec(-5, 0, 0) , vec(0, 0, 0)))
     
 def threeChargePreset(): 
     start()
-    allChargedObjs.append(ChargedObj(1E-6, 1E-9, vec(0,5,0), vec(0, 0, 0)))
-    allChargedObjs.append(ChargedObj(1E-6, 1E-9, vec(5*cos(pi/6),-5*sin(pi/6),0), vec(0, 0, 0)))
-    allChargedObjs.append(ChargedObj(1E-6, -1.5E-9, vec(-5*cos(pi/6),-5*sin(pi/6),0), vec(0, 0, 0)))
+    allChargedObjs.append(ChargedObj(massScalar, chargeScalar, vec(0,5,0), vec(0, 0, 0)))
+    allChargedObjs.append(ChargedObj(massScalar, chargeScalar, vec(5*cos(pi/6),-5*sin(pi/6),0), vec(0, 0, 0)))
+    allChargedObjs.append(ChargedObj(massScalar, -1.5*chargeScalar, vec(-5*cos(pi/6),-5*sin(pi/6),0), vec(0, 0, 0)))
 
 def butterflyPreset():
     start()
-    allChargedObjs.append(ChargedObj(1E-6, -1E-9, vec(0,5,0), vec(1, -1, 0)))
-    allChargedObjs.append(ChargedObj(1E-6, -1E-9, vec(5,5,0), vec(-1, -1, 0)))
-    allChargedObjs.append(ChargedObj(1E-6, 5E-9, vec(2.5,0,0), vec(0, 1, 0)))
+    allChargedObjs.append(ChargedObj(massScalar, -chargeScalar, vec(0,5,0), vec(1, -1, 0)))
+    allChargedObjs.append(ChargedObj(massScalar, -chargeScalar, vec(5,5,0), vec(-1, -1, 0)))
+    allChargedObjs.append(ChargedObj(massScalar, 5*chargeScalar, vec(2.5,0,0), vec(0, 1, 0)))
 
 def helixPreset(): 
     start()
-    allChargedObjs.append(ChargedObj(1E-6, -1E-9, vec(-1.5,10,0), vec(.25, -2, 0)))
-    allChargedObjs.append(ChargedObj(1E-6, 1E-9, vec(1.5,10,0), vec(-.25, -2, 0)))
+    allChargedObjs.append(ChargedObj(massScalar, -chargeScalar, vec(-1.5,10,0), vec(.25, -2, 0)))
+    allChargedObjs.append(ChargedObj(massScalar, chargeScalar, vec(1.5,10,0), vec(-.25, -2, 0)))
 
 def helixGunPreset ():
     start()
-    allChargedObjs.append(ChargedObj(1E-6, -1E-9, vec(-15,1.5,0), vec(2, -.25, 0)))
-    allChargedObjs.append(ChargedObj(1E-6, 1E-9, vec(-15,-1.5,0), vec(2, .25, 0)))
-    allChargedObjs.append(ChargedObj(1E-6, -1E-9, vec(0,1.5,0), vec(0, 0, 0)))
-    allChargedObjs.append(ChargedObj(1E-6, 1E-9, vec(0,-1.5,0), vec(0, 0, 0)))
+    allChargedObjs.append(ChargedObj(massScalar, -chargeScalar, vec(-15,1.5,0), vec(2, -.25, 0)))
+    allChargedObjs.append(ChargedObj(massScalar, chargeScalar, vec(-15,-1.5,0), vec(2, .25, 0)))
+    allChargedObjs.append(ChargedObj(massScalar, -chargeScalar, vec(0,1.5,0), vec(0, 0, 0)))
+    allChargedObjs.append(ChargedObj(massScalar, chargeScalar, vec(0,-1.5,0), vec(0, 0, 0)))
     
 def dragonflyPreset ():
     start()
-    allChargedObjs.append(ChargedObj(1E-6, 1E-9, vec(0,5,0), vec(0, 0, 0)))
-    allChargedObjs.append(ChargedObj(1E-6, 1E-9, vec(4.33,-2.5,0), vec(0, 0, 0)))
-    allChargedObjs.append(ChargedObj(1E-6, 1E-9, vec(-4.33,-2.5,0), vec(0, 0, 0)))
-    allChargedObjs.append(ChargedObj(1E-6, -5E-9, vec(0,0,0), vec(0, 0, 0)))
+    allChargedObjs.append(ChargedObj(massScalar, chargeScalar, vec(0,5,0), vec(0, 0, 0)))
+    allChargedObjs.append(ChargedObj(massScalar, chargeScalar, vec(4.33,-2.5,0), vec(0, 0, 0)))
+    allChargedObjs.append(ChargedObj(massScalar, chargeScalar, vec(-4.33,-2.5,0), vec(0, 0, 0)))
+    allChargedObjs.append(ChargedObj(massScalar, -5*chargeScalar, vec(0,0,0), vec(0, 0, 0)))
     
 def somethingPreset():
     start()
-    allChargedObjs.append(ChargedObj(1E-6, -5E-9, vec(0,5,0), vec(3, 0, 0)))
-    allChargedObjs.append(ChargedObj(1E-6, 1E-9, vec(5*cos(30),-5*sin(30),0), vec(-1, 2, 0)))
-    allChargedObjs.append(ChargedObj(1E-6, 5E-9, vec(-5*cos(30),-5*sin(30),0), vec(1, 2, 0)))
+    allChargedObjs.append(ChargedObj(massScalar, -5*chargeScalar, vec(0,5,0), vec(3, 0, 0)))
+    allChargedObjs.append(ChargedObj(massScalar, chargeScalar, vec(5*cos(30),-5*sin(30),0), vec(-1, 2, 0)))
+    allChargedObjs.append(ChargedObj(massScalar, 5*chargeScalar, vec(-5*cos(30),-5*sin(30),0), vec(1, 2, 0)))
 
 # Presets
 button(text = "Dipole", bind = dipolePreset)
@@ -948,7 +950,7 @@ def createCaptionSpawnScreen():
     # spawn charge slider and input field
     global spawnChargeSlider, spawnChargeInputField
     scene.append_to_caption("\n\n")
-    spawnChargeSlider = slider(bind = spawnChargeShift, min = -5, max = 5, value = spawnCharge / 1E-9, step = 0.1, length = sliderLength)
+    spawnChargeSlider = slider(bind = spawnChargeShift, min = -5, max = 5, value = spawnCharge / chargeScalar, step = 0.1, length = sliderLength)
     scene.append_to_caption("\n                             Charge: ")
     spawnChargeInputField = winput(bind = spawnChargeInput, text = spawnChargeSlider.value, width = 35)
     scene.append_to_caption(" nC")
@@ -956,10 +958,10 @@ def createCaptionSpawnScreen():
     # spawn mass slider and input field
     global spawnMassSlider, spawnMassInputField
     scene.append_to_caption("\n\n")
-    spawnMassSlider = slider(bind = spawnMassShift, min = 1, max = 5, value = spawnMass / 1E-6, step = 0.1, length = sliderLength)
+    spawnMassSlider = slider(bind = spawnMassShift, min = 1, max = 5, value = spawnMass / massScalar, step = 0.1, length = sliderLength)
     scene.append_to_caption("\n                          Mass: ")
     spawnMassInputField = winput(bind = spawnMassInput, text = spawnMassSlider.value, width = 35)
-    scene.append_to_caption(" * 10^-6 Kg")
+    scene.append_to_caption(" * 10^-9 Kg")
 
     # spawn and back buttons
     global spawnButton, backButton
@@ -994,11 +996,11 @@ def selectSpawnChargeObj():
     print("!!!")
 
 # spawn charge slider and input field
-spawnCharge = 1E-9
+spawnCharge = chargeScalar
 
 def spawnChargeShift():
     global spawnCharge, spawnChargeInputField
-    spawnCharge = spawnChargeSlider.value * 1E-9
+    spawnCharge = spawnChargeSlider.value * chargeScalar
     spawnChargeInputField.text = spawnChargeSlider.value
 
 def spawnChargeInput():
@@ -1008,18 +1010,18 @@ def spawnChargeInput():
         num = max(spawnChargeSlider.min, spawnChargeInputField.number)
         num = min(spawnChargeSlider.max, num)
         # set values
-        spawnCharge = num * 1E-9
+        spawnCharge = num * chargeScalar
         spawnChargeSlider.value = num
         spawnChargeInputField.text = num
     else:
-        spawnChargeInputField.text = spawnCharge / 1E-9
+        spawnChargeInputField.text = spawnCharge / chargeScalar
 
 # spawn mass slider and input field
-spawnMass = 1E-6
+spawnMass = massScalar
 
 def spawnMassShift():
     global spawnMass, spawnMassInputField
-    spawnMass = spawnMassSlider.value * 1E-6
+    spawnMass = spawnMassSlider.value * massScalar
     spawnMassInputField.text = spawnMassSlider.value
 
 def spawnMassInput():
@@ -1029,11 +1031,11 @@ def spawnMassInput():
         num = max(spawnMassSlider.min, spawnMassInputField.number)
         num = min(spawnMassSlider.max, num)
         # set values
-        spawnMass = num * 1E-6
+        spawnMass = num * massScalar
         spawnMassSlider.value = num
         spawnMassInputField.text = num
     else:
-        spawnMassInputField.text = spawnMass / 1E-6
+        spawnMassInputField.text = spawnMass / massScalar
 
 # spawn button
 def spawnChargedObj():
@@ -1096,7 +1098,7 @@ def addCaptionSelectScreen():
     # select charge slider
     global selectedChargeSlider, selectedChargeInputField
     scene.append_to_caption("\n\n")
-    selectedChargeSlider = slider(bind = selectedChargeShift, min = -5, max = 5, value = chargedObjSelected.charge / 1E-9, step = 0.1, length = sliderLength)
+    selectedChargeSlider = slider(bind = selectedChargeShift, min = -5, max = 5, value = chargedObjSelected.charge / chargeScalar, step = 0.1, length = sliderLength)
     scene.append_to_caption("\n                             Charge: ")
     selectedChargeInputField = winput(bind = selectedChargeInput, text = selectedChargeSlider.value, width = 35)
     scene.append_to_caption(" nC")
@@ -1104,10 +1106,10 @@ def addCaptionSelectScreen():
     # select mass slider
     global selectedMassSlider, selectedMassInputField
     scene.append_to_caption("\n\n")
-    selectedMassSlider = slider(bind = selectedMassShift, min = 1, max = 5, value = chargedObjSelected.mass / 1E-6, step = 0.1, length = sliderLength) 
+    selectedMassSlider = slider(bind = selectedMassShift, min = 1, max = 5, value = chargedObjSelected.mass / massScalar, step = 0.1, length = sliderLength) 
     scene.append_to_caption("\n                          Mass: ")
     selectedMassInputField = winput(bind = selectedMassInput, text = selectedMassSlider.value, width = 35)
-    scene.append_to_caption(" * 10^-6 Kg")
+    scene.append_to_caption(" * 10^-9 Kg")
 
     # fix and delete button
     global deleteButton, fixButton
@@ -1145,7 +1147,7 @@ def addCaptionSelectScreen():
 
     # select charge force setter
     global selectedChargeForceXYText, selectedChargeForceMAText
-    force = chargedObjSelected.calculateNetForce() / 1E-9
+    force = chargedObjSelected.calculateNetForce() / chargeScalar
     scene.append_to_caption("\n\n   ")
     selectedChargeForceXYText = wtext(text = "Force: <" + 
                     '{:1.5f}'.format(force.x) + ", " + 
@@ -1173,7 +1175,7 @@ def updateSelectScreen():
     selectedChargeVelMAText.text = ("Velocity: "+
                     '{:1.2f}'.format((mag(chargedObjSelected.vel))) + " m/s @ " +
                     '{:1.2f}'.format(atan2(chargedObjSelected.vel.y, chargedObjSelected.vel.x) / pi * 180) + " degree")
-    force = chargedObjSelected.calculateNetForce() / 1E-9
+    force = chargedObjSelected.calculateNetForce() / chargeScalar
 
     selectedChargeForceXYText.text = ("Force: <" + 
                     '{:1.5f}'.format(force.x) + ", " + 
@@ -1237,7 +1239,7 @@ def selectedChargeModified():
 
 def selectedChargeShift(): 
     global chargedObjSelected, selectedChargeSlider, selectedChargeInputField
-    chargedObjSelected.charge = selectedChargeSlider.value * 1E-9      
+    chargedObjSelected.charge = selectedChargeSlider.value * chargeScalar      
     selectedChargeInputField.text = selectedChargeSlider.value
     selectedChargeModified()
     
@@ -1248,17 +1250,17 @@ def selectedChargeInput():
         num = max(selectedChargeSlider.min, selectedChargeInputField.number)
         num = min(selectedChargeSlider.max, num)
         # set values
-        chargedObjSelected.charge = num * 1E-9
+        chargedObjSelected.charge = num * chargeScalar
         selectedChargeSlider.value = num
         selectedChargeInputField.text = num
         selectedChargeModified()
     else:
-        selectedChargeInputField.text = chargedObjSelected.charge / 1E-9
+        selectedChargeInputField.text = chargedObjSelected.charge / chargeScalar
 
 # select mass slider
 def selectedMassShift(): 
     global chargedObjSelected, selectedMassSlider, selectedMassInputField
-    chargedObjSelected.mass = selectedMassSlider.value * 1E-6   
+    chargedObjSelected.mass = selectedMassSlider.value * massScalar   
     selectedMassInputField.text = selectedMassSlider.value
     # change radius
     chargedObjSelected.display.radius = ((chargedObjSelected.mass) / (((4/3)* pi*massDensity)))**(1/3)
@@ -1271,14 +1273,14 @@ def selectedMassInput():
         num = max(selectedMassSlider.min, selectedMassInputField.number)
         num = min(selectedMassSlider.max, num)
         # set values
-        chargedObjSelected.mass = num * 1E-6
+        chargedObjSelected.mass = num * massScalar
         selectedMassSlider.value = num
         selectedMassInputField.text = num
         # change radius
         chargedObjSelected.display.radius = ((chargedObjSelected.mass) / (((4/3)* pi*massDensity)))**(1/3)
         chargedObjSelected.displaySelect()
     else:
-        selectedMassInputField.text = chargedObjSelected.mass / 1E-6
+        selectedMassInputField.text = chargedObjSelected.mass / massScalar
 
 # fix button
 def fixChargedObj():
