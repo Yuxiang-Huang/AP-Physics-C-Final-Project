@@ -1,3 +1,4 @@
+# Web VPython 3.2
 from vpython import *
 
 ####################################################################################################
@@ -22,7 +23,6 @@ epsilon = 0.01
 numOfRate = 1000
 sliderLength = 450
 electricFieldOpacitySetter = 1
-forceScaler = 1E6
 
 # texture links
 positiveSphereTexture = "https://i.imgur.com/9c10QCm.png"
@@ -257,7 +257,7 @@ class ChargedObj:
 
     # endregion
 
-    # region force & velocity
+    # region force, velocity, and impulse
     def calculateNetForce(self):
         force = vec(0, 0, 0)
         for chargedObj in allChargedObjs:
@@ -272,8 +272,12 @@ class ChargedObj:
             # apply force
             self.vel += self.calculateNetForce() / self.mass
 
-    def createForceLabel(self):    
-        self.forceLabel.text = "{0:.3f}".format(mag(self.forceVec.axis)) + "μN"
+    def showForceVec(self):
+        self.forceVec.visible = True
+        self.forceVec.pos = self.pos
+        self.forceVec.axis = self.calculateNetForce() * 1E9
+        # label
+        self.forceLabel.text = "{0:.3f}".format(mag(self.forceVec.axis)) + "nN"
         self.forceLabel.pos = self.forceVec.pos + self.forceVec.axis
         self.forceLabel.visible = True
 
@@ -284,13 +288,17 @@ class ChargedObj:
             if (self == chargedObjSelected):
                 self.displaySelect()
 
-    def createVelLabel(self):    
+    def showVelVec(self):    
+        self.velVec.visible = True
+        self.velVec.pos = self.pos
+        self.velVec.axis = self.vel
+        # label
         self.velLabel.text = "{0:.3f}".format(mag(self.velVec.axis)) + "m/s"
         self.velLabel.pos = self.velVec.pos + self.velVec.axis
         self.velLabel.visible = True
 
     def createImpulseLabel(self):
-        self.impulseLabel.text = "{0:.3f}".format(mag(self.impulseVec.axis)) + "μN"
+        self.impulseLabel.text = "{0:.3f}".format(mag(self.impulseVec.axis)) + "μN * " + str(1 / numOfRate) + "s"
         self.impulseLabel.pos = self.impulseVec.pos + self.impulseVec.axis
         self.impulseLabel.visible = True
 
@@ -501,7 +509,7 @@ def onMouseUp():
     # apply force vector if necessary
     if (chargedObjSelected != None):
         if (chargedObjSelected.impulseVec.axis != vec(0, 0, 0)):
-            chargedObjSelected.vel += chargedObjSelected.impulseVec.axis / forceScaler / chargedObjSelected.mass 
+            chargedObjSelected.vel += chargedObjSelected.impulseVec.axis / 1E6 / chargedObjSelected.mass 
             chargedObjSelected.impulseVec.axis = vec(0, 0, 0)
             chargedObjSelected.impulseLabel.visible = False
 
@@ -791,20 +799,13 @@ def changePlay():
                     co.velVec.visible = False
                     co.velLabel.visible = False
                 else:
-                    co.velVec.visible = True
-                    co.velVec.pos = co.pos
-                    co.velVec.axis = co.vel
-                    co.createVelLabel()
+                    co.showVelVec()
             elif (vectorToShow == "Force"):
                 if (playing):
                     co.forceVec.visible = False
                     co.forceLabel.visible = False
                 else:
-                    co.forceVec.visible = True
-                    co.forceVec.pos = co.pos
-                    print(co.calculateNetForce())
-                    co.forceVec.axis = co.calculateNetForce() * forceScaler
-                    co.createForceLabel()
+                    co.showForceVec()
 
 # instruction button
 def displayInstructionPage():
@@ -831,7 +832,26 @@ vectorToShow = "Velocity"
 
 def selectVector():
     global vectorToShow
+    # hide earlier vector
+    for co in allChargedObjs:
+        if (not co.fixed):
+            if (vectorToShow == "Velocity"):
+                co.velVec.visible = False
+                co.velLabel.visible = False
+            elif (vectorToShow == "Force"):
+                co.forceVec.visible = False
+                co.forceLabel.visible = False
+
+    # show new vector if not playing
     vectorToShow = vectorMenu.selected
+
+    if (not playing):
+        for co in allChargedObjs:
+            if (not co.fixed):
+                if (vectorToShow == "Velocity"):
+                    co.showVelVec()
+                elif (vectorToShow == "Force"):
+                    co.showForceVec()
 
 # trail checkbox
 trailStateAll = False
@@ -1251,7 +1271,7 @@ selectedMassText = None
 
 # delete button
 def deleteChargedObj():
-    global chargedObjSelected
+    global chargedObjSelected, cameraFollowedObj
 
     # hide everything, remove from list, reset chargedObjSelected
     chargedObjSelected.display.visible = False
