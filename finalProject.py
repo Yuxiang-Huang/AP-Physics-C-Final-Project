@@ -288,7 +288,8 @@ class ChargedObj:
             if (self == chargedObjSelected):
                 self.displaySelect()
 
-    def showVelVec(self):    
+    def createVelVec(self):
+        # arrow    
         self.velVec.visible = True
         self.velVec.pos = self.pos
         self.velVec.axis = self.vel
@@ -296,6 +297,11 @@ class ChargedObj:
         self.velLabel.text = "{0:.3f}".format(mag(self.velVec.axis)) + "m/s"
         self.velLabel.pos = self.velVec.pos + self.velVec.axis
         self.velLabel.visible = True
+
+        # reset if velocity vector is too small
+        if (mag(self.velVec.axis) < self.display.radius):
+            self.velVec.visible = False
+            self.velLabel.visible = False
 
     def createImpulseLabel(self):
         self.impulseLabel.text = "{0:.3f}".format(mag(self.impulseVec.axis)) + "μN * " + str(1 / numOfRate) + "s"
@@ -538,26 +544,18 @@ def onMouseMove():
                 mousePos = getMousePos()
                 chargedObjToDrag.pos = mousePos
                 chargedObjToDrag.display.pos = chargedObjToDrag.pos
-                chargedObjToDrag.velVec.pos = chargedObjToDrag.pos
-                # create velocity label only if velocity not too small
-                if (mag(chargedObjToDrag.velVec.axis) > chargedObjToDrag.display.radius):
-                    chargedObjToDrag.createVelLabel()
+                chargedObjToDrag.createVelVec()
 
                 # could have impacted electric field and potential in the spawn screen
                 if (spawnPos != None):
                     updateSpawnScreen()
         else:
             if chargedObjToDrag != None:
-                # velocity vector
+                # set velocity vector
                 if (not playing):
-                    chargedObjToDrag.velVec.pos = chargedObjToDrag.pos
                     chargedObjToDrag.velVec.axis = getMousePos() - chargedObjToDrag.pos
-                    chargedObjToDrag.createVelLabel()
-                    # velocity too small reset
-                    if (mag(chargedObjToDrag.velVec.axis) < chargedObjToDrag.display.radius):
-                        chargedObjToDrag.velVec.axis = vec(0, 0, 0)
-                        chargedObjToDrag.velLabel.visible = False
                     chargedObjToDrag.vel = chargedObjToDrag.velVec.axis
+                    chargedObjToDrag.createVelVec()
                     updateSelectScreen()
 
 # endregion
@@ -798,7 +796,7 @@ def changePlay():
                     co.velVec.visible = False
                     co.velLabel.visible = False
                 else:
-                    co.showVelVec()
+                    co.createVelVec()
             elif (vectorToShow == "Force"):
                 if (playing):
                     co.forceVec.visible = False
@@ -848,7 +846,7 @@ def selectVector():
         for co in allChargedObjs:
             if (not co.fixed):
                 if (vectorToShow == "Velocity"):
-                    co.showVelVec()
+                    co.createVelVec()
                 elif (vectorToShow == "Force"):
                     co.showForceVec()
 
@@ -1280,6 +1278,7 @@ def selectedMassInput():
         chargedObjSelected.displaySelect()
     else:
         selectedMassInputField.text = chargedObjSelected.mass / 1E-6
+
 # fix button
 def fixChargedObj():
     global chargedObjSelected
@@ -1288,6 +1287,11 @@ def fixChargedObj():
     # text
     if (chargedObjSelected.fixed):
         fixButton.text = "Unfix"
+        # reset vectors
+        chargedObjSelected.velVec.visible = False
+        chargedObjSelected.velLabel.visible = False
+        chargedObjSelected.forceVec.visible = False
+        chargedObjSelected.forceLabel.visible = False
     else:
         fixButton.text = "Fix"
 
