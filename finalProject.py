@@ -41,6 +41,10 @@ fixedNeutralSphereTexture = "https://i.imgur.com/b80Axoa.png"
 
 # region Initilization
 
+# store all spawned charges
+allChargedObjs = []
+allTrails = []
+
 unitWidth = None
 unitHeight = None
 
@@ -126,9 +130,6 @@ def createRulerLabel():
     rulerLabel.text = "{0:.3f}".format(mag(ruler.point(1)['pos'] - ruler.point(0)['pos'])) + "m"
     rulerLabel.pos = ruler.point(0)['pos'] + (ruler.point(1)['pos'] - ruler.point(0)['pos']) / 2
     rulerLabel.visible = True
-         
-# store all spawned charges
-allChargedObjs = []
 
 #endregion
 
@@ -222,7 +223,7 @@ class ChargedObj:
         # select display
         self.selectDisplay = []
         self.createSelectDisplay()
-
+        allTrails.append(self.trail)
         self.updateDisplay()
 
     # region select display
@@ -770,7 +771,12 @@ def createCaptionMainScreen():
     # save button
     global saveButton
     scene.append_to_caption("   ")
-    button (text = "Save", bind = changePlay)
+    saveButton = button(text = "Save", bind = changePlay)
+
+    # clear button
+    global clearButton
+    scene.append_to_caption("   ")
+    clearButton = button(text = "Clear", bind = clear)
 
     # time slider
     global timeSlider, timeText
@@ -836,6 +842,20 @@ def displayInstructionPage():
 # save button
 def save():
     print("!!!")
+
+# clear button
+def clear():
+    global chargedObjSelected
+    i = len(allChargedObjs) - 1
+    while i >= 0:
+        chargedObjSelected = allChargedObjs[i]
+        deleteChargedObj()
+        i -= 1
+    i = len(allTrails) - 1
+    while i >= 0:
+        allTrails[i].clear()
+        allTrails.remove(allTrails[i])
+        i -= 1
 
 # time slider
 time = 1
