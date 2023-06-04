@@ -1117,7 +1117,7 @@ def addCaptionSelectScreen():
     # fix button
     global deleteButton, fixButton
     scene.append_to_caption("\n\n   ")
-    fixButton = button(text="Fix", bind=fixChargedObj)
+    fixButton = button(text = "Fix", bind=fixChargedObj)
 
     # trail checkbox
     global trailCheckbox
@@ -1131,35 +1131,33 @@ def addCaptionSelectScreen():
 
     # delete button
     scene.append_to_caption("   ")
-    deleteButton = button(text="Delete", bind=deleteChargedObj)
+    deleteButton = button(text = "Delete", bind=deleteChargedObj)
 
     # select position input fields
-    global selectXInputField, selectYInputField
+    global selectPosXInputField, selectPosYInputField
     scene.append_to_caption("\n\n   Position: <")
-    selectXInputField = winput(bind = selectXInput, text = '{:1.2f}'.format(chargedObjSelected.pos.x), width = 50)
+    selectPosXInputField = winput(bind = selectPosXInput, text = '{:1.2f}'.format(chargedObjSelected.pos.x), width = 50)
     scene.append_to_caption(", ")
-    selectYInputField = winput(bind = selectYInput, text = '{:1.2f}'.format(chargedObjSelected.pos.y), width = 50) 
+    selectPosYInputField = winput(bind = selectPosYInput, text = '{:1.2f}'.format(chargedObjSelected.pos.y), width = 50) 
     scene.append_to_caption(">")
     
-    # select velocity setter
-    global selectedChargeVelXYText, selectedChargeVelMAText
-    scene.append_to_caption("\n\n   ")
-    selectedChargeVelXYText = wtext(text = "Velocity: <" + 
-                    '{:1.2f}'.format(chargedObjSelected.vel.x) + ", " + 
-                    '{:1.2f}'.format(chargedObjSelected.vel.y) + "> m/s")
-    scene.append_to_caption("\n   x:")
-    winput(bind = spawnXInput)
-    scene.append_to_caption("\n   y:")
-    winput(bind = spawnYInput) 
+    # select velocity XY setter
+    global selectedVelXInputField, selectedVelYInputField
+    scene.append_to_caption("\n\n   Velocity: <")
+    selectedVelXInputField = winput(bind = selectVelXInput, width = 50)
+    scene.append_to_caption(", ")
+    selectedVelYInputField = winput(bind = selectVelYInput, width = 50) 
+    scene.append_to_caption(">")
 
-    scene.append_to_caption("\n\n   ")
-    selectedChargeVelMAText = wtext(text = "Velocity: "+
-                    '{:1.2f}'.format((mag(chargedObjSelected.vel))) + " m/s @ " +
-                    '{:1.2f}'.format(atan2(chargedObjSelected.vel.y, chargedObjSelected.vel.x) / pi * 180) + " degree")
-    scene.append_to_caption("\n   mag:")
-    winput(bind = spawnXInput)
-    scene.append_to_caption("\n   angle:")
-    winput(bind = spawnYInput) 
+    # select velocity MA setter
+    global selectedVelMagInputField, selectedVelAngleInputField
+    scene.append_to_caption("\n   Velocity: <")
+    selectedVelMagInputField = winput(bind = selectVelMagInput, width = 50)
+    scene.append_to_caption(" m/s @ ")
+    selectedVelAngleInputField = winput(bind = selectVelAngleInput, width = 60)
+    scene.append_to_caption(" degree")
+
+    updateVelocityStatsSelectScreen()
 
     # select force stats
     global selectedChargeForceXYText, selectedChargeForceMAText
@@ -1336,31 +1334,69 @@ def deleteChargedObj():
     createCaptionMainScreen()
 
 # select position input fields
-def selectXInput():
-    global chargedObjSelected, selectXInputField
+def updateVelocityStatsSelectScreen():
+    global selectedVelXInputField, selectedVelYInputField, selectedVelMagInputField, selectedVelAngleInputField
+    selectedVelXInputField.text = '{:1.2f}'.format(chargedObjSelected.vel.x)
+    selectedVelYInputField.text = '{:1.2f}'.format(chargedObjSelected.vel.y)
+    selectedVelMagInputField.text = '{:1.2f}'.format((mag(chargedObjSelected.vel)))
+    selectedVelAngleInputField.text = '{:1.2f}'.format(atan2(chargedObjSelected.vel.y, chargedObjSelected.vel.x) / pi * 180)
+
+def selectPosXInput():
+    global chargedObjSelected, selectPosXInputField
     # change the x value of select position
-    if (selectXInputField.number != None):
-        chargedObjSelected.pos.x = selectXInputField.number
+    if (selectPosXInputField.number != None):
+        chargedObjSelected.pos.x = selectPosXInputField.number
         chargedObjSelected.display.pos.x = chargedObjSelected.pos.x
         chargedObjSelected.displaySelect()
         updateForceStatSelectScreen()
     else: 
         # invalid input
-        selectXInputField.text = '{:1.2f}'.format(chargedObjSelected.pos.x)
+        selectPosXInputField.text = '{:1.2f}'.format(chargedObjSelected.pos.x)
 
-def selectYInput():
-    global chargedObjSelected
+def selectPosYInput():
+    global chargedObjSelected, selectPosYInputField
     # change the y value of select position
-    if (selectYInputField.number != None):
-        chargedObjSelected.pos.y = selectYInputField.number
+    if (selectPosYInputField.number != None):
+        chargedObjSelected.pos.y = selectPosYInputField.number
         chargedObjSelected.display.pos.y = chargedObjSelected.pos.y
         chargedObjSelected.displaySelect()
         updateForceStatSelectScreen()
     else: 
         # invalid input
-        selectYInputField.text = '{:1.2f}'.format(chargedObjSelected.pos.y)
+        selectPosYInputField.text = '{:1.2f}'.format(chargedObjSelected.pos.y)
 
-# select stats
+# select velocity input field
+def selectVelXInput():
+    global chargedObjSelected, selectPosXInputField
+    # change the x value of select position
+    if (selectPosXInputField.number != None):
+        chargedObjSelected.pos.x = selectPosXInputField.number
+        chargedObjSelected.display.pos.x = chargedObjSelected.pos.x
+        chargedObjSelected.displaySelect()
+        updateForceStatSelectScreen()
+    else: 
+        # invalid input
+        selectPosXInputField.text = '{:1.2f}'.format(chargedObjSelected.pos.x)
+
+def selectVelYInput():
+    global chargedObjSelected
+    # change the y value of select position
+    if (selectPosYInputField.number != None):
+        chargedObjSelected.pos.y = selectPosYInputField.number
+        chargedObjSelected.display.pos.y = chargedObjSelected.pos.y
+        chargedObjSelected.displaySelect()
+        updateForceStatSelectScreen()
+    else: 
+        # invalid input
+        selectPosYInputField.text = '{:1.2f}'.format(chargedObjSelected.pos.y)
+
+def selectVelMagInput():
+    global chargedObjSelected
+    
+def selectVelAngleInput():
+    global chargedObjSelected
+
+# select force stats
 def updateForceStatSelectScreen():
     global selectedChargeForceXYText, selectedChargeForceMAText
 
