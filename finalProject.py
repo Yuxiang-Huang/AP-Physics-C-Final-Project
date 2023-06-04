@@ -174,42 +174,45 @@ class ChargedObj:
             self.velVec = arrow(axis = vec(0, 0, 0), color = color.red)
             self.forceVec = arrow(axis = vec(0, 0, 0), color = color.red)
 
-            # electric field
-            # initialize all the arrows
+            # initialize all electric field arrows
             self.electricFieldArrows = [ [0]*electricFieldPrecision for i in range(self.numOfLine)]
             for i in range(self.numOfLine):
                 for j in range(electricFieldPrecision):
                     self.electricFieldArrows[i][j] = arrow(axis = vec(0, 0, 0), color = color.red)
 
-            self.color = color.red
+            self.trail = attach_trail(self.display, color = color.red)
 
         elif (charge < 0):
             self.display = sphere(pos=spawnPos, radius=spawnRadius, texture = negativeSphereTexture)
             self.velVec = arrow(axis = vec(0, 0, 0), color = color.blue)
             self.forceVec = arrow(axis = vec(0, 0, 0), color = color.blue)
 
-            # electric field
-            # initialize all the arrows
+            # initialize all electric field arrows
             self.electricFieldArrows = [ [0]*electricFieldPrecision for i in range(self.numOfLine)]
             for i in range(self.numOfLine):
                 for j in range(electricFieldPrecision):
                     self.electricFieldArrows[i][j] = arrow(axis = vec(0, 0, 0), color = color.blue)
             
-            self.color = color.blue
+            self.trail = attach_trail(self.display, color = color.blue)
         
         else:
             self.display = sphere(pos=spawnPos, radius=spawnRadius, texture = neutralSphereTexture)
             self.velVec = arrow(axis = vec(0, 0, 0), color = color.black)
             self.forceVec = arrow(axis = vec(0, 0, 0), color = color.black)
 
-            self.color = color.black
+            # initialize all electric field arrows
+            self.electricFieldArrows = [ [0]*electricFieldPrecision for i in range(self.numOfLine)]
+            for i in range(self.numOfLine):
+                for j in range(electricFieldPrecision):
+                    self.electricFieldArrows[i][j] = arrow(axis = vec(0, 0, 0), color = color.black)
+
+            self.trail = attach_trail(self.display, color = color.black)
+
+        self.trail.stop()
 
         # select display
         self.selectDisplay = []
         self.createSelectDisplay()
-
-        # trail
-        self.trail = attach_trail(self.display, color = self.color)
 
     def createSelectDisplay(self):
         # Math with a circle to create arcs
@@ -1179,6 +1182,23 @@ def selectedChargeShift():
             chargedObjSelected.display.texture = fixedNeutralSphereTexture
         else:
             chargedObjSelected.display.texture = neutralSphereTexture
+
+    # colors
+    if (chargedObjSelected.charge > 0):
+        curColor = color.red
+    elif (chargedObjSelected.charge < 0):
+        curColor = color.blue
+    else:
+        curColor = color.black
+
+    chargedObjSelected.velVec.color = curColor
+    chargedObjSelected.forceVec.color = curColor
+
+    for i in range(chargedObjSelected.numOfLine):
+        for j in range(electricFieldPrecision):
+            chargedObjSelected.electricFieldArrows[i][j].color = curColor
+
+    chargedObjSelected.trail.color = curColor
 
 selectedChargeSlider = None
 selectedChargeText = None
