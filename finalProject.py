@@ -223,6 +223,8 @@ class ChargedObj:
         self.selectDisplay = []
         self.createSelectDisplay()
 
+        self.updateDisplay()
+
     # region select display
 
     def createSelectDisplay(self):
@@ -287,12 +289,13 @@ class ChargedObj:
     def applyVel(self):
         if (not self.fixed):
             self.pos += self.vel / numOfRate
-            self.updateDisplay()
+        self.updateDisplay()
 
     def updateDisplay(self):
         self.display.pos = self.pos
         if (self == chargedObjSelected):
             self.displaySelect()
+
         if (vectorToShow == "Velocity"):
             self.createVelVec()
         elif (vectorToShow == "Force"):
@@ -461,7 +464,7 @@ def clicked():
             if (chargedObjSelected != None):
                 chargedObjSelected.displaySelect()
                 spawnPosIndicator.visible = False
-                addCaptionSelectScreen()
+                createCaptionSelectScreen()
             # spawn screen when the click is not on a charged object
             else:
                 spawnPos = getMousePos()
@@ -475,7 +478,7 @@ def clicked():
             # select again or deselect
             if (chargedObjSelected != None):
                 chargedObjSelected.displaySelect()
-                addCaptionSelectScreen()
+                createCaptionSelectScreen()
             else:
                 createCaptionMainScreen()
 
@@ -1077,7 +1080,7 @@ def updateSpawnScreen():
 
 # region Select ChargedObj Screen Caption
 
-def addCaptionSelectScreen():
+def createCaptionSelectScreen():
     createCaptionMainScreen()
 
     # camera follow button
@@ -1107,7 +1110,10 @@ def addCaptionSelectScreen():
     # fix button
     global deleteButton, fixButton
     scene.append_to_caption("\n\n   ")
-    fixButton = button(text = "Fix", bind=fixChargedObj)
+    if (chargedObjSelected.fixed):
+        fixButton = button(text = "Unfix", bind=fixChargedObj)
+    else:
+        fixButton = button(text = "Fix", bind=fixChargedObj)
 
     # trail checkbox
     global trailCheckbox
@@ -1271,6 +1277,7 @@ def fixChargedObj():
         chargedObjSelected.forceLabel.visible = False
     else:
         fixButton.text = "Fix"
+        chargedObjSelected.updateDisplay()
 
     # texture
     if (chargedObjSelected.fixed): 
@@ -1324,6 +1331,11 @@ def deleteChargedObj():
     createCaptionMainScreen()
 
 # select position input fields
+def updatePosStatSelectScreen():
+    global selectPosXInputField, selectPosYInputField
+    selectPosXInputField.text = '{:1.2f}'.format(chargedObjSelected.pos.x)
+    selectPosYInputField.text = '{:1.2f}'.format(chargedObjSelected.pos.y)
+
 def selectPosXInput():
     global chargedObjSelected, selectPosXInputField
     # change the x value of select position
@@ -1424,8 +1436,12 @@ def updateForceStatSelectScreen():
 # region Program Runs Here
 curRange = scene.range
 
+t = 0
+
 while True:
     rate(numOfRate * time)
+    t += 1
+
     if (playing):
         for chargedObj in allChargedObjs:
             chargedObj.applyForce()
@@ -1449,6 +1465,12 @@ while True:
         charge.checkCollision()
     for charge in allChargedObjs:
         charge.collided = []
+
+    # update stats in select screen if necessary every second
+    if (playing and chargedObjSelected != None and t % 1000 == 0):
+        updatePosStatSelectScreen()
+        updateVelocityStatsSelectScreen()
+        updateForceStatSelectScreen()
 
     # update force vector because it is possible that mouse is not moving
     if (playing and mouseDown and chargedObjSelected != None and not chargedObjSelected.fixed):
