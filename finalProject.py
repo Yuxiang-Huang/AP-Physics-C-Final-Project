@@ -295,11 +295,24 @@ class ChargedObj:
         self.display.pos = self.pos
         if (self == chargedObjSelected):
             self.displaySelect()
-
-        if (vectorToShow == "Velocity"):
-            self.createVelVec()
-        elif (vectorToShow == "Force"):
-            self.createForceVec()
+        
+        # vectors
+        if (self.fixed):
+            self.resetVec()
+        else:
+            if (vectorToShow == "Velocity"):
+                self.createVelVec()
+            elif (vectorToShow == "Force"):
+                self.createForceVec()
+            else:
+                self.resetVec()
+    
+    def resetVec(self):
+        self.vel = vec(0, 0, 0)
+        self.velVec.visible = False
+        self.velLabel.visible = False
+        self.forceVec.visible = False
+        self.forceLabel.visible = False
 
     def createVelVec(self):
         # arrow    
@@ -1270,11 +1283,7 @@ def fixChargedObj():
     if (chargedObjSelected.fixed):
         fixButton.text = "Unfix"
         # reset vectors
-        chargedObjSelected.vel = vec(0, 0, 0)
-        chargedObjSelected.velVec.visible = False
-        chargedObjSelected.velLabel.visible = False
-        chargedObjSelected.forceVec.visible = False
-        chargedObjSelected.forceLabel.visible = False
+        chargedObjSelected.resetVec()
     else:
         fixButton.text = "Fix"
         chargedObjSelected.updateDisplay()
