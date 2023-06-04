@@ -171,6 +171,8 @@ class ChargedObj:
         # possibly sliders for more variables
         self.numOfLine = 8
 
+        self.trailState = True
+
         # spheres for now
         if (charge > 0):
             # display and vectors
@@ -216,8 +218,6 @@ class ChargedObj:
                     self.electricFieldArrows[i][j] = arrow(axis = vec(0, 0, 0), color = color.black)
 
             self.trail = attach_trail(self.display, color = color.black)
-
-        self.trail.stop()
 
         # select display
         self.selectDisplay = []
@@ -750,14 +750,14 @@ def createCaptionMainScreen():
     vectorMenu = menu(choices = ["Velocity", "Force", "Neither"], bind = selectVector, selected = vectorToShow)
 
     # trail checkbox
-    global trailCheckbox
+    global allTrailCheckbox
     scene.append_to_caption("   ")
-    trailCheckbox = checkbox(text = "All Trail", bind = changeTrailStateAll, checked = trailStateAll)
+    allTrailCheckbox = checkbox(text = "All Trail", bind = changeTrailStateAll, checked = trailStateAll)
 
     # clear trail button
-    global clearTrailButton
+    global clearAllTrailButton
     scene.append_to_caption("   ")
-    clearTrailButton = button (text = "Clear All Trail", bind = clearTrailAll)
+    clearAllTrailButton = button (text = "Clear All Trail", bind = clearTrailAll)
 
     # electric field mode button
     global electricFieldButton
@@ -853,8 +853,8 @@ def selectVector():
                 elif (vectorToShow == "Force"):
                     co.createForceVec()
 
-# trail checkbox
-trailStateAll = False
+# all trail checkbox
+trailStateAll = True
 
 def changeTrailStateAll():
     global trailStateAll, allChargedObjs
@@ -865,7 +865,7 @@ def changeTrailStateAll():
         else:
             co.trail.stop()
 
-# clear trail button
+# clear all trail button
 def clearTrailAll():
     for co in allChargedObjs:
         co.trail.clear()
@@ -1114,10 +1114,22 @@ def addCaptionSelectScreen():
     selectedMassInputField = winput(bind = selectedMassInput, text = selectedMassSlider.value, width = 35)
     scene.append_to_caption(" * 10^-9 Kg")
 
-    # fix and delete button
+    # fix button
     global deleteButton, fixButton
     scene.append_to_caption("\n\n   ")
     fixButton = button(text="Fix", bind=fixChargedObj)
+
+    # trail checkbox
+    global trailCheckbox
+    scene.append_to_caption("   ")
+    trailCheckbox = checkbox(text = "Trail", bind = changeTrailState, checked = chargedObjSelected.trailState)
+
+    # clear trail button
+    global clearTrailButton
+    scene.append_to_caption("   ")
+    clearTrailButton = button (text = "Clear Trail", bind = clearTrail)
+
+    # delete button
     scene.append_to_caption("   ")
     deleteButton = button(text="Delete", bind=deleteChargedObj)
 
@@ -1287,6 +1299,20 @@ def fixChargedObj():
             chargedObjSelected.display.texture = negativeSphereTexture
         else: 
             chargedObjSelected.display.texture = neutralSphereTexture
+
+# trail checkbox
+def changeTrailState():
+    global chargedObjSelected
+    chargedObjSelected.trailState = not chargedObjSelected.trailState
+    if (chargedObjSelected.trailState):
+        chargedObjSelected.trail.start()
+    else:
+        chargedObjSelected.trail.stop()
+
+# clear trail button
+def clearTrail():
+    global chargedObjSelected
+    chargedObjSelected.trail.clear()
 
 # delete button
 def deleteChargedObj():
