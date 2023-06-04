@@ -559,7 +559,7 @@ def onMouseMove():
                     chargedObjToDrag.vel = vec(0, 0, 0)
                     chargedObjToDrag.velVec.visible = False
                     chargedObjToDrag.velLabel.visible = False
-                updateSelectScreen()
+                # updateSelectScreen() !!!
 
 # endregion
 
@@ -752,7 +752,7 @@ def createCaptionMainScreen():
     # trail checkbox
     global trailCheckbox
     scene.append_to_caption("   ")
-    trailCheckbox = checkbox(text = "Trail", bind = changeTrailStateAll, checked = trailStateAll)
+    trailCheckbox = checkbox(text = "All Trail", bind = changeTrailStateAll, checked = trailStateAll)
 
     # clear trail button
     global clearTrailButton
@@ -971,7 +971,7 @@ def createCaptionSpawnScreen():
     backButton = button(text = "Back", bind = back)
 
     # spawn position input fields
-    global spawnPosText, spawnXInputField, spawnYInputField
+    global spawnXInputField, spawnYInputField
     scene.append_to_caption("\n\n   Position: <")
     spawnXInputField = winput(bind = spawnXInput, text = '{:1.2f}'.format(spawnPos.x), width = 50)
     scene.append_to_caption(", ")
@@ -981,15 +981,10 @@ def createCaptionSpawnScreen():
     # electric field and potential texts
     global electricFieldText, electricPotentialText
     scene.append_to_caption("\n\n   ")
-    electricField = calculateElectricField(spawnPos)
-    electricFieldText = wtext(text = "Electric Field: <" + 
-                                        '{:1.2f}'.format(electricField.x) + ", " + 
-                                        '{:1.2f}'.format(electricField.y) + "> N/C \n   Electric Field: "+
-                                        '{:1.2f}'.format((mag(electricField))) + " N/C @ " +
-                                        '{:1.2f}'.format(atan2(electricField.y, electricField.x) / pi * 180) + " degree")
-
+    electricFieldText = wtext()
     scene.append_to_caption("\n\n   ")
-    electricPotentialText = wtext(text = "Electric Potential: " '{:1.2f}'.format(calculateElectricPotential(spawnPos)) + " V")
+    electricPotentialText = wtext()
+    updateSpawnScreen()
 
 # spawn charge menu
 def selectSpawnChargeObj():
@@ -1014,6 +1009,7 @@ def spawnChargeInput():
         spawnChargeSlider.value = num
         spawnChargeInputField.text = num
     else:
+        # invalid input
         spawnChargeInputField.text = spawnCharge / chargeScalar
 
 # spawn mass slider and input field
@@ -1035,6 +1031,7 @@ def spawnMassInput():
         spawnMassSlider.value = num
         spawnMassInputField.text = num
     else:
+        # invalid input
         spawnMassInputField.text = spawnMass / massScalar
 
 # spawn button
@@ -1051,20 +1048,26 @@ def back():
 
 # spawn position input fields
 def spawnXInput():
-    global spawnPos, spawnPosIndicator
+    global spawnPos, spawnPosIndicator, spawnXInputField
     # change the x value of spawn position
     if (spawnXInputField.number != None):
         spawnPos.x = spawnXInputField.number
         updateSpawnScreen()
         displaySpawnPosIndicator(spawnPos)  
+    else:
+        # invalid input
+        spawnXInputField.text = '{:1.2f}'.format(spawnPos.x)
 
 def spawnYInput():
-    global spawnPos, spawnPosIndicator
+    global spawnPos, spawnPosIndicator, spawnYInputField
     # change the y value of spawn position
     if (spawnYInputField.number != None):
         spawnPos.y = spawnYInputField.number
         updateSpawnScreen()
         displaySpawnPosIndicator(spawnPos)
+    else: 
+        # invalid input
+        spawnYInputField.text = '{:1.2f}'.format(spawnPos.y)
 
 # electric field and potential texts
 def updateSpawnScreen():
@@ -1118,14 +1121,15 @@ def addCaptionSelectScreen():
     scene.append_to_caption("   ")
     deleteButton = button(text="Delete", bind=deleteChargedObj)
 
-    scene.append_to_caption("\n\n   ")
-    wtext(text = "Position: <" + '{:1.2f}'.format(chargedObjSelected.pos.x) + ", " + '{:1.2f}'.format(chargedObjSelected.pos.y) + ">")
-    scene.append_to_caption("\n   x:")
-    winput(bind = spawnXInput)
-    scene.append_to_caption("\n   y:")
-    winput(bind = spawnYInput) 
-
-    # select charge velocity setter
+    # select position input fields
+    global selectXInputField, selectYInputField
+    scene.append_to_caption("\n\n   Position: <")
+    selectXInputField = winput(bind = selectXInput, text = '{:1.2f}'.format(chargedObjSelected.pos.x), width = 50)
+    scene.append_to_caption(", ")
+    selectYInputField = winput(bind = selectYInput, text = '{:1.2f}'.format(chargedObjSelected.pos.y), width = 50) 
+    scene.append_to_caption(">")
+    
+    # select velocity setter
     global selectedChargeVelXYText, selectedChargeVelMAText
     scene.append_to_caption("\n\n   ")
     selectedChargeVelXYText = wtext(text = "Velocity: <" + 
@@ -1145,44 +1149,8 @@ def addCaptionSelectScreen():
     scene.append_to_caption("\n   angle:")
     winput(bind = spawnYInput) 
 
-    # select charge force setter
-    global selectedChargeForceXYText, selectedChargeForceMAText
-    force = chargedObjSelected.calculateNetForce() / chargeScalar
-    scene.append_to_caption("\n\n   ")
-    selectedChargeForceXYText = wtext(text = "Force: <" + 
-                    '{:1.5f}'.format(force.x) + ", " + 
-                    '{:1.5f}'.format(force.y) + "> nN") 
-    scene.append_to_caption("\n   x:")
-    winput(bind = spawnXInput)
-    scene.append_to_caption("\n   y:")
-    winput(bind = spawnYInput) 
-
-    scene.append_to_caption("\n\n   ")
-    selectedChargeForceMAText= wtext(text = "Force: "+
-                    '{:1.5f}'.format((mag(force))) + " nN @ " +
-                    '{:1.2f}'.format(atan2(force.y, force.x) / pi * 180) + " degree")
-    scene.append_to_caption("\n   mag:")
-    winput(bind = spawnXInput)
-    scene.append_to_caption("\n   angle:")
-    winput(bind = spawnYInput) 
-
-# stats
-def updateSelectScreen():
-    global selectedChargeVelXYText, selectedChargeVelMAText, selectedChargeForceXYText, selectedChargeForceMAText
-    selectedChargeVelXYText.text = ("Velocity: <" + 
-                    '{:1.2f}'.format(chargedObjSelected.vel.x) + ", " + 
-                    '{:1.2f}'.format(chargedObjSelected.vel.y) + "> m/s")
-    selectedChargeVelMAText.text = ("Velocity: "+
-                    '{:1.2f}'.format((mag(chargedObjSelected.vel))) + " m/s @ " +
-                    '{:1.2f}'.format(atan2(chargedObjSelected.vel.y, chargedObjSelected.vel.x) / pi * 180) + " degree")
-    force = chargedObjSelected.calculateNetForce() / chargeScalar
-
-    selectedChargeForceXYText.text = ("Force: <" + 
-                    '{:1.5f}'.format(force.x) + ", " + 
-                    '{:1.5f}'.format(force.y) + "> nN") 
-    selectedChargeForceMAText.text = ("Force: "+
-                    '{:1.5f}'.format((mag(force))) + " nN @ " +
-                    '{:1.2f}'.format(atan2(force.y, force.x) / pi * 180) + " degree")
+    # select force stats
+    updateForceStatSelectScreen()
 
 # camera follow button
 cameraFollowedObj = None
@@ -1257,7 +1225,7 @@ def selectedChargeInput():
     else:
         selectedChargeInputField.text = chargedObjSelected.charge / chargeScalar
 
-# select mass slider
+# select mass slider and input field
 def selectedMassShift(): 
     global chargedObjSelected, selectedMassSlider, selectedMassInputField
     chargedObjSelected.mass = selectedMassSlider.value * massScalar   
@@ -1335,6 +1303,37 @@ def deleteChargedObj():
         cameraFollowedObj = None
     chargedObjSelected = None
     createCaptionMainScreen()
+
+# select position input fields
+def selectXInput():
+    global chargedObjSelected
+    # change the x value of select position
+    if (selectXInputField.number != None):
+        chargedObjSelected.pos.x = selectXInputField.number
+        chargedObjSelected.display.pos.x = chargedObjSelected.pos.x
+    
+        updateForceStatSelectScreen()
+
+def selectYInput():
+    global chargedObjSelected
+    # change the y value of select position
+    if (selectYInputField.number != None):
+        chargedObjSelected.pos.y = selectYInputField.number
+        chargedObjSelected.display.pos.y = chargedObjSelected.pos.x
+    updateForceStatSelectScreen()
+
+# select stats
+def updateForceStatSelectScreen():
+    global selectedChargeForceXYText, selectedChargeForceMAText
+
+    force = chargedObjSelected.calculateNetForce() * 1E9
+
+    selectedChargeForceXYText.text = ("Force: <" + 
+                    '{:1.5f}'.format(force.x) + ", " + 
+                    '{:1.5f}'.format(force.y) + "> nN") 
+    selectedChargeForceMAText.text = ("Force: "+
+                    '{:1.5f}'.format((mag(force))) + " nN @ " +
+                    '{:1.2f}'.format(atan2(force.y, force.x) / pi * 180) + " degree")
 
 # endregion 
 
