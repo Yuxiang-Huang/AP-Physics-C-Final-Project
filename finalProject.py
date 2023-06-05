@@ -70,7 +70,6 @@ def createElectricFieldArrowsAll():
 def setElectricFieldArrowsAll():
     for i in range(gridPrecision):
         for j in range(gridPrecision):
-            electricFieldArrowsAll[i][j].visible = True
             electricFieldArrowsAll[i][j].pos = vec((i - gridPrecision / 2 + 1/2) * unitWidth,
                                                            (j - gridPrecision / 2 + 1/2) * unitHeight, 0)
 
@@ -891,6 +890,7 @@ def clear():
         deleteChargedObj(allChargedObjs[i])
         i -= 1
     # clear all trails
+    print(len(allTrails))
     i = len(allTrails) - 1
     while i >= 0:
         allTrails[i].clear()
