@@ -225,6 +225,9 @@ class ChargedObj:
         allTrails.append(self.trail)
         self.updateDisplay()
 
+        # patch for making sure deleting everything
+        self.deleted = False
+
     # region select display
 
     def createSelectDisplay(self):
@@ -312,7 +315,7 @@ class ChargedObj:
             self.displaySelect()
         
         # vectors
-        if (self.fixed):
+        if (self.fixed or self.deleted):
             self.hideVec()
         else:
             if (vectorToShow == "Velocity"):
@@ -883,8 +886,7 @@ def clear():
     # clear all charged objs
     i = len(allChargedObjs) - 1
     while i >= 0:
-        chargedObjSelected = allChargedObjs[i]
-        deleteChargedObj()
+        delete(allChargedObjs[i])
         i -= 1
     # clear all trails
     i = len(allTrails) - 1
@@ -892,6 +894,7 @@ def clear():
         allTrails[i].clear()
         allTrails.remove(allTrails[i])
         i -= 1
+    createCaptionMainScreen()
 
 # time slider
 time = 1
@@ -1389,24 +1392,30 @@ def clearTrail():
 
 # delete button
 def deleteChargedObj():
-    global chargedObjSelected, cameraFollowedObj
+    delete(chargedObjSelected)
+    createCaptionMainScreen()
 
+# another method to allow deleting all charges
+def delete(co):
+    global cameraFollowedObj
     # hide everything, remove from list, reset chargedObjSelected
-    chargedObjSelected.display.visible = False
-    chargedObjSelected.velVec.visible = False
-    chargedObjSelected.impulseVec.visible = False
-    chargedObjSelected.velLabel.visible = False
-    chargedObjSelected.impulseLabel.visible = False
-    chargedObjSelected.hideSelect()
-    for i in range(chargedObjSelected.numOfLine):   
+    allChargedObjs.remove(co)
+    co.display.visible = False
+    co.velVec.visible = False
+    co.velLabel.visible = False
+    co.forceVec.visible = False
+    co.forceLabel.visible = False
+    co.impulseVec.visible = False
+    co.impulseLabel.visible = False
+    co.deleted = True
+    co.hideSelect()
+    for i in range(co.numOfLine):   
             for j in range(electricFieldPrecision):
-                chargedObjSelected.electricFieldArrows[i][j].visible = False
-    allChargedObjs.remove(chargedObjSelected)
-    if (chargedObjSelected == cameraFollowedObj):
+                co.electricFieldArrows[i][j].visible = False
+    if (co == cameraFollowedObj):
         scene.camera.follow(None)
         cameraFollowedObj = None
-    chargedObjSelected = None
-    createCaptionMainScreen()
+    co = None
 
 # select position input fields
 def updatePosStatSelectScreen():
