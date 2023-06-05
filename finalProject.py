@@ -150,7 +150,6 @@ spawnPosIndicator.visible = False
 
 # region Classes
 
-# region Sphere of Charge
 class ChargedObj:       
     def __init__(self, mass, charge, spawnPos, spawnVel):
         # physics variables
@@ -314,17 +313,16 @@ class ChargedObj:
         
         # vectors
         if (self.fixed):
-            self.resetVec()
+            self.hideVec()
         else:
             if (vectorToShow == "Velocity"):
                 self.createVelVec()
             elif (vectorToShow == "Force"):
                 self.createForceVec()
             else:
-                self.resetVec()
+                self.hideVec()
     
-    def resetVec(self):
-        self.vel = vec(0, 0, 0)
+    def hideVec(self):
         self.velVec.visible = False
         self.velLabel.visible = False
         self.forceVec.visible = False
@@ -414,7 +412,14 @@ def calculateForce(q1, q2):
     r12 = q1.pos - q2.pos
     return norm(r12) * K * q1.charge * q2.charge / (mag(r12)**2)
 
-# endregion
+def clone(co):
+    # copy stats including mass, charge, pos, vel, fixed, trail
+    copy = ChargedObj(co.mass, co.charge, co.pos, co.vel)
+    copy.fixed = co.fixed
+    copy.trailState = co.trailState
+    if (not copy.trailState):
+        copy.trail.stop()
+    return copy
 
 # endregion
 
@@ -768,15 +773,17 @@ def createCaptionMainScreen():
     scene.append_to_caption("   ")
     instructionButton = button(text="Instructions", bind = displayInstructionPage)
 
-    # save button
-    global saveButton
-    scene.append_to_caption("   ")
-    saveButton = button(text = "Save", bind = changePlay)
-
     # clear button
     global clearButton
     scene.append_to_caption("   ")
     clearButton = button(text = "Clear", bind = clear)
+
+    # save button
+    global saveButton
+    scene.append_to_caption("   ")
+    saveButton = button(text = "Save", bind = save)
+
+    createSavedCaption()
 
     # time slider
     global timeSlider, timeText
@@ -840,17 +847,46 @@ def displayInstructionPage():
     createInstruction()
 
 # save button
+savedVersions = []
+
 def save():
-    print("!!!")
+    global savedVersions
+    newVersion = []
+    # clone all charged objs
+    for co in allChargedObjs:
+        copy = clone(co)
+        # hide
+        copy.display.visible = False
+        copy.hideVec()
+        # add to new list
+        newVersion.append(copy)
+    # add to stored versions
+    savedVersions.append(newVersion)
+    createCaptionMainScreen()
+    
+def createSavedCaption():
+    for i in range(len(savedVersions)):
+        scene.append_to_caption("   ")
+        button(text = "Saved Version " + str(i), bind = toSaved)
+
+def toSaved(version):
+    global allChargedObjs 
+    clear()
+    index = int(version.text[-1])
+    for co in savedVersions[index]:
+        # clone again so the button can be reused
+        allChargedObjs.append(clone(co))
 
 # clear button
 def clear():
     global chargedObjSelected
+    # clear all charged objs
     i = len(allChargedObjs) - 1
     while i >= 0:
         chargedObjSelected = allChargedObjs[i]
         deleteChargedObj()
         i -= 1
+    # clear all trails
     i = len(allTrails) - 1
     while i >= 0:
         allTrails[i].clear()
@@ -1314,8 +1350,9 @@ def fixChargedObj():
     # text
     if (chargedObjSelected.fixed):
         fixButton.text = "Unfix"
-        # reset vectors
-        chargedObjSelected.resetVec()
+        # reset velocity and hide vectors
+        chargedObjSelected.vel = vec(0, 0, 0)
+        chargedObjSelected.hideVec()
     else:
         fixButton.text = "Fix"
         chargedObjSelected.updateDisplay()
