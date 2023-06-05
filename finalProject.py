@@ -865,7 +865,11 @@ def save():
         newVersion.append(copy)
     # add to stored versions
     savedVersions.append(newVersion)
-    savedVersionsNames.append(input("Save as: "))
+    name = input("Save as: ")
+    # name already exists
+    if (name in savedVersionsNames):
+        name += " ({})".format(len(savedVersionsNames))
+    savedVersionsNames.append(name)
     createCaptionMainScreen()
     
 def createSavedCaption():
