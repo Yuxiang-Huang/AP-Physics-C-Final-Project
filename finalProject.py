@@ -152,6 +152,9 @@ spawnPosIndicator.visible = False
 
 class ChargedObj:       
     def __init__(self, mass, charge, spawnPos, spawnVel):
+        # patch for making sure deleting everything
+        self.deleted = False
+
         # physics variables
         self.charge = charge
         self.mass = mass
@@ -224,9 +227,6 @@ class ChargedObj:
         self.createSelectDisplay()
         allTrails.append(self.trail)
         self.updateDisplay()
-
-        # patch for making sure deleting everything
-        self.deleted = False
 
     # region select display
 
@@ -851,9 +851,10 @@ def displayInstructionPage():
 
 # save button
 savedVersions = []
+savedVersionsNames = []
 
 def save():
-    global savedVersions
+    global savedVersions, savedVersionsNames
     newVersion = []
     # clone all charged objs
     for co in allChargedObjs:
@@ -865,18 +866,19 @@ def save():
         newVersion.append(copy)
     # add to stored versions
     savedVersions.append(newVersion)
+    savedVersionsNames.append(input("Save as: "))
     createCaptionMainScreen()
     
 def createSavedCaption():
     for i in range(len(savedVersions)):
         scene.append_to_caption("   ")
-        button(text = "Saved Version " + str(i), bind = toSaved)
+        button(text = savedVersionsNames[i], bind = toSaved)
 
 def toSaved(version):
     global allChargedObjs 
     clear()
-    index = int(version.text[-1])
-    for co in savedVersions[index]:
+    i = savedVersionsNames.index(version.text)
+    for co in savedVersions[i]:
         # clone again so the button can be reused
         allChargedObjs.append(clone(co))
 
@@ -886,7 +888,7 @@ def clear():
     # clear all charged objs
     i = len(allChargedObjs) - 1
     while i >= 0:
-        delete(allChargedObjs[i])
+        deleteChargedObj(allChargedObjs[i])
         i -= 1
     # clear all trails
     i = len(allTrails) - 1
@@ -1211,7 +1213,7 @@ def createCaptionSelectScreen():
 
     # delete button
     scene.append_to_caption("   ")
-    deleteButton = button(text = "Delete", bind=deleteChargedObj)
+    deleteButton = button(text = "Delete", bind=deleteSelectChargedObj)
 
     # select position input fields
     global selectPosXInputField, selectPosYInputField
@@ -1391,12 +1393,12 @@ def clearTrail():
     chargedObjSelected.trail.clear()
 
 # delete button
-def deleteChargedObj():
-    delete(chargedObjSelected)
+def deleteSelectChargedObj():
+    deleteChargedObj(chargedObjSelected)
     createCaptionMainScreen()
 
 # another method to allow deleting all charges
-def delete(co):
+def deleteChargedObj(co):
     global cameraFollowedObj
     # hide everything, remove from list, reset chargedObjSelected
     allChargedObjs.remove(co)
