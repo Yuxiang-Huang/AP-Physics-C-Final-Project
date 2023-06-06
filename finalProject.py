@@ -271,18 +271,12 @@ class ChargedObj:
                 if (mag(self.pos - chargedObj.pos) > 2 * self.display.radius):
                     force += calculateForce(self, chargedObj)
         return force
-    
-    def applyForceAndVel(self):
-        # calculate force from every other charge
-        if (not self.fixed):
-            # apply force: F * ∆t = m * ∆v
-            self.vel += self.calculateNetForce() / numOfRate / dt / self.mass
 
     def applyForce(self):
         # calculate force from every other charge
         if (not self.fixed):
             # apply force: F * ∆t = m * ∆v
-            self.vel += self.calculateNetForce() / numOfRate / dt / self.mass
+            self.vel += self.calculateNetForce() / numOfRate / self.mass
 
     def createForceVec(self):
         # arrow
@@ -296,7 +290,7 @@ class ChargedObj:
 
     def applyVel(self):
         if (not self.fixed):
-            self.pos += self.vel / numOfRate / dt
+            self.pos += self.vel / numOfRate
         self.updateDisplay()
 
     def createVelVec(self):
@@ -577,6 +571,11 @@ def onMouseUp():
         ruler.modify(0, vec(0, 0, 0))
         ruler.modify(1, vec(0, 0, 0))
     
+    if (chargedObjToDrag != None):
+        # start trail if necessary
+        if (chargedObjToDrag.trailState):
+            chargedObjToDrag.trail.start()
+
     # reset variables
     chargedObjToDrag = None
     mouseDown = False
@@ -596,8 +595,10 @@ def onMouseMove():
             if (chargedObjToDrag != None):
                 mousePos = getMousePos()
                 chargedObjToDrag.pos = mousePos
-                chargedObjToDrag.display.pos = chargedObjToDrag.pos
-                chargedObjToDrag.createVelVec()
+                chargedObjToDrag.updateDisplay()
+
+                # don't display trail when move
+                chargedObjToDrag.trail.stop()
 
                 # could have impacted electric field and potential in the spawn screen
                 if (spawnPos != None):
@@ -891,6 +892,11 @@ def changePlay():
     playing = not playing
     if playing:
         playButton.text = "Stop"
+        # update select screen if necessary
+        if (chargedObjSelected != None):
+            updatePosStatSelectScreen()
+            updateVelocityStatsSelectScreen()
+            updateForceStatSelectScreen()
     else:
         playButton.text = "Play"
 
@@ -1587,42 +1593,42 @@ t = 0
 
 while True:
     rate(numOfRate * time)
-    # t += 1
+    t += 1
 
     if (playing):
         for chargedObj in allChargedObjs:
             chargedObj.applyForce()
         for chargedObj in allChargedObjs:
             chargedObj.applyVel()
-        # collision
-        for charge in allChargedObjs:
-            charge.checkCollision()
-        for charge in allChargedObjs:
-            charge.collided = []
-    # for chargedObj in allChargedObjs:
-    #     chargedObj.updateDisplay()
-        # chargedObj.displayElectricField()
+    for chargedObj in allChargedObjs:
+        chargedObj.displayElectricField()
 
-    # # reset electric field arrows and electric potential grid for all if user zooms
-    # if (curRange != scene.range):
-    #     curRange = scene.range
-    #     setUnits()
-    #     setElectricFieldArrowsAll()
-    #     setElectricPotentialGrid()
+    # reset electric field arrows and electric potential grid for all if user zooms
+    if (curRange != scene.range):
+        curRange = scene.range
+        setUnits()
+        setElectricFieldArrowsAll()
+        setElectricPotentialGrid()
 
-    # displayElectricFieldAll()
-    # displayElectricPotential()
+    displayElectricFieldAll()
+    displayElectricPotential()
 
-    # # update stats in select screen if necessary every second
-    # if (playing and chargedObjSelected != None and t % numOfRate == 0):
-    #     updatePosStatSelectScreen()
-    #     updateVelocityStatsSelectScreen()
-    #     updateForceStatSelectScreen()
+    # collision
+    for charge in allChargedObjs:
+        charge.checkCollision()
+    for charge in allChargedObjs:
+        charge.collided = []
 
-    # # update force vector because it is possible that mouse is not moving
-    # if (playing and mouseDown and chargedObjSelected != None and not chargedObjSelected.fixed):
-    #     chargedObjSelected.impulseVec.pos = chargedObjSelected.pos
-    #     chargedObjSelected.impulseVec.axis = getMousePos() - chargedObjSelected.pos 
-    #     chargedObjSelected.createImpulseLabel()
+    # update stats in select screen if necessary every second
+    if (playing and chargedObjSelected != None and t % 1000 == 0):
+        updatePosStatSelectScreen()
+        updateVelocityStatsSelectScreen()
+        updateForceStatSelectScreen()
+
+    # update force vector because it is possible that mouse is not moving
+    if (playing and mouseDown and chargedObjSelected != None and not chargedObjSelected.fixed):
+        chargedObjSelected.impulseVec.pos = chargedObjSelected.pos
+        chargedObjSelected.impulseVec.axis = getMousePos() - chargedObjSelected.pos 
+        chargedObjSelected.createImpulseLabel()
 
 # endregion
