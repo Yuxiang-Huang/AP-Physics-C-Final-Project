@@ -150,7 +150,7 @@ spawnPosIndicator.visible = False
 # region Classes
 
 class ChargedObj:       
-    def __init__(self, mass, charge, spawnPos, spawnVel):
+    def __init__(self, mass, charge, spawnPos, spawnVel, spawnFixed):
         # patch for making sure deleting everything
         self.deleted = False
 
@@ -159,7 +159,7 @@ class ChargedObj:
         self.mass = mass
         self.pos = spawnPos
         self.vel = spawnVel
-        self.fixed = False
+        self.fixed = spawnFixed
         self.collided = []
 
         # force labels
@@ -271,12 +271,18 @@ class ChargedObj:
                 if (mag(self.pos - chargedObj.pos) > 2 * self.display.radius):
                     force += calculateForce(self, chargedObj)
         return force
+    
+    def applyForceAndVel(self):
+        # calculate force from every other charge
+        if (not self.fixed):
+            # apply force: F * ∆t = m * ∆v
+            self.vel += self.calculateNetForce() / numOfRate / dt / self.mass
 
     def applyForce(self):
         # calculate force from every other charge
         if (not self.fixed):
             # apply force: F * ∆t = m * ∆v
-            self.vel += self.calculateNetForce() / numOfRate / self.mass
+            self.vel += self.calculateNetForce() / numOfRate / dt / self.mass
 
     def createForceVec(self):
         # arrow
@@ -290,7 +296,7 @@ class ChargedObj:
 
     def applyVel(self):
         if (not self.fixed):
-            self.pos += self.vel / numOfRate
+            self.pos += self.vel / numOfRate / dt
         self.updateDisplay()
 
     def createVelVec(self):
@@ -346,6 +352,9 @@ class ChargedObj:
                             # reverse velocity
                             self.vel = - self.vel
 
+                            # apply force again
+                            self.vel += calculateForce(chargedObj, self) / numOfRate / self.mass
+
                             # position check
                             self.pos = chargedObj.pos + norm(self.pos - chargedObj.pos) * (self.display.radius + chargedObj.display.radius)
                         else:
@@ -358,6 +367,10 @@ class ChargedObj:
                             (chargedObj.mass - self.mass) / (chargedObj.mass + self.mass) * chargedObj.vel)
 
                             self.vel = tempvel
+
+                            # apply force again
+                            self.vel += calculateForce(chargedObj, self) / numOfRate / self.mass
+                            chargedObj.vel += calculateForce(self, chargedObj) / numOfRate / self.mass
 
                             # position check
                             dif = self.display.radius + chargedObj.display.radius - mag(self.pos - chargedObj.pos) 
@@ -416,8 +429,7 @@ def calculateForce(q1, q2):
 
 def clone(co):
     # copy stats including mass, charge, pos, vel, fixed, trail
-    copy = ChargedObj(co.mass, co.charge, co.pos, co.vel)
-    copy.fixed = co.fixed
+    copy = ChargedObj(co.mass, co.charge, co.pos, co.vel, co.fixed)
     copy.trailState = co.trailState
     if (not copy.trailState):
         copy.trail.stop()
@@ -465,7 +477,7 @@ def displayElectricPotential():
     if (electricPotentialMode == 1):
         for i in range(gridPrecision-1):
             for j in range(gridPrecision-1):
-                electricPotentialLabels[i][j].text = '{:1.2f}'.format(calculateElectricPotential(electricPotentialLabels[i][j].pos))
+                electricPotentialLabels[i][j].text = '{:1.3f}'.format(calculateElectricPotential(electricPotentialLabels[i][j].pos))
 
 def calculateElectricPotential(pos):
     electricPotential = 0
@@ -644,47 +656,81 @@ scene.append_to_caption("\n\n   ")
 #Dipole
 def dipolePreset():
     start()
-    allChargedObjs.append(ChargedObj(massScalar, chargeScalar, vec(5,0,0), vec(0, 0, 0)))
-    allChargedObjs.append(ChargedObj(massScalar, -chargeScalar, vec(-5, 0, 0) , vec(0, 0, 0)))
+    allChargedObjs.append(ChargedObj(massScalar, chargeScalar, vec(5,0,0), vec(0, 0, 0), False))
+    allChargedObjs.append(ChargedObj(massScalar, -chargeScalar, vec(-5, 0, 0) , vec(0, 0, 0), False))
+    allChargedObjs.append(ChargedObj(massScalar, 0, vec(5, -1, 0) , vec(0, 0, 0), False))
     
 def threeChargePreset(): 
     start()
-    allChargedObjs.append(ChargedObj(massScalar, chargeScalar, vec(0,5,0), vec(0, 0, 0)))
-    allChargedObjs.append(ChargedObj(massScalar, chargeScalar, vec(5*cos(pi/6),-5*sin(pi/6),0), vec(0, 0, 0)))
-    allChargedObjs.append(ChargedObj(massScalar, -1.5*chargeScalar, vec(-5*cos(pi/6),-5*sin(pi/6),0), vec(0, 0, 0)))
+    allChargedObjs.append(ChargedObj(massScalar, chargeScalar, vec(0,5,0), vec(0, 0, 0), False))
+    allChargedObjs.append(ChargedObj(massScalar, chargeScalar, vec(5*cos(pi/6),-5*sin(pi/6),0), vec(0, 0, 0), False))
+    allChargedObjs.append(ChargedObj(massScalar, -1.5*chargeScalar, vec(-5*cos(pi/6),-5*sin(pi/6),0), vec(0, 0, 0), False))
 
 def butterflyPreset():
     start()
-    allChargedObjs.append(ChargedObj(massScalar, -chargeScalar, vec(0,5,0), vec(1, -1, 0)))
-    allChargedObjs.append(ChargedObj(massScalar, -chargeScalar, vec(5,5,0), vec(-1, -1, 0)))
-    allChargedObjs.append(ChargedObj(massScalar, 5*chargeScalar, vec(2.5,0,0), vec(0, 1, 0)))
+    allChargedObjs.append(ChargedObj(massScalar, -chargeScalar, vec(0,5,0), vec(1, -1, 0), False))
+    allChargedObjs.append(ChargedObj(massScalar, -chargeScalar, vec(5,5,0), vec(-1, -1, 0), False))
+    allChargedObjs.append(ChargedObj(massScalar, 5*chargeScalar, vec(2.5,0,0), vec(0, 1, 0), False))
 
 def helixPreset(): 
     start()
-    allChargedObjs.append(ChargedObj(massScalar, -chargeScalar, vec(-1.5,10,0), vec(.25, -2, 0)))
-    allChargedObjs.append(ChargedObj(massScalar, chargeScalar, vec(1.5,10,0), vec(-.25, -2, 0)))
+    allChargedObjs.append(ChargedObj(massScalar, -chargeScalar, vec(-1.5,10,0), vec(.25, -2, 0), False))
+    allChargedObjs.append(ChargedObj(massScalar, chargeScalar, vec(1.5,10,0), vec(-.25, -2, 0), False))
 
 def helixGunPreset ():
     start()
-    allChargedObjs.append(ChargedObj(massScalar, -chargeScalar, vec(-15,1.5,0), vec(2, -.25, 0)))
-    allChargedObjs.append(ChargedObj(massScalar, chargeScalar, vec(-15,-1.5,0), vec(2, .25, 0)))
-    allChargedObjs.append(ChargedObj(massScalar, -chargeScalar, vec(0,1.5,0), vec(0, 0, 0)))
-    allChargedObjs.append(ChargedObj(massScalar, chargeScalar, vec(0,-1.5,0), vec(0, 0, 0)))
+    allChargedObjs.append(ChargedObj(massScalar, -chargeScalar, vec(-15,1.5,0), vec(2, -.25, 0), False))
+    allChargedObjs.append(ChargedObj(massScalar, chargeScalar, vec(-15,-1.5,0), vec(2, .25, 0), False))
+    allChargedObjs.append(ChargedObj(massScalar, -chargeScalar, vec(0,1.5,0), vec(0, 0, 0), False))
+    allChargedObjs.append(ChargedObj(massScalar, chargeScalar, vec(0,-1.5,0), vec(0, 0, 0), False))
     
 def dragonflyPreset ():
     start()
-    allChargedObjs.append(ChargedObj(massScalar, chargeScalar, vec(0,5,0), vec(0, 0, 0)))
-    allChargedObjs.append(ChargedObj(massScalar, chargeScalar, vec(4.33,-2.5,0), vec(0, 0, 0)))
-    allChargedObjs.append(ChargedObj(massScalar, chargeScalar, vec(-4.33,-2.5,0), vec(0, 0, 0)))
-    allChargedObjs.append(ChargedObj(massScalar, -5*chargeScalar, vec(0,0,0), vec(0, 0, 0)))
+    allChargedObjs.append(ChargedObj(massScalar, chargeScalar, vec(0,5,0), vec(0, 0, 0), False))
+    allChargedObjs.append(ChargedObj(massScalar, chargeScalar, vec(4.33,-2.5,0), vec(0, 0, 0), False))
+    allChargedObjs.append(ChargedObj(massScalar, chargeScalar, vec(-4.33,-2.5,0), vec(0, 0, 0), False))
+    allChargedObjs.append(ChargedObj(massScalar, -5*chargeScalar, vec(0,0,0), vec(0, 0, 0), False))
     
 def somethingPreset():
     start()
-    allChargedObjs.append(ChargedObj(massScalar, -5*chargeScalar, vec(0,5,0), vec(3, 0, 0)))
-    allChargedObjs.append(ChargedObj(massScalar, chargeScalar, vec(5*cos(30),-5*sin(30),0), vec(-1, 2, 0)))
-    allChargedObjs.append(ChargedObj(massScalar, 5*chargeScalar, vec(-5*cos(30),-5*sin(30),0), vec(1, 2, 0)))
+    allChargedObjs.append(ChargedObj(massScalar, -5*chargeScalar, vec(0,5,0), vec(3, 0, 0), False))
+    allChargedObjs.append(ChargedObj(massScalar, chargeScalar, vec(5*cos(30),-5*sin(30),0), vec(-1, 2, 0), False))
+    allChargedObjs.append(ChargedObj(massScalar, 5*chargeScalar, vec(-5*cos(30),-5*sin(30),0), vec(1, 2, 0), False))
 
-# Presets
+def yPreset():
+    start()
+    allChargedObjs.append(ChargedObj(massScalar, -chargeScalar, vec(0,5,0), vec(0, 0, 0), False))
+    allChargedObjs.append(ChargedObj(massScalar, -chargeScalar, vec(5,5,0), vec(0, 0, 0), False))
+    allChargedObjs.append(ChargedObj(massScalar, 15*chargeScalar, vec(2.5,0,0), vec(0, 0, 0), False))
+
+def jPreset():
+    start()
+    allChargedObjs.append(ChargedObj(massScalar, 0, vec(-5,5,0), vec(1, 0, 0), False))
+    allChargedObjs.append(ChargedObj(massScalar, 0, vec(-6,5,0), vec(0, 0, 0), False))
+    allChargedObjs.append(ChargedObj(massScalar, 0, vec(6,5,0), vec(0, 0, 0), False))
+    allChargedObjs.append(ChargedObj(massScalar, -chargeScalar, vec(0,5,0), vec(0, -1, 0), False))
+    allChargedObjs.append(ChargedObj(massScalar, -.25*chargeScalar, vec(2.5,-2.5,0), vec(0, 0, 0), False))
+    allChargedObjs.append(ChargedObj(massScalar, -.25*chargeScalar, vec(-3.5,-5.5,0), vec(0, 0, 0), False))
+
+def fourChargePreset():
+    start()
+    allChargedObjs.append(ChargedObj(massScalar, -chargeScalar, vec(0,5,0), vec(0, 0, 0), False))
+    allChargedObjs.append(ChargedObj(massScalar, chargeScalar, vec(5,5,0), vec(0, 0, 0), False))
+    allChargedObjs.append(ChargedObj(massScalar, chargeScalar, vec(0,0,0), vec(0, 0, 0), False))
+    allChargedObjs.append(ChargedObj(massScalar, -chargeScalar, vec(5,0,0), vec(0, 0, 0), False))
+    
+def circularOrbitPreset(): 
+    start()
+    allChargedObjs.append(ChargedObj(massScalar, -chargeScalar, vec(0,0,0), vec(0, 0, 0), False))
+    allChargedObjs.append(ChargedObj(massScalar, chargeScalar, vec(0,5,0), vec(sqrt((9E9*1E-9*1E-9)/(5*1E-9)), 0, 0), False))
+    
+#same right now as circular orbit, but this is unfixed and the circular orbit will be fixed
+def loopWavePreset(): 
+    start()
+    allChargedObjs.append(ChargedObj(massScalar, -chargeScalar, vec(-15,0,0), vec(0, 0, 0), False))
+    allChargedObjs.append(ChargedObj(massScalar, chargeScalar, vec(-15,5,0), vec(sqrt((9E9*1E-9*1E-9)/(5*1E-9)), 0, 0), False))
+
+# preset
 button(text = "Dipole", bind = dipolePreset)
 scene.append_to_caption("   ")
 button(text = "Three-Charge Motion", bind = threeChargePreset)
@@ -701,7 +747,15 @@ button(text = "helix gun (kinda)", bind = helixGunPreset)
 scene.append_to_caption("   ")
 button(text = "draw dragonfly", bind = dragonflyPreset) 
 scene.append_to_caption("\n\n   ")
-button(text = "draw something", bind = somethingPreset)
+button(text = "Draw a Y", bind = yPreset)
+scene.append_to_caption(" ")
+button(text = "Draw a J", bind = jPreset)
+scene.append_to_caption("\n\n   ")
+button(text = "Four-Charge Motion", bind = fourChargePreset) 
+scene.append_to_caption("\n\n   ")
+button(text = "model circular orbit", bind = circularOrbitPreset)
+scene.append_to_caption(" ")
+button(text = "loop Wave Thing", bind = loopWavePreset)
 
 # electric field Slider
 electricFieldPrecision = 10
@@ -1056,9 +1110,9 @@ def createCaptionSpawnScreen():
     # spawn position input fields
     global spawnXInputField, spawnYInputField
     scene.append_to_caption("\n\n   Position: <")
-    spawnXInputField = winput(bind = spawnXInput, text = '{:1.2f}'.format(spawnPos.x), width = 50)
+    spawnXInputField = winput(bind = spawnXInput, text = '{:1.3f}'.format(spawnPos.x), width = 50)
     scene.append_to_caption(", ")
-    spawnYInputField = winput(bind = spawnYInput, text = '{:1.2f}'.format(spawnPos.y), width = 50) 
+    spawnYInputField = winput(bind = spawnYInput, text = '{:1.3f}'.format(spawnPos.y), width = 50) 
     scene.append_to_caption(">")
 
     # electric field and potential texts
@@ -1119,7 +1173,7 @@ def spawnMassInput():
 
 # spawn button
 def spawnChargedObj():
-    allChargedObjs.append(ChargedObj(spawnMass, spawnCharge, spawnPos, vec(0, 0, 0)))
+    allChargedObjs.append(ChargedObj(spawnMass, spawnCharge, spawnPos, vec(0, 0, 0), False))
     back()
 
 # back button
@@ -1139,7 +1193,7 @@ def spawnXInput():
         displaySpawnPosIndicator(spawnPos)  
     else:
         # invalid input
-        spawnXInputField.text = '{:1.2f}'.format(spawnPos.x)
+        spawnXInputField.text = '{:1.3f}'.format(spawnPos.x)
 
 def spawnYInput():
     global spawnPos, spawnPosIndicator, spawnYInputField
@@ -1150,7 +1204,7 @@ def spawnYInput():
         displaySpawnPosIndicator(spawnPos)
     else: 
         # invalid input
-        spawnYInputField.text = '{:1.2f}'.format(spawnPos.y)
+        spawnYInputField.text = '{:1.3f}'.format(spawnPos.y)
 
 # electric field and potential texts
 def updateSpawnScreen():
@@ -1158,11 +1212,11 @@ def updateSpawnScreen():
     # recalculate electric field and potential
     electricField = calculateElectricField(spawnPos)
     electricFieldText.text = ("Electric Field: <" + 
-                                        '{:1.2f}'.format(electricField.x) + ", " + 
-                                        '{:1.2f}'.format(electricField.y) + "> N/C \n   Electric Field: "+
-                                        '{:1.2f}'.format((mag(electricField))) + " N/C @ " +
-                                        '{:1.2f}'.format(atan2(electricField.y, electricField.x) / pi * 180) + " degree")
-    electricPotentialText.text = "Electric Potential: " '{:1.2f}'.format(calculateElectricPotential(spawnPos)) + " V"
+                                        '{:1.3f}'.format(electricField.x) + ", " + 
+                                        '{:1.3f}'.format(electricField.y) + "> N/C \n   Electric Field: "+
+                                        '{:1.3f}'.format((mag(electricField))) + " N/C @ " +
+                                        '{:1.3f}'.format(atan2(electricField.y, electricField.x) / pi * 180) + " degree")
+    electricPotentialText.text = "Electric Potential: " '{:1.3f}'.format(calculateElectricPotential(spawnPos)) + " V"
 
 # endregion
 
@@ -1222,9 +1276,9 @@ def createCaptionSelectScreen():
     # select position input fields
     global selectPosXInputField, selectPosYInputField
     scene.append_to_caption("\n\n   Position: <")
-    selectPosXInputField = winput(bind = selectPosXInput, text = '{:1.2f}'.format(chargedObjSelected.pos.x), width = 50)
+    selectPosXInputField = winput(bind = selectPosXInput, text = '{:1.3f}'.format(chargedObjSelected.pos.x), width = 50)
     scene.append_to_caption(", ")
-    selectPosYInputField = winput(bind = selectPosYInput, text = '{:1.2f}'.format(chargedObjSelected.pos.y), width = 50) 
+    selectPosYInputField = winput(bind = selectPosYInput, text = '{:1.3f}'.format(chargedObjSelected.pos.y), width = 50) 
     scene.append_to_caption(">")
     
     # select velocity XY setter
@@ -1426,8 +1480,8 @@ def deleteChargedObj(co):
 # select position input fields
 def updatePosStatSelectScreen():
     global selectPosXInputField, selectPosYInputField
-    selectPosXInputField.text = '{:1.2f}'.format(chargedObjSelected.pos.x)
-    selectPosYInputField.text = '{:1.2f}'.format(chargedObjSelected.pos.y)
+    selectPosXInputField.text = '{:1.3f}'.format(chargedObjSelected.pos.x)
+    selectPosYInputField.text = '{:1.3f}'.format(chargedObjSelected.pos.y)
 
 def selectPosXInput():
     global chargedObjSelected, selectPosXInputField
@@ -1439,7 +1493,7 @@ def selectPosXInput():
         updateForceStatSelectScreen()
     else: 
         # invalid input
-        selectPosXInputField.text = '{:1.2f}'.format(chargedObjSelected.pos.x)
+        selectPosXInputField.text = '{:1.3f}'.format(chargedObjSelected.pos.x)
 
 def selectPosYInput():
     global chargedObjSelected, selectPosYInputField
@@ -1451,15 +1505,15 @@ def selectPosYInput():
         updateForceStatSelectScreen()
     else: 
         # invalid input
-        selectPosYInputField.text = '{:1.2f}'.format(chargedObjSelected.pos.y)
+        selectPosYInputField.text = '{:1.3f}'.format(chargedObjSelected.pos.y)
 
 # select velocity input field
 def updateVelocityStatsSelectScreen(): 
     global selectedVelXInputField, selectedVelYInputField, selectedVelMagInputField, selectedVelAngleInputField
-    selectedVelXInputField.text = '{:1.2f}'.format(chargedObjSelected.vel.x)
-    selectedVelYInputField.text = '{:1.2f}'.format(chargedObjSelected.vel.y)
-    selectedVelMagInputField.text = '{:1.2f}'.format((mag(chargedObjSelected.vel)))
-    selectedVelAngleInputField.text = '{:1.2f}'.format(atan2(chargedObjSelected.vel.y, chargedObjSelected.vel.x) / pi * 180)
+    selectedVelXInputField.text = '{:1.3f}'.format(chargedObjSelected.vel.x)
+    selectedVelYInputField.text = '{:1.3f}'.format(chargedObjSelected.vel.y)
+    selectedVelMagInputField.text = '{:1.3f}'.format((mag(chargedObjSelected.vel)))
+    selectedVelAngleInputField.text = '{:1.3f}'.format(atan2(chargedObjSelected.vel.y, chargedObjSelected.vel.x) / pi * 180)
 
 def selectVelXInput():
     global chargedObjSelected, selectedVelXInputField
@@ -1470,7 +1524,7 @@ def selectVelXInput():
         updateVelocityStatsSelectScreen()
     else: 
         # invalid input
-        selectedVelXInputField.text = '{:1.2f}'.format(chargedObjSelected.vel.x)
+        selectedVelXInputField.text = '{:1.3f}'.format(chargedObjSelected.vel.x)
 
 def selectVelYInput():
     global chargedObjSelected, selectedVelYInputField
@@ -1481,7 +1535,7 @@ def selectVelYInput():
         updateVelocityStatsSelectScreen()
     else: 
         # invalid input
-        selectedVelYInputField.text = '{:1.2f}'.format(chargedObjSelected.vel.y)
+        selectedVelYInputField.text = '{:1.3f}'.format(chargedObjSelected.vel.y)
 
 def selectVelMagInput():
     global chargedObjSelected, selectedVelMagInputField
@@ -1494,7 +1548,7 @@ def selectVelMagInput():
         updateVelocityStatsSelectScreen()
     else: 
         # invalid input
-        selectedVelMagInputField.text = '{:1.2f}'.format((mag(chargedObjSelected.vel)))
+        selectedVelMagInputField.text = '{:1.3f}'.format((mag(chargedObjSelected.vel)))
     
 def selectVelAngleInput():
     global chargedObjSelected, selectedVelAngleInputField
@@ -1507,7 +1561,7 @@ def selectVelAngleInput():
         updateVelocityStatsSelectScreen()
     else: 
         # invalid input
-        selectedVelAngleInputField.text = '{:1.2f}'.format(atan2(chargedObjSelected.vel.y, chargedObjSelected.vel.x) / pi * 180)
+        selectedVelAngleInputField.text = '{:1.3f}'.format(atan2(chargedObjSelected.vel.y, chargedObjSelected.vel.x) / pi * 180)
 
 # select force stats
 def updateForceStatSelectScreen():
@@ -1520,7 +1574,7 @@ def updateForceStatSelectScreen():
                     '{:1.5f}'.format(force.y) + "> nN") 
     selectedChargeForceMAText.text = ("Force: "+
                     '{:1.5f}'.format((mag(force))) + " nN @ " +
-                    '{:1.2f}'.format(atan2(force.y, force.x) / pi * 180) + " degree")
+                    '{:1.3f}'.format(atan2(force.y, force.x) / pi * 180) + " degree")
 
 # endregion 
 
@@ -1533,42 +1587,42 @@ t = 0
 
 while True:
     rate(numOfRate * time)
-    t += 1
+    # t += 1
 
     if (playing):
         for chargedObj in allChargedObjs:
             chargedObj.applyForce()
         for chargedObj in allChargedObjs:
             chargedObj.applyVel()
-    for chargedObj in allChargedObjs:
-        chargedObj.displayElectricField()
+        # collision
+        for charge in allChargedObjs:
+            charge.checkCollision()
+        for charge in allChargedObjs:
+            charge.collided = []
+    # for chargedObj in allChargedObjs:
+    #     chargedObj.updateDisplay()
+        # chargedObj.displayElectricField()
 
-    # reset electric field arrows and electric potential grid for all if user zooms
-    if (curRange != scene.range):
-        curRange = scene.range
-        setUnits()
-        setElectricFieldArrowsAll()
-        setElectricPotentialGrid()
+    # # reset electric field arrows and electric potential grid for all if user zooms
+    # if (curRange != scene.range):
+    #     curRange = scene.range
+    #     setUnits()
+    #     setElectricFieldArrowsAll()
+    #     setElectricPotentialGrid()
 
-    displayElectricFieldAll()
-    displayElectricPotential()
+    # displayElectricFieldAll()
+    # displayElectricPotential()
 
-    # collision
-    for charge in allChargedObjs:
-        charge.checkCollision()
-    for charge in allChargedObjs:
-        charge.collided = []
+    # # update stats in select screen if necessary every second
+    # if (playing and chargedObjSelected != None and t % numOfRate == 0):
+    #     updatePosStatSelectScreen()
+    #     updateVelocityStatsSelectScreen()
+    #     updateForceStatSelectScreen()
 
-    # update stats in select screen if necessary every second
-    if (playing and chargedObjSelected != None and t % 1000 == 0):
-        updatePosStatSelectScreen()
-        updateVelocityStatsSelectScreen()
-        updateForceStatSelectScreen()
-
-    # update force vector because it is possible that mouse is not moving
-    if (playing and mouseDown and chargedObjSelected != None and not chargedObjSelected.fixed):
-        chargedObjSelected.impulseVec.pos = chargedObjSelected.pos
-        chargedObjSelected.impulseVec.axis = getMousePos() - chargedObjSelected.pos 
-        chargedObjSelected.createImpulseLabel()
+    # # update force vector because it is possible that mouse is not moving
+    # if (playing and mouseDown and chargedObjSelected != None and not chargedObjSelected.fixed):
+    #     chargedObjSelected.impulseVec.pos = chargedObjSelected.pos
+    #     chargedObjSelected.impulseVec.axis = getMousePos() - chargedObjSelected.pos 
+    #     chargedObjSelected.createImpulseLabel()
 
 # endregion
