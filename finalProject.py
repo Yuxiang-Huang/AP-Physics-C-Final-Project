@@ -635,12 +635,12 @@ def onMouseMove():
 
 # region Intro Screen
 
-# Intro text
+# intro text
 startText = text(pos = vec(0, -3, 0), text="JackXiang", align='center', color = color.cyan)
 startText.height = 10
 startText.length = 25
 
-# Start Button
+# start Button
 def start():
     scene.userzoom = True
     startText.visible = False
@@ -666,7 +666,7 @@ scene.append_to_caption("   ")
 startButton = button(text = "Start without preset", bind = start)
 scene.append_to_caption("\n\n   ")
 
-#Dipole
+# presets
 def dipolePreset():
     start()
     allChargedObjs.append(ChargedObj(massScalar, chargeScalar, vec(5,0,0), vec(0, 0, 0), False))
@@ -719,22 +719,29 @@ def yPreset():
 def jPreset():
     start()
     allChargedObjs.append(ChargedObj(massScalar, 0, vec(-5,5,0), vec(1, 0, 0), False))
-    allChargedObjs.append(ChargedObj(massScalar, 0, vec(-6,5,0), vec(0, 0, 0), False))
-    allChargedObjs.append(ChargedObj(massScalar, 0, vec(6,5,0), vec(0, 0, 0), False))
+    allChargedObjs.append(ChargedObj(massScalar, 0, vec(-6,5,0), vec(0, 0, 0), True))
+    allChargedObjs.append(ChargedObj(massScalar, 0, vec(6,5,0), vec(0, 0, 0), True))
     allChargedObjs.append(ChargedObj(massScalar, -chargeScalar, vec(0,5,0), vec(0, -1, 0), False))
-    allChargedObjs.append(ChargedObj(massScalar, -.25*chargeScalar, vec(2.5,-2.5,0), vec(0, 0, 0), False))
-    allChargedObjs.append(ChargedObj(massScalar, -.25*chargeScalar, vec(-3.5,-5.5,0), vec(0, 0, 0), False))
+    allChargedObjs.append(ChargedObj(massScalar, -.25*chargeScalar, vec(2.5,-3.5,0), vec(0, 0, 0), False))
+    allChargedObjs.append(ChargedObj(massScalar, -.25*chargeScalar, vec(-3.5,-6.5,0), vec(0, 0, 0), False))
 
-def fourChargePreset():
+def chargeTrampolinePreset():
     start()
-    allChargedObjs.append(ChargedObj(massScalar, -chargeScalar, vec(0,5,0), vec(0, 0, 0), False))
+    allChargedObjs.append(ChargedObj(massScalar, -chargeScalar, vec(0,5,0), vec(0, 0, 0), True))
     allChargedObjs.append(ChargedObj(massScalar, chargeScalar, vec(5,5,0), vec(0, 0, 0), False))
-    allChargedObjs.append(ChargedObj(massScalar, chargeScalar, vec(0,0,0), vec(0, 0, 0), False))
+    allChargedObjs.append(ChargedObj(massScalar, chargeScalar, vec(0,0,0), vec(0, 0, 0), True))
     allChargedObjs.append(ChargedObj(massScalar, -chargeScalar, vec(5,0,0), vec(0, 0, 0), False))
+    
+def figureEightPreset():
+    start()
+    allChargedObjs.append(ChargedObj(massScalar, -chargeScalar, vec(0,0,0), vec(1,1, 0), False))
+    allChargedObjs.append(ChargedObj(massScalar, chargeScalar * 1.1, vec(0,-5,0), vec(0, 0, 0), True))
+    allChargedObjs.append(ChargedObj(massScalar, chargeScalar * 1.1, vec(0,5,0), vec(0, 0, 0), True))
+    
     
 def circularOrbitPreset(): 
     start()
-    allChargedObjs.append(ChargedObj(massScalar, -chargeScalar, vec(0,0,0), vec(0, 0, 0), False))
+    allChargedObjs.append(ChargedObj(massScalar, -chargeScalar, vec(0,0,0), vec(0, 0, 0), True))
     allChargedObjs.append(ChargedObj(massScalar, chargeScalar, vec(0,5,0), vec(sqrt((9E9*1E-9*1E-9)/(5*1E-9)), 0, 0), False))
     
 #same right now as circular orbit, but this is unfixed and the circular orbit will be fixed
@@ -764,11 +771,13 @@ button(text = "Draw a Y", bind = yPreset)
 scene.append_to_caption(" ")
 button(text = "Draw a J", bind = jPreset)
 scene.append_to_caption("\n\n   ")
-button(text = "Four-Charge Motion", bind = fourChargePreset) 
+button(text = "Charge Trampoline", bind = chargeTrampolinePreset) 
 scene.append_to_caption("\n\n   ")
 button(text = "model circular orbit", bind = circularOrbitPreset)
 scene.append_to_caption(" ")
 button(text = "loop Wave Thing", bind = loopWavePreset)
+scene.append_to_caption("\n\n   ")
+button(text = "draw figure 8", bind = figureEightPreset)
 
 # electric field Slider
 electricFieldPrecision = 10
@@ -1506,7 +1515,11 @@ def selectPosXInput():
     # change the x value of select position
     if (selectPosXInputField.number != None):
         chargedObjSelected.pos.x = selectPosXInputField.number
+        # change position without trail
+        chargedObjSelected.trail.stop()
         chargedObjSelected.display.pos.x = chargedObjSelected.pos.x
+        if (chargedObjSelected.trailState):
+            chargedObjSelected.trail.start()
         chargedObjSelected.updateDisplay()
         updateForceStatSelectScreen()
     else: 
@@ -1518,7 +1531,10 @@ def selectPosYInput():
     # change the y value of select position
     if (selectPosYInputField.number != None):
         chargedObjSelected.pos.y = selectPosYInputField.number
+        chargedObjSelected.trail.stop()
         chargedObjSelected.display.pos.y = chargedObjSelected.pos.y
+        if (chargedObjSelected.trailState):
+            chargedObjSelected.trail.start()
         chargedObjSelected.updateDisplay()
         updateForceStatSelectScreen()
     else: 
