@@ -178,7 +178,11 @@ class ChargedObj:
         # spheres for now
         if (charge > 0):
             # display and vectors
-            self.display = sphere(pos = spawnPos, radius = spawnRadius, texture = positiveSphereTexture)
+            self.display = sphere(pos = spawnPos, radius = spawnRadius)
+            if (self.fixed):
+                self.display.texture = fixedPositiveSphereTexture
+            else:
+                self.display.texture = positiveSphereTexture
             self.velVec = arrow(axis = vec(0, 0, 0), color = color.red)
             self.forceVec = arrow(axis = vec(0, 0, 0), color = color.red)
             self.impulseVec = arrow(axis = vec(0, 0, 0), color = color.red)
@@ -193,7 +197,11 @@ class ChargedObj:
 
         elif (charge < 0):
             # display and vectors
-            self.display = sphere(pos=spawnPos, radius=spawnRadius, texture = negativeSphereTexture)
+            self.display = sphere(pos=spawnPos, radius=spawnRadius)
+            if (self.fixed):
+                self.display.texture = fixedNegativeSphereTexture
+            else:
+                self.display.texture = negativeSphereTexture
             self.velVec = arrow(axis = vec(0, 0, 0), color = color.blue)
             self.forceVec = arrow(axis = vec(0, 0, 0), color = color.blue)
             self.impulseVec = arrow(axis = vec(0, 0, 0), color = color.blue)
@@ -208,7 +216,11 @@ class ChargedObj:
         
         else:
             # display and vectors
-            self.display = sphere(pos=spawnPos, radius=spawnRadius, texture = neutralSphereTexture)
+            self.display = sphere(pos=spawnPos, radius=spawnRadius)
+            if (self.fixed):
+                self.display.texture = fixedNeutralSphereTexture
+            else:
+                self.display.texture = neutralSphereTexture
             self.velVec = arrow(axis = vec(0, 0, 0), color = color.black)
             self.forceVec = arrow(axis = vec(0, 0, 0), color = color.black)
             self.impulseVec = arrow(axis = vec(0, 0, 0), color = color.black)
@@ -811,7 +823,7 @@ backButton = None
 # endregion
 
 ####################################################################################################
-
+  
 # region Main Screen Caption
 
 def createCaptionMainScreen():
@@ -1116,9 +1128,9 @@ def createCaptionSpawnScreen():
     # spawn position input fields
     global spawnXInputField, spawnYInputField
     scene.append_to_caption("\n\n   Position: <")
-    spawnXInputField = winput(bind = spawnXInput, text = '{:1.3f}'.format(spawnPos.x), width = 50)
+    spawnXInputField = winput(bind = spawnXInput, text = '{:1.3f}'.format(spawnPos.x), width = 60)
     scene.append_to_caption(", ")
-    spawnYInputField = winput(bind = spawnYInput, text = '{:1.3f}'.format(spawnPos.y), width = 50) 
+    spawnYInputField = winput(bind = spawnYInput, text = '{:1.3f}'.format(spawnPos.y), width = 60) 
     scene.append_to_caption(">")
 
     # electric field and potential texts
@@ -1282,23 +1294,23 @@ def createCaptionSelectScreen():
     # select position input fields
     global selectPosXInputField, selectPosYInputField
     scene.append_to_caption("\n\n   Position: <")
-    selectPosXInputField = winput(bind = selectPosXInput, text = '{:1.3f}'.format(chargedObjSelected.pos.x), width = 50)
+    selectPosXInputField = winput(bind = selectPosXInput, text = '{:1.3f}'.format(chargedObjSelected.pos.x), width = 60)
     scene.append_to_caption(", ")
-    selectPosYInputField = winput(bind = selectPosYInput, text = '{:1.3f}'.format(chargedObjSelected.pos.y), width = 50) 
+    selectPosYInputField = winput(bind = selectPosYInput, text = '{:1.3f}'.format(chargedObjSelected.pos.y), width = 60) 
     scene.append_to_caption(">")
     
     # select velocity XY setter
     global selectedVelXInputField, selectedVelYInputField
     scene.append_to_caption("\n\n   Velocity: <")
-    selectedVelXInputField = winput(bind = selectVelXInput, width = 50)
+    selectedVelXInputField = winput(bind = selectVelXInput, width = 60)
     scene.append_to_caption(", ")
-    selectedVelYInputField = winput(bind = selectVelYInput, width = 50) 
+    selectedVelYInputField = winput(bind = selectVelYInput, width = 60) 
     scene.append_to_caption(">")
 
     # select velocity MA setter
     global selectedVelMagInputField, selectedVelAngleInputField
     scene.append_to_caption("\n   Velocity: <")
-    selectedVelMagInputField = winput(bind = selectVelMagInput, width = 50)
+    selectedVelMagInputField = winput(bind = selectVelMagInput, width = 60)
     scene.append_to_caption(" m/s @ ")
     selectedVelAngleInputField = winput(bind = selectVelAngleInput, width = 60)
     scene.append_to_caption(" degree")
