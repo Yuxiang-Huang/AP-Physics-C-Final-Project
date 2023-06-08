@@ -548,9 +548,26 @@ class PlateChargedObj:
 
         # select display
         self.selectDisplay = []
+        self.selectDisplayReset = []
         self.createSelectDisplay()
         self.updateDisplay()
 
+    def updateDisplay(self):
+        self.display.pos = self.pos
+        if (self == chargedObjSelected):
+            self.displaySelect()
+        
+        # vectors
+        if (self.fixed or self.deleted):
+            self.hideVec()
+        else:
+            if (vectorToShow == "Velocity"):
+                self.createVelVec()
+            elif (vectorToShow == "Force"):
+                self.createForceVec()
+            else:
+                self.hideVec()
+    
     # region select display
 
     def createSelectDisplay(self):
@@ -580,6 +597,9 @@ class PlateChargedObj:
         curve2.rotate(angle = rotAngle, axis = vec(0, 0, 1), origin = self.pos)
         self.selectDisplay.append(curve2)
 
+        self.selectDisplayReset.append(self.pos)
+        self.selectDisplayReset.append(rotAngle)
+
         for c in self.selectDisplay:
             c.visible = False
     
@@ -598,18 +618,32 @@ class PlateChargedObj:
         curve1.modify(1, pos = vec(halfLen, halfHei, 0) + self.pos)
         curve1.modify(2, pos = vec(halfLen, - halfHei, 0) + self.pos)
         curve1.modify(3, pos = vec(halfLen - len, - halfHei, 0) + self.pos)
+        
+        # reverse rotation and rotate
+        curve1.rotate(angle = -self.selectDisplayReset[1], axis = vec(0, 0, 1), 
+                      origin = self.selectDisplayReset[0])
         curve1.rotate(angle = rotAngle, axis = vec(0, 0, 1), origin = self.pos)
 
         # left side
         curve2 = self.selectDisplay[1]
         curve2.modify(0, pos = vec(-halfLen + len, halfHei, 0) + self.pos)
         curve2.modify(1, pos = vec(-halfLen, halfHei, 0) + self.pos)
-        curve2.modify(2, pos = vec(-halfLen, + halfHei, 0) + self.pos)
+        curve2.modify(2, pos = vec(-halfLen, - halfHei, 0) + self.pos)
         curve2.modify(3, pos = vec(-halfLen + len, - halfHei, 0) + self.pos)
+        curve2.rotation = vec(0, 0, 0)
+
+        # reverse rotation and rotate
+        curve2.rotate(angle = -self.selectDisplayReset[1], axis = vec(0, 0, 1), 
+                      origin = self.selectDisplayReset[0])
         curve2.rotate(angle = rotAngle, axis = vec(0, 0, 1), origin = self.pos)
 
-        for curve in self.selectDisplay:
-            curve.visible = True
+        # new reset
+        self.selectDisplayReset = []
+        self.selectDisplayReset.append(self.pos)
+        self.selectDisplayReset.append(rotAngle)
+
+        for c in self.selectDisplay:
+            c.visible = True
     
     def hideSelect(self):
         for curve in self.selectDisplay:
@@ -662,22 +696,6 @@ class PlateChargedObj:
         self.impulseLabel.pos = self.impulseVec.pos + self.impulseVec.axis
         self.impulseLabel.visible = True
 
-    def updateDisplay(self):
-        self.display.pos = self.pos
-        if (self == chargedObjSelected):
-            self.displaySelect()
-        
-        # vectors
-        if (self.fixed or self.deleted):
-            self.hideVec()
-        else:
-            if (vectorToShow == "Velocity"):
-                self.createVelVec()
-            elif (vectorToShow == "Force"):
-                self.createForceVec()
-            else:
-                self.hideVec()
-    
     def hideVec(self):
         self.velVec.visible = False
         self.velLabel.visible = False
@@ -967,8 +985,8 @@ def onMouseMove():
                 if (spawnPos != None):
                     updateSpawnScreen()
         else:
-            # conditions for setting velocity vectors: not playing, dragging, obj not fixed, and in show velocity vector mode
-            if not playing and chargedObjToDrag != None and not chargedObjToDrag.fixed and vectorToShow == "Velocity":
+            # conditions for setting velocity vectors: not playing, dragging, obj not fixed, in show velocity vector mode, and sphere
+            if not playing and chargedObjToDrag != None and not chargedObjToDrag.fixed and vectorToShow == "Velocity" and chargedObjToDrag.type == "Sphere":
                 # set velocity vector
                 chargedObjToDrag.velVec.axis = getMousePos() - chargedObjToDrag.pos
                 chargedObjToDrag.vel = chargedObjToDrag.velVec.axis
