@@ -565,7 +565,7 @@ class PlateChargedObj:
 
     def updateDisplay(self):
         self.display.pos = self.pos
-        if (self == chargedObjSelected):
+        if (self == chargedObjSelected and not self.deleted):
             self.displaySelect()
         
         # vectors
@@ -1383,13 +1383,14 @@ def changePlay():
     playing = not playing
     if (playing):
         playButton.text = "■ Stop"
+        # take out sliders to prevent changing charge and mass during play
+        if (chargedObjSelected != None):
+            createCaptionSelectScreen() 
     else:
         playButton.text = "► Play"
         # update select screen if necessary
         if (chargedObjSelected != None):
-            updatePosStatSelectScreen()
-            updateVelocityStatsSelectScreen()
-            updateForceStatSelectScreen()
+            createCaptionSelectScreen()
 
 # instruction button
 def displayInstructionPage():
@@ -1812,25 +1813,26 @@ def createCaptionSelectScreen():
     else:
         cameraFollowButton = button(text = "Camera Follow", bind = cameraFollow)
 
-    # select charge slider
-    global selectedChargeSlider, selectedChargeInputField
-    scene.append_to_caption("\n\n")
-    if (chargedObjSelected.type == "Sphere"):
-        selectedChargeSlider = slider(bind = selectedChargeShift, min = -5, max = 5, value = chargedObjSelected.charge / chargeScalar, step = 0.1, length = sliderLength)
-        scene.append_to_caption("\n" + sliderTextSpaceMore + "Charge: ")
-    elif (chargedObjSelected.type == "Plate"):
-        selectedChargeSlider = slider(bind = selectedChargeShift, min = -5, max = 5, value = chargedObjSelected.chargeDensity / chargeScalar, step = 0.1, length = sliderLength)
-        scene.append_to_caption("\n" + sliderTextSpaceLess + "Charge Density: ")
-    selectedChargeInputField = winput(bind = selectedChargeInput, text = selectedChargeSlider.value, width = 35)
-    scene.append_to_caption(" nC")
+    if (not playing):
+        # select charge slider
+        global selectedChargeSlider, selectedChargeInputField
+        scene.append_to_caption("\n\n")
+        if (chargedObjSelected.type == "Sphere"):
+            selectedChargeSlider = slider(bind = selectedChargeShift, min = -5, max = 5, value = chargedObjSelected.charge / chargeScalar, step = 0.1, length = sliderLength)
+            scene.append_to_caption("\n" + sliderTextSpaceMore + "Charge: ")
+        elif (chargedObjSelected.type == "Plate"):
+            selectedChargeSlider = slider(bind = selectedChargeShift, min = -5, max = 5, value = chargedObjSelected.chargeDensity / chargeScalar, step = 0.1, length = sliderLength)
+            scene.append_to_caption("\n" + sliderTextSpaceLess + "Charge Density: ")
+        selectedChargeInputField = winput(bind = selectedChargeInput, text = selectedChargeSlider.value, width = 35)
+        scene.append_to_caption(" nC")
 
-    # select mass slider
-    global selectedMassSlider, selectedMassInputField
-    scene.append_to_caption("\n\n")
-    selectedMassSlider = slider(bind = selectedMassShift, min = 1, max = 5, value = chargedObjSelected.mass / massScalar, step = 0.1, length = sliderLength) 
-    scene.append_to_caption("\n                          Mass: ")
-    selectedMassInputField = winput(bind = selectedMassInput, text = selectedMassSlider.value, width = 35)
-    scene.append_to_caption(" * 10^-9 Kg")
+        # select mass slider
+        global selectedMassSlider, selectedMassInputField
+        scene.append_to_caption("\n\n")
+        selectedMassSlider = slider(bind = selectedMassShift, min = 1, max = 5, value = chargedObjSelected.mass / massScalar, step = 0.1, length = sliderLength) 
+        scene.append_to_caption("\n                          Mass: ")
+        selectedMassInputField = winput(bind = selectedMassInput, text = selectedMassSlider.value, width = 35)
+        scene.append_to_caption(" * 10^-9 Kg")
 
     # fix button
     global deleteButton, fixButton
@@ -2034,7 +2036,9 @@ def clearTrail():
 
 # delete button
 def deleteSelectChargedObj():
+    global chargedObjSelected
     deleteChargedObj(chargedObjSelected)
+    chargedObjSelected = None
     createCaptionMainScreen()
 
 # another method to allow deleting all charges
