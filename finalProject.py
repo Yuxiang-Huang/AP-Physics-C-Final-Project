@@ -18,6 +18,7 @@ scene.align = "left"
 #constants
 K = 9E9
 chargeScalar = 1E-9
+chargeDensityScalar = 1E-12
 massScalar = 1E-9
 sphereMassDensity = 2.5E-9
 
@@ -473,7 +474,7 @@ class SphereChargedObj:
 # region Plate
 
 class PlateChargedObj:       
-    def __init__(self, charge, chargeDensity, angle, spawnPos, spawnFixed):
+    def __init__(self, charge, chargeDensity, spawnAngle, spawnPos, spawnFixed):
         # patch for making sure deleting everything
         self.deleted = False
 
@@ -482,7 +483,7 @@ class PlateChargedObj:
 
         # physics variables
         self.chargeDensity = chargeDensity
-        self.mass = "!!!"
+        self.mass = 1 #!!!
         self.pos = spawnPos
         self.vel = vec(0, 0, 0)
         self.fixed = spawnFixed
@@ -758,14 +759,15 @@ class PlateChargedObj:
         deltaY = self.display.axis.y / deltaFactor
         deltaZ = self.display.height / deltaFactor
 
-        startPos = self.pos - vec(self.display.axis.x * self.display.length, self.display.axis.y * self.display.width, 0) / mag(self.display.axis) / 2
+        startPos = self.pos - norm(self.display.axis) * self.display.length / 2
+        print(startPos)
         # loop to find pos of each dA
         for i in range(deltaFactor):
             for j in range(deltaFactor):
-                curPos = vec(startPos.x + deltaX * i, startPos.y + deltaY * i, - self.display.height / 2 + deltaZ)
+                curPos = vec(startPos.x + deltaX * i, startPos.y + deltaY * i, - self.display.width / 2 + deltaZ)
                 # dE = norm(r) * K * (dA * charge density) / r^2
                 r = pos - curPos
-                dA = self.display.length / deltaFactor * self.display.height / deltaFactor
+                dA = self.display.length / deltaFactor * self.display.width / deltaFactor 
                 electricField += norm(r) * K * (dA * self.chargeDensity) / (mag(r)**2)
         return electricField
     
@@ -1202,7 +1204,6 @@ def figureEightPreset():
     allChargedObjs.append(SphereChargedObj(massScalar, chargeScalar * 1.1, vec(0,-5,0), vec(0, 0, 0), True))
     allChargedObjs.append(SphereChargedObj(massScalar, chargeScalar * 1.1, vec(0,5,0), vec(0, 0, 0), True))
     
-    
 def circularOrbitPreset(): 
     start()
     allChargedObjs.append(SphereChargedObj(massScalar, -chargeScalar, vec(0,0,0), vec(0, 0, 0), True))
@@ -1214,7 +1215,14 @@ def loopWavePreset():
     allChargedObjs.append(SphereChargedObj(massScalar, -chargeScalar, vec(-15,0,0), vec(0, 0, 0), False))
     allChargedObjs.append(SphereChargedObj(massScalar, chargeScalar, vec(-15,5,0), vec(sqrt((9E9*1E-9*1E-9)/(5*1E-9)), 0, 0), False))
 
+def testPlate():
+    start()
+    allChargedObjs.append(SphereChargedObj(massScalar, chargeScalar, vec(1,0,0), vec(0, 0, 0), False))
+    allChargedObjs.append(PlateChargedObj(chargeScalar, 10 * chargeDensityScalar, 90, vec(0, 0, 0), False))
+
 # preset
+button(text = "test plate", bind = testPlate)
+scene.append_to_caption("\n\n   ")
 button(text = "Dipole", bind = dipolePreset)
 scene.append_to_caption("   ")
 button(text = "Three-Charge Motion", bind = threeChargePreset)
@@ -1586,12 +1594,12 @@ def createCaptionSpawnScreen():
     scene.append_to_caption(" nC")
 
     global spawnChargeDensitySlider, spawnChargeDensityInputField
-    scene.append_to_caption("\n\n")
     if (chargeMenu.selected == "Plate"):
-        spawnChargeDensitySlider = slider(bind = spawnChargeShift, min = -5, max = 5, value = spawnChargeDensity / chargeScalar, step = 0.1, length = sliderLength)
+        scene.append_to_caption("\n\n")
+        spawnChargeDensitySlider = slider(bind = spawnChargeDensityShift, min = -100, max = 100, value = spawnChargeDensity / chargeDensityScalar, step = 10, length = sliderLength)
         scene.append_to_caption("\n" + sliderTextSpaceLess + "Charge Density: ")
-        spawnChargeDensityInputField = winput(bind = spawnChargeInput, text = spawnChargeSlider.value, width = 35)
-        scene.append_to_caption(" nC/m^2")
+        spawnChargeDensityInputField = winput(bind = spawnChargeDensityInput, text = spawnChargeDensitySlider.value, width = 35)
+        scene.append_to_caption(" pC/m^2")
 
     # spawn mass slider and input field
     global spawnMassSlider, spawnMassInputField
@@ -1674,12 +1682,12 @@ def spawnChargeInput():
             spawnChargeInputField.text = spawnChargePlate / chargeScalar
 
 # spawn charge density slider and input field
-spawnChargeDensity = chargeScalar
+spawnChargeDensity = 10 * chargeDensityScalar
 
 def spawnChargeDensityShift():
     global spawnChargeDensity, spawnChargeDensityInputField
-    spawnChargeDensity = spawnChargeDensitySlider.value * chargeScalar    
-    spawnChargeInputField.text = spawnChargeDensitySlider.value
+    spawnChargeDensity = spawnChargeDensitySlider.value * chargeDensityScalar    
+    spawnChargeDensityInputField.text = spawnChargeDensitySlider.value
 
 def spawnChargeDensityInput():
     global spawnChargeDensity, spawnChargeDensitySlider, spawnChargeDensityInputField
@@ -1688,12 +1696,12 @@ def spawnChargeDensityInput():
         num = max(spawnChargeDensitySlider.min, spawnChargeDensityInputField.number)
         num = min(spawnChargeDensitySlider.max, num)
         # set values
-        spawnChargeDensity = num * chargeScalar
+        spawnChargeDensity = num * chargeDensityScalar
         spawnChargeDensitySlider.value = num
         spawnChargeDensityInputField.text = num
     else:
         # invalid input
-        spawnChargeDensityInputField.text = spawnChargeDensity / chargeScalar
+        spawnChargeDensityInputField.text = spawnChargeDensity / chargeDensityScalar
 
 # spawn mass slider and input field
 spawnMass = massScalar
@@ -2180,10 +2188,10 @@ while True:
             if (chargedObj.type == "Sphere"):
                 chargedObj.applyVel()
         # collision
-        for charge in allChargedObjs:
-            charge.checkCollision()
-        for charge in allChargedObjs:
-            charge.collided = []
+        # for charge in allChargedObjs:
+        #     charge.checkCollision()
+        # for charge in allChargedObjs:
+        #     charge.collided = []
     for chargedObj in allChargedObjs:
         chargedObj.displayElectricField()
 
