@@ -378,6 +378,9 @@ class SphereChargedObj:
 
     # endregion
 
+    def onObj(mousePos):
+        return mag(mousePos - chargedObj.pos) <= chargedObj.display.radius
+
     def checkCollision(self):
         # skip if fixed
         if (self.fixed):
@@ -561,6 +564,7 @@ class PlateChargedObj:
         # create select display
         len = self.display.length / plateSelectDisplayFactor
 
+        # helper variables
         halfLen = self.display.length / 2 + epsilon * 10
         halfHei = self.display.height / 2 + epsilon * 10
         rotAngle = atan2(self.display.axis.y, self.display.axis.x)
@@ -583,19 +587,33 @@ class PlateChargedObj:
         arc2.rotate(angle = rotAngle, axis = vec(0, 0, 1), origin = self.pos)
         self.selectDisplay.append(arc2)
 
-        # for arc in self.selectDisplay:
-            # arc.visible = False
+        for arc in self.selectDisplay:
+            arc.visible = False
     
     def displaySelect(self):
-        thetaRange = pi / 4
-        for x in range(4):
-            arc = self.selectDisplay[x]
-            initialTheta = x * pi / 2 + pi / 4
-            for i in range(steps):
-                theta = i * thetaRange / steps + initialTheta - thetaRange / 2 
-                arc.modify(i, pos = vec(cos(theta) * (self.display.radius + epsilon * scene.range), 
-                                    sin(theta) * (self.display.radius + epsilon * scene.range), 0) + self.pos)
-            arc.visible = True
+        # modify select display
+        len = self.display.length / plateSelectDisplayFactor
+
+        # helper variables
+        halfLen = self.display.length / 2 + epsilon * 10
+        halfHei = self.display.height / 2 + epsilon * 10
+        rotAngle = atan2(self.display.axis.y, self.display.axis.x)
+
+        # right side
+        arc1 = self.selectDisplay[0]
+        arc1.modify(0, pos = vec(halfLen - len, halfHei, 0) + self.pos)
+        arc1.append(1, pos = vec(halfLen, halfHei, 0) + self.pos)
+        arc1.append(2, pos = vec(halfLen, - halfHei, 0) + self.pos)
+        arc1.append(3, pos = vec(halfLen - len, - halfHei, 0) + self.pos)
+        arc1.rotate(angle = rotAngle, axis = vec(0, 0, 1), origin = self.pos)
+
+        # left side
+        arc2 = self.selectDisplay[1]
+        arc2.modify(0, pos = vec(-halfLen + len, halfHei, 0) + self.pos)
+        arc2.append(1, pos = vec(-halfLen, halfHei, 0) + self.pos)
+        arc2.append(2, pos = vec(-halfLen, + halfHei, 0) + self.pos)
+        arc2.append(3, pos = vec(-halfLen + len, - halfHei, 0) + self.pos)
+        arc2.rotate(angle = rotAngle, axis = vec(0, 0, 1), origin = self.pos)
     
     def hideSelect(self):
         for x in range(4):
@@ -757,6 +775,31 @@ class PlateChargedObj:
                 for j in range(electricFieldPrecision):
                     self.electricFieldArrows[i][j].visible = False
 
+    def onObj(self, mousePos):
+        # find vertices
+        halfLen = self.display.length / 2
+        halfHei = self.display.height / 2
+        rotAngle = atan2(self.display.axis.y, self.display.axis.x)
+
+        vertices = [vec(halfLen, halfHei, 0) + self.pos, vec(-halfLen, halfHei, 0) + self.pos, 
+                    vec(-halfLen, -halfHei, 0) + self.pos, vec(halfLen, -halfHei, 0) + self.pos]
+
+        for i in range(4):
+            vertices[i] -= self.pos
+            vertices[i] = vertices[i].rotate(angle = rotAngle)
+            vertices[i] += self.pos
+        
+        # use cross products to determine if inside
+        for i in range(4):
+            v1 = vertices[i] - mousePos
+            v2 = vertices[(i + 1) % 4] - mousePos
+            print(v1.cross(v2).z)
+            if v1.cross(v2).z < 0:
+                print(str(i) + ": false \n")
+                return False
+        print("true")
+        return True
+
 # endregion
 
 # endregion
@@ -780,11 +823,11 @@ def displayElectricFieldAll():
     
 def calculateElectricField(pos):
     electricField = vec(0, 0, 0)
-    for chargedObj in allChargedObjs:
-        r = pos - chargedObj.pos
-        # just check for now before I figure out what to do in this case
-        if (mag(r) != 0):
-            electricField += norm(r) * K * chargedObj.charge / (mag(r)**2)
+    for co in allChargedObjs:
+        if (co.type == "Sphere"):
+            r = pos - co.pos
+            if (mag(r) != 0):
+                electricField += norm(r) * K * co.charge / (mag(r)**2)
     return electricField
 
 def tooClose(owner, pos, size):
@@ -805,11 +848,11 @@ def displayElectricPotential():
 
 def calculateElectricPotential(pos):
     electricPotential = 0
-    for chargedObj in allChargedObjs:
-        r = pos - chargedObj.pos
-        # just check for now before I figure out what to do in this case
-        if (mag(r) != 0):
-            electricPotential +=  K * chargedObj.charge / mag(r)
+    for co in allChargedObjs:
+        if (co.type == "Sphere"):
+            r = pos - co.pos
+            if (mag(r) != 0):
+                electricPotential +=  K * co.charge / mag(r)
     return electricPotential
 
 # endregion
@@ -854,8 +897,8 @@ def clicked():
 # helper methods
 def chargedObjOnMouse():
     mousePos = getMousePos()
-    for chargedObj in allChargedObjs:
-        if (mag(mousePos - chargedObj.pos) <= chargedObj.display.radius):
+    for co in allChargedObjs:
+        if (co.onObj(mousePos)):
             return chargedObj
     return None
 
