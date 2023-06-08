@@ -499,7 +499,7 @@ class PlateChargedObj:
         self.numOfLine = 8
 
         # thin boxes
-        self.display = box(pos = spawnPos, size = vec(spawnLen, spawnLen / plateWidthFactor, spawnLen))
+        self.display = box(pos = spawnPos, size = vec(spawnLen, spawnLen / plateWidthFactor, spawnLen), axis = vec(1, 1, 0))
         
         # differ in charge sign
         if (chargeDensity > 0):
@@ -563,6 +563,7 @@ class PlateChargedObj:
 
         halfLen = self.display.length / 2 + epsilon * 10
         halfHei = self.display.height / 2 + epsilon * 10
+        rotAngle = atan2(self.display.axis.y, self.display.axis.x)
 
         # right side
         arc1 = curve()
@@ -570,6 +571,7 @@ class PlateChargedObj:
         arc1.append({"pos": vec(halfLen, halfHei, 0) + self.pos, "color": color.yellow})
         arc1.append({"pos": vec(halfLen, - halfHei, 0) + self.pos, "color": color.yellow})
         arc1.append({"pos": vec(halfLen - len, - halfHei, 0) + self.pos, "color": color.yellow})
+        arc1.rotate(angle = rotAngle, axis = vec(0, 0, 1), origin = self.pos)
         self.selectDisplay.append(arc1)
 
         # left side
@@ -578,6 +580,7 @@ class PlateChargedObj:
         arc2.append({"pos": vec(- halfLen, halfHei, 0) + self.pos, "color": color.yellow})
         arc2.append({"pos": vec(- halfLen, - halfHei, 0) + self.pos, "color": color.yellow})
         arc2.append({"pos": vec(- halfLen + len, - halfHei, 0) + self.pos, "color": color.yellow})
+        arc2.rotate(angle = rotAngle, axis = vec(0, 0, 1), origin = self.pos)
         self.selectDisplay.append(arc2)
 
         # for arc in self.selectDisplay:
