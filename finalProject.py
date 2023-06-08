@@ -1071,6 +1071,10 @@ def onMouseMove():
                 # could have impacted electric field and potential in the spawn screen
                 if (spawnPos != None):
                     updateSpawnScreen()
+
+                # update the force in select screen
+                if (chargedObjSelected != None):
+                    updateForceStatSelectScreen()
         else:
             # conditions for setting velocity vectors: not playing, dragging, obj not fixed, in show velocity vector mode, and sphere
             if not playing and chargedObjToDrag != None and not chargedObjToDrag.fixed and vectorToShow == "Velocity" and chargedObjToDrag.type == "Sphere":
@@ -1717,7 +1721,7 @@ def updateSpawnScreen():
                                         '{:1.3f}'.format(electricField.x) + ", " + 
                                         '{:1.3f}'.format(electricField.y) + "> N/C \n   Electric Field: "+
                                         '{:1.3f}'.format((mag(electricField))) + " N/C @ " +
-                                        '{:1.3f}'.format(atan2(electricField.y, electricField.x) / pi * 180) + " degree")
+                                        '{:1.2f}'.format(atan2(electricField.y, electricField.x) / pi * 180) + " degree")
     electricPotentialText.text = "Electric Potential: " '{:1.3f}'.format(calculateNetElectricPotential(spawnPos)) + " V"
 
 # endregion
@@ -2088,7 +2092,7 @@ def updateForceStatSelectScreen():
                     '{:1.5f}'.format(force.y) + "> nN") 
     selectedChargeForceMAText.text = ("Force: "+
                     '{:1.5f}'.format((mag(force))) + " nN @ " +
-                    '{:1.3f}'.format(atan2(force.y, force.x) / pi * 180) + " degree")
+                    '{:1.2f}'.format(atan2(force.y, force.x) / pi * 180) + " degree")
 
 # endregion 
 
