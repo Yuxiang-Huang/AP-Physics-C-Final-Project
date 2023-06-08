@@ -501,7 +501,8 @@ class PlateChargedObj:
         self.numOfLine = 8
 
         # thin boxes
-        self.display = box(pos = spawnPos, size = vec(spawnLen, spawnLen / plateWidthFactor, spawnLen), axis = vec(0, 1, 0))
+        self.display = box(pos = spawnPos, size = vec(spawnLen, spawnLen / plateWidthFactor, spawnLen),
+                            axis = vec(cos(radians(spawnAngle)), sin(radians(spawnAngle)), 0))
         
         # differ in charge sign
         if (chargeDensity > 0):
@@ -755,16 +756,14 @@ class PlateChargedObj:
     def calculateElectricField(self, pos):
         electricField = vec(0, 0, 0)
         # helper variables
-        deltaX = self.display.axis.x / deltaFactor
-        deltaY = self.display.axis.y / deltaFactor
-        deltaZ = self.display.height / deltaFactor
-
+        deltaX = self.display.axis.x / (deltaFactor - 1)
+        deltaY = self.display.axis.y / (deltaFactor - 1)
+        deltaZ = self.display.width / (deltaFactor - 1)
         startPos = self.pos - norm(self.display.axis) * self.display.length / 2
-        print(startPos)
         # loop to find pos of each dA
         for i in range(deltaFactor):
             for j in range(deltaFactor):
-                curPos = vec(startPos.x + deltaX * i, startPos.y + deltaY * i, - self.display.width / 2 + deltaZ)
+                curPos = vec(startPos.x + deltaX * i, startPos.y + deltaY * i, - self.display.width / 2 + deltaZ * j)
                 # dE = norm(r) * K * (dA * charge density) / r^2
                 r = pos - curPos
                 dA = self.display.length / deltaFactor * self.display.width / deltaFactor 
@@ -772,22 +771,21 @@ class PlateChargedObj:
         return electricField
     
     def calculateElectricPotential(self, pos):
-        electricPotential = 0
+        electricFieldPotential = 0
         # helper variables
-        deltaX = self.display.axis.x / deltaFactor
-        deltaY = self.display.axis.y / deltaFactor
-        deltaZ = self.display.height / deltaFactor
-
-        startPos = self.pos - vec(self.display.axis.x * self.display.length, self.display.axis.y * self.display.width, 0) / mag(self.display.axis) / 2
+        deltaX = self.display.axis.x / (deltaFactor - 1)
+        deltaY = self.display.axis.y / (deltaFactor - 1)
+        deltaZ = self.display.width / (deltaFactor - 1)
+        startPos = self.pos - norm(self.display.axis) * self.display.length / 2
         # loop to find pos of each dA
         for i in range(deltaFactor):
             for j in range(deltaFactor):
-                curPos = vec(startPos.x + deltaX * i, startPos.y + deltaY * i, - self.display.height / 2 + deltaZ)
+                curPos = vec(startPos.x + deltaX * i, startPos.y + deltaY * i, - self.display.width / 2 + deltaZ * j)
                 # dV = K * (dA * charge density) / r
                 r = pos - curPos
-                dA = self.display.length / deltaFactor * self.display.height / deltaFactor
-                electricPotential += K * (dA * self.chargeDensity) / mag(r)
-        return electricPotential
+                dA = self.display.length / deltaFactor * self.display.width / deltaFactor 
+                electricFieldPotential += K * (dA * self.chargeDensity) / mag(r)
+        return electricFieldPotential
     
     # endregion
     
@@ -900,6 +898,11 @@ class PlateChargedObj:
 # endregion
 
 # endregion
+
+def testPlate():
+    start()
+    allChargedObjs.append(SphereChargedObj(massScalar, chargeScalar, vec(1,0,0), vec(0, 0, 0), False))
+    allChargedObjs.append(PlateChargedObj(chargeScalar, 10 * chargeDensityScalar, 90, vec(0, 0, 0), False))
 
 ####################################################################################################
 
@@ -1214,11 +1217,6 @@ def loopWavePreset():
     start()
     allChargedObjs.append(SphereChargedObj(massScalar, -chargeScalar, vec(-15,0,0), vec(0, 0, 0), False))
     allChargedObjs.append(SphereChargedObj(massScalar, chargeScalar, vec(-15,5,0), vec(sqrt((9E9*1E-9*1E-9)/(5*1E-9)), 0, 0), False))
-
-def testPlate():
-    start()
-    allChargedObjs.append(SphereChargedObj(massScalar, chargeScalar, vec(1,0,0), vec(0, 0, 0), False))
-    allChargedObjs.append(PlateChargedObj(chargeScalar, 10 * chargeDensityScalar, 90, vec(0, 0, 0), False))
 
 # preset
 button(text = "test plate", bind = testPlate)
