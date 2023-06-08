@@ -616,8 +616,8 @@ def onMouseMove():
                 if (spawnPos != None):
                     updateSpawnScreen()
         else:
-            # conditions for setting vectors: not playing, dragging, and obj not fixed
-            if not playing and chargedObjToDrag != None and not chargedObjToDrag.fixed:
+            # conditions for setting velocity vectors: not playing, dragging, obj not fixed, and in show velocity vector mode
+            if not playing and chargedObjToDrag != None and not chargedObjToDrag.fixed and vectorToShow == "Velocity":
                 # set velocity vector
                 chargedObjToDrag.velVec.axis = getMousePos() - chargedObjToDrag.pos
                 chargedObjToDrag.vel = chargedObjToDrag.velVec.axis
@@ -975,7 +975,6 @@ def clear():
         deleteChargedObj(allChargedObjs[i])
         i -= 1
     # clear all trails
-    print(len(allTrails))
     i = len(allTrails) - 1
     while i >= 0:
         allTrails[i].clear()
