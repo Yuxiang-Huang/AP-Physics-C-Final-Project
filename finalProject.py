@@ -306,7 +306,7 @@ class SphereChargedObj:
 
     # region force, velocity, and impulse
     def calculateNetForce(self):
-        force = calculateElectricField(self.pos, self) * self.charge
+        force = calculateNetElectricFieldExclude(self.pos, self) * self.charge
         return force
 
     def applyForce(self):
@@ -390,7 +390,7 @@ class SphereChargedObj:
                         self.electricFieldArrows[i][j].visible = False
                     else:
                         # determine the arrow 
-                        electricField = calculateElectricField(curPos)
+                        electricField = calculateNetElectricField(curPos)
                         arrowLength = norm(electricField) * size
                         self.electricFieldArrows[i][j].visible = True
                         self.electricFieldArrows[i][j].pos = curPos
@@ -439,9 +439,6 @@ class SphereChargedObj:
                             # reverse velocity
                             self.vel = - self.vel
 
-                            # apply force again (!!!)
-                            # self.vel += calculateForce(chargedObj, self) / numOfRate / self.mass
-
                             # position check
                             self.pos = chargedObj.pos + norm(self.pos - chargedObj.pos) * (self.display.radius + chargedObj.display.radius)
                         else:
@@ -454,10 +451,6 @@ class SphereChargedObj:
                             (chargedObj.mass - self.mass) / (chargedObj.mass + self.mass) * chargedObj.vel)
 
                             self.vel = tempvel
-
-                            # apply force again (!!!)
-                            # self.vel += calculateForce(chargedObj, self) / numOfRate / self.mass
-                            # chargedObj.vel += calculateForce(self, chargedObj) / numOfRate / self.mass
 
                             # position check
                             dif = self.display.radius + chargedObj.display.radius - mag(self.pos - chargedObj.pos) 
@@ -662,7 +655,7 @@ class PlateChargedObj:
 
     # region force, velocity, and impulse
     def calculateNetForce(self):
-        force = calculateElectricField(self.pos)
+        force = calculateNetElectricFieldExclude(self.pos)
         return force
 
     def applyForce(self):
@@ -709,6 +702,58 @@ class PlateChargedObj:
 
     # endregion
 
+    # region electric field and potential
+
+    def displayElectricField(self):
+        # if (self.charge == 0):
+        return
+        # if (electricFieldMode == 1):
+        #     # determine size
+        #     size = scene.range / 10
+        #     # for every direction
+        #     for i in range(self.numOfLine):
+        #         # determine starting position
+        #         theta = i * 2 * pi / self.numOfLine
+        #         curPos = self.pos + vec(cos(theta), sin(theta), 0) * self.display.radius
+        #         #for every step
+        #         for j in range(electricFieldPrecision):
+        #             # don't display if too close to a charge
+        #             if (tooClose(self, curPos, size)):
+        #                 self.electricFieldArrows[i][j].visible = False
+        #             else:
+        #                 # determine the arrow 
+        #                 electricField = calculateElectricField(curPos)
+        #                 arrowLength = norm(electricField) * size
+        #                 self.electricFieldArrows[i][j].visible = True
+        #                 self.electricFieldArrows[i][j].pos = curPos
+        #                 if (self.charge < 0):
+        #                     self.electricFieldArrows[i][j].pos -= arrowLength
+        #                 self.electricFieldArrows[i][j].axis = arrowLength
+
+        #                 # opacity
+        #                 if (electricOpacityMode):
+        #                     self.electricFieldArrows[i][j].opacity = mag(electricField) / electricFieldOpacitySetter
+        #                 else:
+        #                     self.electricFieldArrows[i][j].opacity = 1
+
+        #                 # next position
+        #                 curPos += arrowLength * self.charge / abs(self.charge)
+        # else: 
+        #     # hide all electric field arrows
+        #     for i in range(self.numOfLine):   
+        #         for j in range(electricFieldPrecision):
+        #             self.electricFieldArrows[i][j].visible = False
+
+    def calculateElectricField(self, pos):
+        r = pos - self.pos
+        return norm(r) * K * self.charge / (mag(r)**2)
+    
+    def calculateElectricPotential(self, pos):
+        r = pos - self.pos
+        return  K * self.charge / mag(r)
+    
+    # endregion
+    
     def checkCollision(self):
         # skip if fixed
         if (self.fixed):
@@ -752,7 +797,7 @@ class PlateChargedObj:
                         # prevent collision calculation twice
                         chargedObj.collided.append(self)
 
-    def displayElectricField(self):
+
         # if (self.charge == 0):
         #     return
         
@@ -829,20 +874,20 @@ def displayElectricFieldAll():
         size = scene.range / 10
         for i in range(gridPrecision):
             for j in range(gridPrecision):
-                electricField = calculateElectricField(electricFieldArrowsAll[i][j].pos)
+                electricField = calculateNetElectricField(electricFieldArrowsAll[i][j].pos)
                 electricFieldArrowsAll[i][j].axis = norm(electricField) * size
                 if (electricOpacityMode):
                     electricFieldArrowsAll[i][j].opacity = mag(electricField) / electricFieldOpacitySetter
                 else:
                     electricFieldArrowsAll[i][j].opacity = 1
     
-def calculateElectricField(pos):
+def calculateNetElectricField(pos):
     electricField = vec(0, 0, 0)
     for co in allChargedObjs:
         electricField += co.calculateElectricField(pos)
     return electricField
 
-def calculateElectricField(pos, exclude):
+def calculateNetElectricFieldExclude(pos, exclude):
     electricField = vec(0, 0, 0)
     for co in allChargedObjs:
         if (co != exclude):
@@ -863,9 +908,9 @@ def displayElectricPotential():
     if (electricPotentialMode == 1):
         for i in range(gridPrecision-1):
             for j in range(gridPrecision-1):
-                electricPotentialLabels[i][j].text = '{:1.3f}'.format(calculateElectricPotential(electricPotentialLabels[i][j].pos))
+                electricPotentialLabels[i][j].text = '{:1.3f}'.format(calculateNetElectricPotential(electricPotentialLabels[i][j].pos))
 
-def calculateElectricPotential(pos):
+def calculateNetElectricPotential(pos):
     electricPotential = 0
     for co in allChargedObjs:
         electricPotential +=  co.calculateElectricPotential(pos)
@@ -1619,13 +1664,13 @@ def spawnYInput():
 def updateSpawnScreen():
     global electricFieldText, electricPotentialText
     # recalculate electric field and potential
-    electricField = calculateElectricField(spawnPos)
+    electricField = calculateNetElectricField(spawnPos)
     electricFieldText.text = ("Electric Field: <" + 
                                         '{:1.3f}'.format(electricField.x) + ", " + 
                                         '{:1.3f}'.format(electricField.y) + "> N/C \n   Electric Field: "+
                                         '{:1.3f}'.format((mag(electricField))) + " N/C @ " +
                                         '{:1.3f}'.format(atan2(electricField.y, electricField.x) / pi * 180) + " degree")
-    electricPotentialText.text = "Electric Potential: " '{:1.3f}'.format(calculateElectricPotential(spawnPos)) + " V"
+    electricPotentialText.text = "Electric Potential: " '{:1.3f}'.format(calculateNetElectricPotential(spawnPos)) + " V"
 
 # endregion
 
@@ -2011,9 +2056,11 @@ while True:
 
     if (playing):
         for chargedObj in allChargedObjs:
-            chargedObj.applyForce()
+            if (chargedObj.type == "Sphere"):
+                chargedObj.applyForce()
         for chargedObj in allChargedObjs:
-            chargedObj.applyVel()
+            if (chargedObj.type == "Sphere"):
+                chargedObj.applyVel()
         # collision
         for charge in allChargedObjs:
             charge.checkCollision()
@@ -2033,7 +2080,7 @@ while True:
     displayElectricPotential()
 
     # update stats in select screen if necessary every second
-    if (playing and chargedObjSelected != None and t % numOfRate * time == 0):
+    if (playing and chargedObjSelected != None and t % (numOfRate * time) == 0):
         updatePosStatSelectScreen()
         updateVelocityStatsSelectScreen()
         updateForceStatSelectScreen()
