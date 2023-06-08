@@ -25,6 +25,8 @@ plateMassDensity = 1E-11
 plateWidthFactor = 20
 # ratio of length to length of select display
 plateSelectDisplayFactor = 40
+# for plate when calculating electric field and potential
+deltaFactor = 10
 
 steps = 10
 epsilon = 0.01
@@ -745,12 +747,27 @@ class PlateChargedObj:
         #             self.electricFieldArrows[i][j].visible = False
 
     def calculateElectricField(self, pos):
-        r = pos - self.pos
-        return norm(r) * K * self.charge / (mag(r)**2)
+        electricField = vec(0, 0, 0)
+        # helper variables
+        deltaX = self.display.axis.x / deltaFactor
+        deltaY = self.display.axis.y / deltaFactor
+        deltaZ = self.display.height / deltaFactor
+
+        startPos = self.pos - vec(self.display.axis.x * self.display.length, self.display.axis.y * self.display.width, 0) / mag(self.display.axis) / 2
+        # loop to find pos of each dA
+        for i in range(deltaFactor):
+            for j in range(deltaFactor):
+                curPos = vec(startPos.x + deltaX * i, startPos.y + deltaY * i, - self.display.height / 2 + deltaZ)
+                # dE = norm(r) * K * (dA * charge density) / r^2
+                r = pos - curPos
+                dA = self.display.length / deltaFactor * self.display.height / deltaFactor
+                electricField += norm(r) * K * (dA * self.chargeDensity) / (mag(r)**2)
+        return electricField
     
     def calculateElectricPotential(self, pos):
-        r = pos - self.pos
-        return  K * self.charge / mag(r)
+        # r = pos - self.pos
+        # return  K * self.charge / mag(r)
+        return 0
     
     # endregion
     
@@ -1264,9 +1281,9 @@ def createCaptionMainScreen():
     global playButton
     scene.append_to_caption("   ")
     if (playing):
-        playButton = button(text="Stop", bind = changePlay)
+        playButton = button(text="■ Stop", bind = changePlay)
     else:
-        playButton = button(text="Play", bind = changePlay)
+        playButton = button(text="► Play", bind = changePlay)
 
     # instruction button
     global instructionButton
@@ -1333,10 +1350,10 @@ playing = False
 def changePlay():
     global playing, playButton
     playing = not playing
-    if playing:
-        playButton.text = "Stop"
+    if (playing):
+        playButton.text = "■ Stop"
     else:
-        playButton.text = "Play"
+        playButton.text = "► Play"
         # update select screen if necessary
         if (chargedObjSelected != None):
             updatePosStatSelectScreen()
@@ -1739,31 +1756,32 @@ def createCaptionSelectScreen():
     selectPosYInputField = winput(bind = selectPosYInput, text = '{:1.3f}'.format(chargedObjSelected.pos.y), width = 60) 
     scene.append_to_caption(">")
     
-    # select velocity XY setter
-    global selectedVelXInputField, selectedVelYInputField
-    scene.append_to_caption("\n\n   Velocity: <")
-    selectedVelXInputField = winput(bind = selectVelXInput, width = 60)
-    scene.append_to_caption(", ")
-    selectedVelYInputField = winput(bind = selectVelYInput, width = 60) 
-    scene.append_to_caption(">")
+    if (chargedObjSelected.type == "Sphere"):
+        # select velocity XY setter
+        global selectedVelXInputField, selectedVelYInputField
+        scene.append_to_caption("\n\n   Velocity: <")
+        selectedVelXInputField = winput(bind = selectVelXInput, width = 60)
+        scene.append_to_caption(", ")
+        selectedVelYInputField = winput(bind = selectVelYInput, width = 60) 
+        scene.append_to_caption(">")
 
-    # select velocity MA setter
-    global selectedVelMagInputField, selectedVelAngleInputField
-    scene.append_to_caption("\n   Velocity: <")
-    selectedVelMagInputField = winput(bind = selectVelMagInput, width = 60)
-    scene.append_to_caption(" m/s @ ")
-    selectedVelAngleInputField = winput(bind = selectVelAngleInput, width = 60)
-    scene.append_to_caption(" degree")
+        # select velocity MA setter
+        global selectedVelMagInputField, selectedVelAngleInputField
+        scene.append_to_caption("\n   Velocity: <")
+        selectedVelMagInputField = winput(bind = selectVelMagInput, width = 60)
+        scene.append_to_caption(" m/s @ ")
+        selectedVelAngleInputField = winput(bind = selectVelAngleInput, width = 60)
+        scene.append_to_caption(" degree")
 
-    updateVelocityStatsSelectScreen()
+        updateVelocityStatsSelectScreen()
 
-    # select force stats
-    global selectedChargeForceXYText, selectedChargeForceMAText
-    scene.append_to_caption("\n\n   ")
-    selectedChargeForceXYText = wtext() 
-    scene.append_to_caption("\n\n   ")
-    selectedChargeForceMAText= wtext()
-    updateForceStatSelectScreen()
+        # select force stats
+        global selectedChargeForceXYText, selectedChargeForceMAText
+        scene.append_to_caption("\n\n   ")
+        selectedChargeForceXYText = wtext() 
+        scene.append_to_caption("\n\n   ")
+        selectedChargeForceMAText= wtext()
+        updateForceStatSelectScreen()
 
 # camera follow button
 cameraFollowedObj = None
