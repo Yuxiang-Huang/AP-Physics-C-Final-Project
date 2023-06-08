@@ -1011,11 +1011,14 @@ def displaySpawnPosIndicator(pos):
 # dragging
 chargedObjToDrag = None
 mouseDown = False
+dragOffset = vec(0, 0, 0)
 
 def onMouseDown():
-    global chargedObjToDrag, mouseDown, ruler
+    global chargedObjToDrag, mouseDown, ruler, dragOffset
     # assign charged object to drag
     chargedObjToDrag = chargedObjOnMouse()
+    if (chargedObjToDrag != None):
+        dragOffset = chargedObjToDrag.pos - getMousePos()
     mouseDown = True
 
     # initial pos of ruler
@@ -1062,7 +1065,7 @@ def onMouseMove():
             # set position
             if (chargedObjToDrag != None):
                 mousePos = getMousePos()
-                chargedObjToDrag.pos = mousePos
+                chargedObjToDrag.pos = mousePos + dragOffset
                 chargedObjToDrag.updateDisplay()
 
                 # don't display trail when move
