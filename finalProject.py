@@ -21,6 +21,11 @@ chargeScalar = 1E-9
 massScalar = 1E-9
 sphereMassDensity = 2.5E-9
 plateMassDensity = 1E-11
+# ratio of length to width for a plate
+plateWidthFactor = 20
+# ratio of length to length of select display
+plateSelectDisplayFactor = 40
+
 steps = 10
 epsilon = 0.01
 numOfRate = 1000
@@ -36,12 +41,12 @@ fixedPositiveSphereTexture = "https://i.imgur.com/ADy8l2o.png"
 fixedNegativeSphereTexture = "https://i.imgur.com/ReG5wU7.png"
 fixedNeutralSphereTexture = "https://i.imgur.com/b80Axoa.png"
 
-positivePlateTexture = "https: //i.imgur.com/0nKY4ns.png"
-negativePlateTexture = "https: //i.imgur.com/Ccmo21E.png"
+positivePlateTexture = "https://i.imgur.com/0nKY4ns.png"
+negativePlateTexture = "https://i.imgur.com/Ccmo21E.png"
 neutralPlateTexture = "https://i.imgur.com/eLOxvSS.png"
 
-fixedPositivePlateTexture = "https: //i.imgur.com/0nKY4ns.png"
-fixedNegativePlateTexture = "https: //i.imgur.com/Ccmo21E.png"
+fixedPositivePlateTexture = "https://i.imgur.com/0nKY4ns.png"
+fixedNegativePlateTexture = "https://i.imgur.com/Ccmo21E.png"
 fixedNeutralPlateTexture = "https://i.imgur.com/eLOxvSS.png"
 
 # endregion
@@ -494,7 +499,7 @@ class PlateChargedObj:
         self.numOfLine = 8
 
         # thin boxes
-        self.display = box(pos = spawnPos, size = vec(spawnLen, 0.5, spawnLen))
+        self.display = box(pos = spawnPos, size = vec(spawnLen, spawnLen / plateWidthFactor, spawnLen))
         
         # differ in charge sign
         if (chargeDensity > 0):
@@ -553,20 +558,30 @@ class PlateChargedObj:
     # region select display
 
     def createSelectDisplay(self):
-        # Math with a circle to create arcs
-        thetaRange = pi / 4
-        for x in range(4):
-            arc = curve()
-            initialTheta = x * pi / 2 + pi / 4
-            for i in range(steps):
-                theta = i * thetaRange / steps + initialTheta - thetaRange / 2 
-                arc.append({"pos": vec(cos(theta) * (self.display.radius + epsilon * scene.range), 
-                                    sin(theta) * (self.display.radius + epsilon * scene.range), 0) + self.pos
-                                    , "color": color.yellow})
-            
-            self.selectDisplay.append(arc)
-        for arc in self.selectDisplay:
-            arc.visible = False
+        # create select display
+        len = self.display.length / plateSelectDisplayFactor
+
+        halfLen = self.display.length / 2 + epsilon * 10
+        halfHei = self.display.height / 2 + epsilon * 10
+
+        # right side
+        arc1 = curve()
+        arc1.append({"pos": vec(halfLen - len, halfHei, 0) + self.pos, "color": color.yellow})
+        arc1.append({"pos": vec(halfLen, halfHei, 0) + self.pos, "color": color.yellow})
+        arc1.append({"pos": vec(halfLen, - halfHei, 0) + self.pos, "color": color.yellow})
+        arc1.append({"pos": vec(halfLen - len, - halfHei, 0) + self.pos, "color": color.yellow})
+        self.selectDisplay.append(arc1)
+
+        # left side
+        arc2 = curve()
+        arc2.append({"pos": vec(- halfLen + len, halfHei, 0) + self.pos, "color": color.yellow})
+        arc2.append({"pos": vec(- halfLen, halfHei, 0) + self.pos, "color": color.yellow})
+        arc2.append({"pos": vec(- halfLen, - halfHei, 0) + self.pos, "color": color.yellow})
+        arc2.append({"pos": vec(- halfLen + len, - halfHei, 0) + self.pos, "color": color.yellow})
+        self.selectDisplay.append(arc2)
+
+        # for arc in self.selectDisplay:
+            # arc.visible = False
     
     def displaySelect(self):
         thetaRange = pi / 4
@@ -699,41 +714,41 @@ class PlateChargedObj:
                         chargedObj.collided.append(self)
 
     def displayElectricField(self):
-        if (self.charge == 0):
-            return
+        # if (self.charge == 0):
+        #     return
         
-        if (electricFieldMode == 1):
-            # determine size
-            size = scene.range / 10
-            # for every direction
-            for i in range(self.numOfLine):
-                # determine starting position
-                theta = i * 2 * pi / self.numOfLine
-                curPos = self.pos + vec(cos(theta), sin(theta), 0) * self.display.radius
-                #for every step
-                for j in range(electricFieldPrecision):
-                    # don't display if too close to a charge
-                    if (tooClose(self, curPos, size)):
-                        self.electricFieldArrows[i][j].visible = False
-                    else:
-                        # determine the arrow 
-                        electricField = calculateElectricField(curPos)
-                        arrowLength = norm(electricField) * size
-                        self.electricFieldArrows[i][j].visible = True
-                        self.electricFieldArrows[i][j].pos = curPos
-                        if (self.charge < 0):
-                            self.electricFieldArrows[i][j].pos -= arrowLength
-                        self.electricFieldArrows[i][j].axis = arrowLength
+        # if (electricFieldMode == 1):
+        #     # determine size
+        #     size = scene.range / 10
+        #     # for every direction
+        #     for i in range(self.numOfLine):
+        #         # determine starting position
+        #         theta = i * 2 * pi / self.numOfLine
+        #         curPos = self.pos + vec(cos(theta), sin(theta), 0) * self.display.radius
+        #         #for every step
+        #         for j in range(electricFieldPrecision):
+        #             # don't display if too close to a charge
+        #             if (tooClose(self, curPos, size)):
+        #                 self.electricFieldArrows[i][j].visible = False
+        #             else:
+        #                 # determine the arrow 
+        #                 electricField = calculateElectricField(curPos)
+        #                 arrowLength = norm(electricField) * size
+        #                 self.electricFieldArrows[i][j].visible = True
+        #                 self.electricFieldArrows[i][j].pos = curPos
+        #                 if (self.charge < 0):
+        #                     self.electricFieldArrows[i][j].pos -= arrowLength
+        #                 self.electricFieldArrows[i][j].axis = arrowLength
 
-                        # opacity
-                        if (electricOpacityMode):
-                            self.electricFieldArrows[i][j].opacity = mag(electricField) / electricFieldOpacitySetter
-                        else:
-                            self.electricFieldArrows[i][j].opacity = 1
+        #                 # opacity
+        #                 if (electricOpacityMode):
+        #                     self.electricFieldArrows[i][j].opacity = mag(electricField) / electricFieldOpacitySetter
+        #                 else:
+        #                     self.electricFieldArrows[i][j].opacity = 1
 
-                        # next position
-                        curPos += arrowLength * self.charge / abs(self.charge)
-        else: 
+        #                 # next position
+        #                 curPos += arrowLength * self.charge / abs(self.charge)
+        # else: 
             # hide all electric field arrows
             for i in range(self.numOfLine):   
                 for j in range(electricFieldPrecision):
@@ -1933,6 +1948,11 @@ while True:
             chargedObj.applyForce()
         for chargedObj in allChargedObjs:
             chargedObj.applyVel()
+        # collision
+        for charge in allChargedObjs:
+            charge.checkCollision()
+        for charge in allChargedObjs:
+            charge.collided = []
     for chargedObj in allChargedObjs:
         chargedObj.displayElectricField()
 
@@ -1945,12 +1965,6 @@ while True:
 
     displayElectricFieldAll()
     displayElectricPotential()
-
-    # collision
-    for charge in allChargedObjs:
-        charge.checkCollision()
-    for charge in allChargedObjs:
-        charge.collided = []
 
     # update stats in select screen if necessary every second
     if (playing and chargedObjSelected != None and t % 1000 == 0):
