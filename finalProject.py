@@ -1594,7 +1594,7 @@ def createCaptionSpawnScreen():
     global spawnChargeDensitySlider, spawnChargeDensityInputField
     if (chargeMenu.selected == "Plate"):
         scene.append_to_caption("\n\n")
-        spawnChargeDensitySlider = slider(bind = spawnChargeDensityShift, min = -100, max = 100, value = spawnChargeDensity / chargeDensityScalar, step = 10, length = sliderLength)
+        spawnChargeDensitySlider = slider(bind = spawnChargeDensityShift, min = 1, max = 100, value = spawnChargeDensity / chargeDensityScalar, step = 1, length = sliderLength)
         scene.append_to_caption("\n" + sliderTextSpaceLess + "Charge Density: ")
         spawnChargeDensityInputField = winput(bind = spawnChargeDensityInput, text = spawnChargeDensitySlider.value, width = 35)
         scene.append_to_caption(" pC/m^2")
