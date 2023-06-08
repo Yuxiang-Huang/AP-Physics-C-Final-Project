@@ -28,7 +28,7 @@ plateSelectDisplayFactor = 40
 
 steps = 10
 epsilon = 0.01
-numOfRate = 1000
+numOfRate = 2000
 sliderLength = 450
 electricFieldOpacitySetter = 1
 
@@ -163,11 +163,6 @@ spawnPosIndicator.visible = False
 
 # region Classes
 
-# Coulomb's Law for force of q2 on q1
-def calculateForce(q1, q2):
-    r12 = q1.pos - q2.pos
-    return norm(r12) * K * q1.charge * q2.charge / (mag(r12)**2)
-
 def clone(co):
     # copy stats including mass, charge, pos, vel, fixed, trail
     if (co.type == "Sphere"):
@@ -178,6 +173,8 @@ def clone(co):
     if (not copy.trailState):
         copy.trail.stop()
     return copy
+
+# region Sphere
 
 class SphereChargedObj:       
     def __init__(self, mass, charge, spawnPos, spawnVel, spawnFixed):
@@ -309,11 +306,7 @@ class SphereChargedObj:
 
     # region force, velocity, and impulse
     def calculateNetForce(self):
-        force = vec(0, 0, 0)
-        for chargedObj in allChargedObjs:
-            if (chargedObj != self):
-                if (mag(self.pos - chargedObj.pos) > 2 * self.display.radius):
-                    force += calculateForce(self, chargedObj)
+        force = calculateElectricField(self.pos, self) * self.charge
         return force
 
     def applyForce(self):
@@ -376,51 +369,7 @@ class SphereChargedObj:
 
     # endregion
 
-    def onObj(mousePos):
-        return mag(mousePos - chargedObj.pos) <= chargedObj.display.radius
-
-    def checkCollision(self):
-        # skip if fixed
-        if (self.fixed):
-            return
-        
-        for chargedObj in allChargedObjs:
-            if (self != chargedObj):
-                if (mag(self.pos - chargedObj.pos) <= self.display.radius + chargedObj.display.radius):
-                    if (not (chargedObj in self.collided)):
-                        # collide with fixed obj
-                        if (chargedObj.fixed):
-                            # reverse velocity
-                            self.vel = - self.vel
-
-                            # apply force again
-                            self.vel += calculateForce(chargedObj, self) / numOfRate / self.mass
-
-                            # position check
-                            self.pos = chargedObj.pos + norm(self.pos - chargedObj.pos) * (self.display.radius + chargedObj.display.radius)
-                        else:
-                            # v1 = 2 * m2 / (m1 + m2) * v2 + (m1 - m2) / (m1 + m2) * v1
-                            tempvel = (2 * chargedObj.mass / (chargedObj.mass + self.mass) * chargedObj.vel +
-                            (self.mass - chargedObj.mass) / (chargedObj.mass + self.mass) * self.vel)
-
-                            # v2 = 2 * m1 / (m1 + m2) * v1 + (m2 - m1) / (m1 + m2) * v2
-                            chargedObj.vel = (2 * self.mass / (chargedObj.mass + self.mass) * self.vel +
-                            (chargedObj.mass - self.mass) / (chargedObj.mass + self.mass) * chargedObj.vel)
-
-                            self.vel = tempvel
-
-                            # apply force again
-                            self.vel += calculateForce(chargedObj, self) / numOfRate / self.mass
-                            chargedObj.vel += calculateForce(self, chargedObj) / numOfRate / self.mass
-
-                            # position check
-                            dif = self.display.radius + chargedObj.display.radius - mag(self.pos - chargedObj.pos) 
-                            tempPos = self.pos + norm(self.pos - chargedObj.pos) * dif / 2
-                            chargedObj.pos = chargedObj.pos + norm(chargedObj.pos - self.pos) * dif / 2
-                            self.pos = tempPos
-
-                        # prevent collision calculation twice
-                        chargedObj.collided.append(self)
+    # region electric field and potential
 
     def displayElectricField(self):
         if (self.charge == 0):
@@ -462,6 +411,66 @@ class SphereChargedObj:
             for i in range(self.numOfLine):   
                 for j in range(electricFieldPrecision):
                     self.electricFieldArrows[i][j].visible = False
+
+    def calculateElectricField(self, pos):
+        r = pos - self.pos
+        return norm(r) * K * self.charge / (mag(r)**2)
+    
+    def calculateElectricPotential(self, pos):
+        r = pos - self.pos
+        return  K * self.charge / mag(r)
+    
+    # endregion
+
+    def onObj(self, mousePos):
+        return mag(mousePos - self.pos) <= self.display.radius
+
+    def checkCollision(self):
+        # skip if fixed
+        if (self.fixed):
+            return
+        
+        for chargedObj in allChargedObjs:
+            if (self != chargedObj):
+                if (mag(self.pos - chargedObj.pos) <= self.display.radius + chargedObj.display.radius):
+                    if (not (chargedObj in self.collided)):
+                        # collide with fixed obj
+                        if (chargedObj.fixed):
+                            # reverse velocity
+                            self.vel = - self.vel
+
+                            # apply force again (!!!)
+                            # self.vel += calculateForce(chargedObj, self) / numOfRate / self.mass
+
+                            # position check
+                            self.pos = chargedObj.pos + norm(self.pos - chargedObj.pos) * (self.display.radius + chargedObj.display.radius)
+                        else:
+                            # v1 = 2 * m2 / (m1 + m2) * v2 + (m1 - m2) / (m1 + m2) * v1
+                            tempvel = (2 * chargedObj.mass / (chargedObj.mass + self.mass) * chargedObj.vel +
+                            (self.mass - chargedObj.mass) / (chargedObj.mass + self.mass) * self.vel)
+
+                            # v2 = 2 * m1 / (m1 + m2) * v1 + (m2 - m1) / (m1 + m2) * v2
+                            chargedObj.vel = (2 * self.mass / (chargedObj.mass + self.mass) * self.vel +
+                            (chargedObj.mass - self.mass) / (chargedObj.mass + self.mass) * chargedObj.vel)
+
+                            self.vel = tempvel
+
+                            # apply force again (!!!)
+                            # self.vel += calculateForce(chargedObj, self) / numOfRate / self.mass
+                            # chargedObj.vel += calculateForce(self, chargedObj) / numOfRate / self.mass
+
+                            # position check
+                            dif = self.display.radius + chargedObj.display.radius - mag(self.pos - chargedObj.pos) 
+                            tempPos = self.pos + norm(self.pos - chargedObj.pos) * dif / 2
+                            chargedObj.pos = chargedObj.pos + norm(chargedObj.pos - self.pos) * dif / 2
+                            self.pos = tempPos
+
+                        # prevent collision calculation twice
+                        chargedObj.collided.append(self)
+
+# endregion
+
+# region Plate
 
 class PlateChargedObj:       
     def __init__(self, mass, chargeDensity, spawnPos, spawnVel, spawnFixed):
@@ -653,11 +662,7 @@ class PlateChargedObj:
 
     # region force, velocity, and impulse
     def calculateNetForce(self):
-        force = vec(0, 0, 0)
-        for chargedObj in allChargedObjs:
-            if (chargedObj != self):
-                if (mag(self.pos - chargedObj.pos) > 2 * self.display.radius):
-                    force += calculateForce(self, chargedObj)
+        force = calculateElectricField(self.pos)
         return force
 
     def applyForce(self):
@@ -719,7 +724,7 @@ class PlateChargedObj:
                             self.vel = - self.vel
 
                             # apply force again
-                            self.vel += calculateForce(chargedObj, self) / numOfRate / self.mass
+                            # self.vel += calculateForce(chargedObj, self) / numOfRate / self.mass
 
                             # position check
                             self.pos = chargedObj.pos + norm(self.pos - chargedObj.pos) * (self.display.radius + chargedObj.display.radius)
@@ -735,8 +740,8 @@ class PlateChargedObj:
                             self.vel = tempvel
 
                             # apply force again
-                            self.vel += calculateForce(chargedObj, self) / numOfRate / self.mass
-                            chargedObj.vel += calculateForce(self, chargedObj) / numOfRate / self.mass
+                            # self.vel += calculateForce(chargedObj, self) / numOfRate / self.mass
+                            # chargedObj.vel += calculateForce(self, chargedObj) / numOfRate / self.mass
 
                             # position check
                             dif = self.display.radius + chargedObj.display.radius - mag(self.pos - chargedObj.pos) 
@@ -812,6 +817,8 @@ class PlateChargedObj:
 
 # endregion
 
+# endregion
+
 ####################################################################################################
 
 # region Electric Field and Potential
@@ -832,10 +839,14 @@ def displayElectricFieldAll():
 def calculateElectricField(pos):
     electricField = vec(0, 0, 0)
     for co in allChargedObjs:
-        if (co.type == "Sphere"):
-            r = pos - co.pos
-            if (mag(r) != 0):
-                electricField += norm(r) * K * co.charge / (mag(r)**2)
+        electricField += co.calculateElectricField(pos)
+    return electricField
+
+def calculateElectricField(pos, exclude):
+    electricField = vec(0, 0, 0)
+    for co in allChargedObjs:
+        if (co != exclude):
+            electricField += co.calculateElectricField(pos)
     return electricField
 
 def tooClose(owner, pos, size):
@@ -857,10 +868,7 @@ def displayElectricPotential():
 def calculateElectricPotential(pos):
     electricPotential = 0
     for co in allChargedObjs:
-        if (co.type == "Sphere"):
-            r = pos - co.pos
-            if (mag(r) != 0):
-                electricPotential +=  K * co.charge / mag(r)
+        electricPotential +=  co.calculateElectricPotential(pos)
     return electricPotential
 
 # endregion
@@ -907,7 +915,7 @@ def chargedObjOnMouse():
     mousePos = getMousePos()
     for co in allChargedObjs:
         if (co.onObj(mousePos)):
-            return chargedObj
+            return co
     return None
 
 def getMousePos():
@@ -1282,13 +1290,13 @@ def changePlay():
     playing = not playing
     if playing:
         playButton.text = "Stop"
+    else:
+        playButton.text = "Play"
         # update select screen if necessary
         if (chargedObjSelected != None):
             updatePosStatSelectScreen()
             updateVelocityStatsSelectScreen()
             updateForceStatSelectScreen()
-    else:
-        playButton.text = "Play"
 
 # instruction button
 def displayInstructionPage():
@@ -2025,7 +2033,7 @@ while True:
     displayElectricPotential()
 
     # update stats in select screen if necessary every second
-    if (playing and chargedObjSelected != None and t % 1000 == 0):
+    if (playing and chargedObjSelected != None and t % numOfRate * time == 0):
         updatePosStatSelectScreen()
         updateVelocityStatsSelectScreen()
         updateForceStatSelectScreen()
