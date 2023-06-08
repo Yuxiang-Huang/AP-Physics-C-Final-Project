@@ -34,6 +34,10 @@ numOfRate = 2000
 sliderLength = 450
 electricFieldOpacitySetter = 1
 
+# the space before text under a slider
+sliderTextSpaceLess = "                    "
+sliderTextSpaceMore = "                             "
+
 # texture links
 positiveSphereTexture = "https://i.imgur.com/9c10QCm.png"
 negativeSphereTexture = "https://i.imgur.com/r6loarb.png"
@@ -495,7 +499,7 @@ class PlateChargedObj:
         self.numOfLine = 8
 
         # thin boxes
-        self.display = box(pos = spawnPos, size = vec(spawnLen, spawnLen / plateWidthFactor, spawnLen), axis = vec(1, 1, 0))
+        self.display = box(pos = spawnPos, size = vec(spawnLen, spawnLen / plateWidthFactor, spawnLen), axis = vec(0, 1, 0))
         
         # differ in charge sign
         if (chargeDensity > 0):
@@ -765,9 +769,22 @@ class PlateChargedObj:
         return electricField
     
     def calculateElectricPotential(self, pos):
-        # r = pos - self.pos
-        # return  K * self.charge / mag(r)
-        return 0
+        electricPotential = 0
+        # helper variables
+        deltaX = self.display.axis.x / deltaFactor
+        deltaY = self.display.axis.y / deltaFactor
+        deltaZ = self.display.height / deltaFactor
+
+        startPos = self.pos - vec(self.display.axis.x * self.display.length, self.display.axis.y * self.display.width, 0) / mag(self.display.axis) / 2
+        # loop to find pos of each dA
+        for i in range(deltaFactor):
+            for j in range(deltaFactor):
+                curPos = vec(startPos.x + deltaX * i, startPos.y + deltaY * i, - self.display.height / 2 + deltaZ)
+                # dV = K * (dA * charge density) / r
+                r = pos - curPos
+                dA = self.display.length / deltaFactor * self.display.height / deltaFactor
+                electricPotential += K * (dA * self.chargeDensity) / mag(r)
+        return electricPotential
     
     # endregion
     
@@ -1552,10 +1569,16 @@ def createCaptionSpawnScreen():
     # spawn charge slider and input field
     global spawnChargeSlider, spawnChargeInputField
     scene.append_to_caption("\n\n")
-    spawnChargeSlider = slider(bind = spawnChargeShift, min = -5, max = 5, value = spawnCharge / chargeScalar, step = 0.1, length = sliderLength)
-    scene.append_to_caption("\n                             Charge: ")
-    spawnChargeInputField = winput(bind = spawnChargeInput, text = spawnChargeSlider.value, width = 35)
-    scene.append_to_caption(" nC")
+    if (chargeMenu.selected == "Sphere"):
+        spawnChargeSlider = slider(bind = spawnChargeShift, min = -5, max = 5, value = spawnCharge / chargeScalar, step = 0.1, length = sliderLength)
+        scene.append_to_caption("\n" + sliderTextSpaceMore + "Charge: ")
+        spawnChargeInputField = winput(bind = spawnChargeInput, text = spawnChargeSlider.value, width = 35)
+        scene.append_to_caption(" nC")
+    elif (chargeMenu.selected == "Plate"):
+        spawnChargeSlider = slider(bind = spawnChargeShift, min = -5, max = 5, value = spawnChargeDensity / chargeScalar, step = 0.1, length = sliderLength)
+        scene.append_to_caption("\n" + sliderTextSpaceLess + "Charge Density: ")
+        spawnChargeInputField = winput(bind = spawnChargeInput, text = spawnChargeSlider.value, width = 35)
+        scene.append_to_caption(" nC/m^2")
 
     # spawn mass slider and input field
     global spawnMassSlider, spawnMassInputField
@@ -1594,23 +1617,31 @@ spawnType = "Plate"
 def selectSpawnChargeObj():
     global spawnType
     spawnType = chargeMenu.selected
+    createCaptionSpawnScreen()
 
 # spawn charge slider and input field
 spawnCharge = chargeScalar
+spawnChargeDensity = chargeScalar
 
 def spawnChargeShift():
-    global spawnCharge, spawnChargeInputField
-    spawnCharge = spawnChargeSlider.value * chargeScalar
+    global spawnCharge, spawnChargeDensity, spawnChargeInputField
+    if (chargeMenu.selected == "Sphere"):
+        spawnCharge = spawnChargeSlider.value * chargeScalar    
+    elif (chargeMenu.selected == "Plate"):
+        spawnChargeDensity = spawnChargeSlider.value * chargeScalar    
     spawnChargeInputField.text = spawnChargeSlider.value
 
 def spawnChargeInput():
-    global spawnCharge, spawnChargeSlider, spawnChargeInputField
+    global spawnCharge, spawnChargeDensity, spawnChargeSlider, spawnChargeInputField
     if (spawnChargeInputField.number != None):
         # min max
         num = max(spawnChargeSlider.min, spawnChargeInputField.number)
         num = min(spawnChargeSlider.max, num)
         # set values
-        spawnCharge = num * chargeScalar
+        if (chargeMenu.selected == "Sphere"):
+            spawnCharge = num * chargeScalar
+        elif (chargeMenu.selected == "Plate"):
+            spawnChargeDensity = num * chargeScalar
         spawnChargeSlider.value = num
         spawnChargeInputField.text = num
     else:
@@ -1711,10 +1742,10 @@ def createCaptionSelectScreen():
     scene.append_to_caption("\n\n")
     if (chargedObjSelected.type == "Sphere"):
         selectedChargeSlider = slider(bind = selectedChargeShift, min = -5, max = 5, value = chargedObjSelected.charge / chargeScalar, step = 0.1, length = sliderLength)
-        scene.append_to_caption("\n                             Charge: ")
+        scene.append_to_caption("\n" + sliderTextSpaceMore + "Charge: ")
     elif (chargedObjSelected.type == "Plate"):
         selectedChargeSlider = slider(bind = selectedChargeShift, min = -5, max = 5, value = chargedObjSelected.chargeDensity / chargeScalar, step = 0.1, length = sliderLength)
-        scene.append_to_caption("\n                             Charge Density: ")
+        scene.append_to_caption("\n" + sliderTextSpaceLess + "Charge Density: ")
     selectedChargeInputField = winput(bind = selectedChargeInput, text = selectedChargeSlider.value, width = 35)
     scene.append_to_caption(" nC")
 
