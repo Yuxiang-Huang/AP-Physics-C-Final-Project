@@ -149,10 +149,30 @@ spawnPosIndicator.visible = False
 
 # region Classes
 
-class ChargedObj:       
+# region Charged Obj
+
+def clone(co):
+    # copy stats including mass, charge, pos, vel, fixed, trail
+    if (co.type == "Sphere"):
+        copy = SphereChargedObj(co.mass, co.charge, co.pos, co.vel, co.fixed)
+    else:
+        copy = PlateChargedObj(co.mass, co.charge, co.pos, co.vel, co.fixed)
+    copy.trailState = co.trailState
+    if (not copy.trailState):
+        copy.trail.stop()
+    return copy
+
+# endregion
+
+# region Sphere
+
+class SphereChargedObj:       
     def __init__(self, mass, charge, spawnPos, spawnVel, spawnFixed):
         # patch for making sure deleting everything
         self.deleted = False
+
+        # type 
+        self.type = "Sphere"
 
         # physics variables
         self.charge = charge
@@ -433,13 +453,293 @@ def calculateForce(q1, q2):
     r12 = q1.pos - q2.pos
     return norm(r12) * K * q1.charge * q2.charge / (mag(r12)**2)
 
-def clone(co):
-    # copy stats including mass, charge, pos, vel, fixed, trail
-    copy = ChargedObj(co.mass, co.charge, co.pos, co.vel, co.fixed)
-    copy.trailState = co.trailState
-    if (not copy.trailState):
-        copy.trail.stop()
-    return copy
+# endregion
+
+# region Plate
+
+class PlateChargedObj:       
+    def __init__(self, mass, charge, spawnPos, spawnVel, spawnFixed):
+        # patch for making sure deleting everything
+        self.deleted = False
+
+        # type 
+        self.type = "Sphere"
+
+        # physics variables
+        self.charge = charge
+        self.mass = mass
+        self.pos = spawnPos
+        self.vel = spawnVel
+        self.fixed = spawnFixed
+        self.collided = []
+
+        # force labels
+        self.velLabel = label(text = "0", visible = False)
+        self.forceLabel = label(text = "0", visible = False)
+        self.impulseLabel = label(text = "0", visible = False)
+
+        # radius
+        spawnRadius = ((mass) / (((4/3)* pi*massDensity)))**(1/3)
+
+        # possibly sliders for more variables
+        self.numOfLine = 8
+
+        self.trailState = True
+
+        # spheres for now
+        if (charge > 0):
+            # display and vectors
+            self.display = sphere(pos = spawnPos, radius = spawnRadius)
+            if (self.fixed):
+                self.display.texture = fixedPositiveSphereTexture
+            else:
+                self.display.texture = positiveSphereTexture
+            self.velVec = arrow(axis = vec(0, 0, 0), color = color.red)
+            self.forceVec = arrow(axis = vec(0, 0, 0), color = color.red)
+            self.impulseVec = arrow(axis = vec(0, 0, 0), color = color.red)
+
+            # initialize all electric field arrows
+            self.electricFieldArrows = [ [0]*electricFieldPrecision for i in range(self.numOfLine)]
+            for i in range(self.numOfLine):
+                for j in range(electricFieldPrecision):
+                    self.electricFieldArrows[i][j] = arrow(axis = vec(0, 0, 0), color = color.red)
+
+            self.trail = attach_trail(self.display, color = color.red)
+
+        elif (charge < 0):
+            # display and vectors
+            self.display = sphere(pos=spawnPos, radius=spawnRadius)
+            if (self.fixed):
+                self.display.texture = fixedNegativeSphereTexture
+            else:
+                self.display.texture = negativeSphereTexture
+            self.velVec = arrow(axis = vec(0, 0, 0), color = color.blue)
+            self.forceVec = arrow(axis = vec(0, 0, 0), color = color.blue)
+            self.impulseVec = arrow(axis = vec(0, 0, 0), color = color.blue)
+
+            # initialize all electric field arrows
+            self.electricFieldArrows = [ [0]*electricFieldPrecision for i in range(self.numOfLine)]
+            for i in range(self.numOfLine):
+                for j in range(electricFieldPrecision):
+                    self.electricFieldArrows[i][j] = arrow(axis = vec(0, 0, 0), color = color.blue)
+            
+            self.trail = attach_trail(self.display, color = color.blue)
+        
+        else:
+            # display and vectors
+            self.display = sphere(pos=spawnPos, radius=spawnRadius)
+            if (self.fixed):
+                self.display.texture = fixedNeutralSphereTexture
+            else:
+                self.display.texture = neutralSphereTexture
+            self.velVec = arrow(axis = vec(0, 0, 0), color = color.black)
+            self.forceVec = arrow(axis = vec(0, 0, 0), color = color.black)
+            self.impulseVec = arrow(axis = vec(0, 0, 0), color = color.black)
+
+            # initialize all electric field arrows
+            self.electricFieldArrows = [ [0]*electricFieldPrecision for i in range(self.numOfLine)]
+            for i in range(self.numOfLine):
+                for j in range(electricFieldPrecision):
+                    self.electricFieldArrows[i][j] = arrow(axis = vec(0, 0, 0), color = color.black)
+
+            self.trail = attach_trail(self.display, color = color.black)
+
+        # select display
+        self.selectDisplay = []
+        self.createSelectDisplay()
+        allTrails.append(self.trail)
+        self.updateDisplay()
+
+    # region select display
+
+    def createSelectDisplay(self):
+        # Math with a circle to create arcs
+        thetaRange = pi / 4
+        for x in range(4):
+            arc = curve()
+            initialTheta = x * pi / 2 + pi / 4
+            for i in range(steps):
+                theta = i * thetaRange / steps + initialTheta - thetaRange / 2 
+                arc.append({"pos": vec(cos(theta) * (self.display.radius + epsilon * scene.range), 
+                                    sin(theta) * (self.display.radius + epsilon * scene.range), 0) + self.pos
+                                    , "color": color.yellow})
+            
+            self.selectDisplay.append(arc)
+        for arc in self.selectDisplay:
+            arc.visible = False
+    
+    def displaySelect(self):
+        thetaRange = pi / 4
+        for x in range(4):
+            arc = self.selectDisplay[x]
+            initialTheta = x * pi / 2 + pi / 4
+            for i in range(steps):
+                theta = i * thetaRange / steps + initialTheta - thetaRange / 2 
+                arc.modify(i, pos = vec(cos(theta) * (self.display.radius + epsilon * scene.range), 
+                                    sin(theta) * (self.display.radius + epsilon * scene.range), 0) + self.pos)
+            arc.visible = True
+    
+    def hideSelect(self):
+        for x in range(4):
+            arc = self.selectDisplay[x]
+            arc.visible = False
+
+    # endregion
+
+    # region force, velocity, and impulse
+    def calculateNetForce(self):
+        force = vec(0, 0, 0)
+        for chargedObj in allChargedObjs:
+            if (chargedObj != self):
+                if (mag(self.pos - chargedObj.pos) > 2 * self.display.radius):
+                    force += calculateForce(self, chargedObj)
+        return force
+
+    def applyForce(self):
+        # calculate force from every other charge
+        if (not self.fixed):
+            # apply force: F * ∆t = m * ∆v
+            self.vel += self.calculateNetForce() / numOfRate / self.mass
+
+    def createForceVec(self):
+        # arrow
+        self.forceVec.visible = True
+        self.forceVec.pos = self.pos
+        self.forceVec.axis = self.calculateNetForce() * 1E9
+        # label
+        self.forceLabel.text = "{0:.3f}".format(mag(self.forceVec.axis)) + "nN"
+        self.forceLabel.pos = self.forceVec.pos + self.forceVec.axis
+        self.forceLabel.visible = True
+
+    def applyVel(self):
+        if (not self.fixed):
+            self.pos += self.vel / numOfRate
+        self.updateDisplay()
+
+    def createVelVec(self):
+        # arrow    
+        self.velVec.visible = True
+        self.velVec.pos = self.pos
+        self.velVec.axis = self.vel
+        # label
+        self.velLabel.text = "{0:.3f}".format(mag(self.velVec.axis)) + "m/s"
+        self.velLabel.pos = self.velVec.pos + self.velVec.axis
+        self.velLabel.visible = True
+
+    def createImpulseLabel(self):
+        self.impulseLabel.text = "{0:.3f}".format(mag(self.impulseVec.axis)) + "μN * " + str(1 / numOfRate) + "s"
+        self.impulseLabel.pos = self.impulseVec.pos + self.impulseVec.axis
+        self.impulseLabel.visible = True
+
+    def updateDisplay(self):
+        self.display.pos = self.pos
+        if (self == chargedObjSelected):
+            self.displaySelect()
+        
+        # vectors
+        if (self.fixed or self.deleted):
+            self.hideVec()
+        else:
+            if (vectorToShow == "Velocity"):
+                self.createVelVec()
+            elif (vectorToShow == "Force"):
+                self.createForceVec()
+            else:
+                self.hideVec()
+    
+    def hideVec(self):
+        self.velVec.visible = False
+        self.velLabel.visible = False
+        self.forceVec.visible = False
+        self.forceLabel.visible = False
+
+    # endregion
+
+    def checkCollision(self):
+        # skip if fixed
+        if (self.fixed):
+            return
+        
+        for chargedObj in allChargedObjs:
+            if (self != chargedObj):
+                if (mag(self.pos - chargedObj.pos) <= self.display.radius + chargedObj.display.radius):
+                    if (not (chargedObj in self.collided)):
+                        # collide with fixed obj
+                        if (chargedObj.fixed):
+                            # reverse velocity
+                            self.vel = - self.vel
+
+                            # apply force again
+                            self.vel += calculateForce(chargedObj, self) / numOfRate / self.mass
+
+                            # position check
+                            self.pos = chargedObj.pos + norm(self.pos - chargedObj.pos) * (self.display.radius + chargedObj.display.radius)
+                        else:
+                            # v1 = 2 * m2 / (m1 + m2) * v2 + (m1 - m2) / (m1 + m2) * v1
+                            tempvel = (2 * chargedObj.mass / (chargedObj.mass + self.mass) * chargedObj.vel +
+                            (self.mass - chargedObj.mass) / (chargedObj.mass + self.mass) * self.vel)
+
+                            # v2 = 2 * m1 / (m1 + m2) * v1 + (m2 - m1) / (m1 + m2) * v2
+                            chargedObj.vel = (2 * self.mass / (chargedObj.mass + self.mass) * self.vel +
+                            (chargedObj.mass - self.mass) / (chargedObj.mass + self.mass) * chargedObj.vel)
+
+                            self.vel = tempvel
+
+                            # apply force again
+                            self.vel += calculateForce(chargedObj, self) / numOfRate / self.mass
+                            chargedObj.vel += calculateForce(self, chargedObj) / numOfRate / self.mass
+
+                            # position check
+                            dif = self.display.radius + chargedObj.display.radius - mag(self.pos - chargedObj.pos) 
+                            tempPos = self.pos + norm(self.pos - chargedObj.pos) * dif / 2
+                            chargedObj.pos = chargedObj.pos + norm(chargedObj.pos - self.pos) * dif / 2
+                            self.pos = tempPos
+
+                        # prevent collision calculation twice
+                        chargedObj.collided.append(self)
+
+    def displayElectricField(self):
+        if (self.charge == 0):
+            return
+        
+        if (electricFieldMode == 1):
+            # determine size
+            size = scene.range / 10
+            # for every direction
+            for i in range(self.numOfLine):
+                # determine starting position
+                theta = i * 2 * pi / self.numOfLine
+                curPos = self.pos + vec(cos(theta), sin(theta), 0) * self.display.radius
+                #for every step
+                for j in range(electricFieldPrecision):
+                    # don't display if too close to a charge
+                    if (tooClose(self, curPos, size)):
+                        self.electricFieldArrows[i][j].visible = False
+                    else:
+                        # determine the arrow 
+                        electricField = calculateElectricField(curPos)
+                        arrowLength = norm(electricField) * size
+                        self.electricFieldArrows[i][j].visible = True
+                        self.electricFieldArrows[i][j].pos = curPos
+                        if (self.charge < 0):
+                            self.electricFieldArrows[i][j].pos -= arrowLength
+                        self.electricFieldArrows[i][j].axis = arrowLength
+
+                        # opacity
+                        if (electricOpacityMode):
+                            self.electricFieldArrows[i][j].opacity = mag(electricField) / electricFieldOpacitySetter
+                        else:
+                            self.electricFieldArrows[i][j].opacity = 1
+
+                        # next position
+                        curPos += arrowLength * self.charge / abs(self.charge)
+        else: 
+            # hide all electric field arrows
+            for i in range(self.numOfLine):   
+                for j in range(electricFieldPrecision):
+                    self.electricFieldArrows[i][j].visible = False
+
+# endregion
 
 # endregion
 
@@ -669,86 +969,86 @@ scene.append_to_caption("\n\n   ")
 # presets
 def dipolePreset():
     start()
-    allChargedObjs.append(ChargedObj(massScalar, chargeScalar, vec(5,0,0), vec(0, 0, 0), False))
-    allChargedObjs.append(ChargedObj(massScalar, -chargeScalar, vec(-5, 0, 0) , vec(0, 0, 0), False))
-    allChargedObjs.append(ChargedObj(massScalar, 0, vec(5, -1, 0) , vec(0, 0, 0), False))
+    allChargedObjs.append(SphereChargedObj(massScalar, chargeScalar, vec(5,0,0), vec(0, 0, 0), False))
+    allChargedObjs.append(SphereChargedObj(massScalar, -chargeScalar, vec(-5, 0, 0) , vec(0, 0, 0), False))
+    allChargedObjs.append(SphereChargedObj(massScalar, 0, vec(5, -1, 0) , vec(0, 0, 0), False))
     
 def threeChargePreset(): 
     start()
-    allChargedObjs.append(ChargedObj(massScalar, chargeScalar, vec(0,5,0), vec(0, 0, 0), False))
-    allChargedObjs.append(ChargedObj(massScalar, chargeScalar, vec(5*cos(pi/6),-5*sin(pi/6),0), vec(0, 0, 0), False))
-    allChargedObjs.append(ChargedObj(massScalar, -1.5*chargeScalar, vec(-5*cos(pi/6),-5*sin(pi/6),0), vec(0, 0, 0), False))
+    allChargedObjs.append(SphereChargedObj(massScalar, chargeScalar, vec(0,5,0), vec(0, 0, 0), False))
+    allChargedObjs.append(SphereChargedObj(massScalar, chargeScalar, vec(5*cos(pi/6),-5*sin(pi/6),0), vec(0, 0, 0), False))
+    allChargedObjs.append(SphereChargedObj(massScalar, -1.5*chargeScalar, vec(-5*cos(pi/6),-5*sin(pi/6),0), vec(0, 0, 0), False))
 
 def butterflyPreset():
     start()
-    allChargedObjs.append(ChargedObj(massScalar, -chargeScalar, vec(0,5,0), vec(1, -1, 0), False))
-    allChargedObjs.append(ChargedObj(massScalar, -chargeScalar, vec(5,5,0), vec(-1, -1, 0), False))
-    allChargedObjs.append(ChargedObj(massScalar, 5*chargeScalar, vec(2.5,0,0), vec(0, 1, 0), False))
+    allChargedObjs.append(SphereChargedObj(massScalar, -chargeScalar, vec(0,5,0), vec(1, -1, 0), False))
+    allChargedObjs.append(SphereChargedObj(massScalar, -chargeScalar, vec(5,5,0), vec(-1, -1, 0), False))
+    allChargedObjs.append(SphereChargedObj(massScalar, 5*chargeScalar, vec(2.5,0,0), vec(0, 1, 0), False))
 
 def helixPreset(): 
     start()
-    allChargedObjs.append(ChargedObj(massScalar, -chargeScalar, vec(-1.5,10,0), vec(.25, -2, 0), False))
-    allChargedObjs.append(ChargedObj(massScalar, chargeScalar, vec(1.5,10,0), vec(-.25, -2, 0), False))
+    allChargedObjs.append(SphereChargedObj(massScalar, -chargeScalar, vec(-1.5,10,0), vec(.25, -2, 0), False))
+    allChargedObjs.append(SphereChargedObj(massScalar, chargeScalar, vec(1.5,10,0), vec(-.25, -2, 0), False))
 
 def helixGunPreset ():
     start()
-    allChargedObjs.append(ChargedObj(massScalar, -chargeScalar, vec(-15,1.5,0), vec(2, -.25, 0), False))
-    allChargedObjs.append(ChargedObj(massScalar, chargeScalar, vec(-15,-1.5,0), vec(2, .25, 0), False))
-    allChargedObjs.append(ChargedObj(massScalar, -chargeScalar, vec(0,1.5,0), vec(0, 0, 0), False))
-    allChargedObjs.append(ChargedObj(massScalar, chargeScalar, vec(0,-1.5,0), vec(0, 0, 0), False))
+    allChargedObjs.append(SphereChargedObj(massScalar, -chargeScalar, vec(-15,1.5,0), vec(2, -.25, 0), False))
+    allChargedObjs.append(SphereChargedObj(massScalar, chargeScalar, vec(-15,-1.5,0), vec(2, .25, 0), False))
+    allChargedObjs.append(SphereChargedObj(massScalar, -chargeScalar, vec(0,1.5,0), vec(0, 0, 0), False))
+    allChargedObjs.append(SphereChargedObj(massScalar, chargeScalar, vec(0,-1.5,0), vec(0, 0, 0), False))
     
 def dragonflyPreset ():
     start()
-    allChargedObjs.append(ChargedObj(massScalar, chargeScalar, vec(0,5,0), vec(0, 0, 0), False))
-    allChargedObjs.append(ChargedObj(massScalar, chargeScalar, vec(4.33,-2.5,0), vec(0, 0, 0), False))
-    allChargedObjs.append(ChargedObj(massScalar, chargeScalar, vec(-4.33,-2.5,0), vec(0, 0, 0), False))
-    allChargedObjs.append(ChargedObj(massScalar, -5*chargeScalar, vec(0,0,0), vec(0, 0, 0), False))
+    allChargedObjs.append(SphereChargedObj(massScalar, chargeScalar, vec(0,5,0), vec(0, 0, 0), False))
+    allChargedObjs.append(SphereChargedObj(massScalar, chargeScalar, vec(4.33,-2.5,0), vec(0, 0, 0), False))
+    allChargedObjs.append(SphereChargedObj(massScalar, chargeScalar, vec(-4.33,-2.5,0), vec(0, 0, 0), False))
+    allChargedObjs.append(SphereChargedObj(massScalar, -5*chargeScalar, vec(0,0,0), vec(0, 0, 0), False))
     
 def somethingPreset():
     start()
-    allChargedObjs.append(ChargedObj(massScalar, -5*chargeScalar, vec(0,5,0), vec(3, 0, 0), False))
-    allChargedObjs.append(ChargedObj(massScalar, chargeScalar, vec(5*cos(30),-5*sin(30),0), vec(-1, 2, 0), False))
-    allChargedObjs.append(ChargedObj(massScalar, 5*chargeScalar, vec(-5*cos(30),-5*sin(30),0), vec(1, 2, 0), False))
+    allChargedObjs.append(SphereChargedObj(massScalar, -5*chargeScalar, vec(0,5,0), vec(3, 0, 0), False))
+    allChargedObjs.append(SphereChargedObj(massScalar, chargeScalar, vec(5*cos(30),-5*sin(30),0), vec(-1, 2, 0), False))
+    allChargedObjs.append(SphereChargedObj(massScalar, 5*chargeScalar, vec(-5*cos(30),-5*sin(30),0), vec(1, 2, 0), False))
 
 def yPreset():
     start()
-    allChargedObjs.append(ChargedObj(massScalar, -chargeScalar, vec(0,5,0), vec(0, 0, 0), False))
-    allChargedObjs.append(ChargedObj(massScalar, -chargeScalar, vec(5,5,0), vec(0, 0, 0), False))
-    allChargedObjs.append(ChargedObj(massScalar, 15*chargeScalar, vec(2.5,0,0), vec(0, 0, 0), False))
+    allChargedObjs.append(SphereChargedObj(massScalar, -chargeScalar, vec(0,5,0), vec(0, 0, 0), False))
+    allChargedObjs.append(SphereChargedObj(massScalar, -chargeScalar, vec(5,5,0), vec(0, 0, 0), False))
+    allChargedObjs.append(SphereChargedObj(massScalar, 15*chargeScalar, vec(2.5,0,0), vec(0, 0, 0), False))
 
 def jPreset():
     start()
-    allChargedObjs.append(ChargedObj(massScalar, 0, vec(-5,5,0), vec(1, 0, 0), False))
-    allChargedObjs.append(ChargedObj(massScalar, 0, vec(-6,5,0), vec(0, 0, 0), True))
-    allChargedObjs.append(ChargedObj(massScalar, 0, vec(6,5,0), vec(0, 0, 0), True))
-    allChargedObjs.append(ChargedObj(massScalar, -chargeScalar, vec(0,5,0), vec(0, -1, 0), False))
-    allChargedObjs.append(ChargedObj(massScalar, -.25*chargeScalar, vec(2.5,-3.5,0), vec(0, 0, 0), False))
-    allChargedObjs.append(ChargedObj(massScalar, -.25*chargeScalar, vec(-3.5,-6.5,0), vec(0, 0, 0), False))
+    allChargedObjs.append(SphereChargedObj(massScalar, 0, vec(-5,5,0), vec(1, 0, 0), False))
+    allChargedObjs.append(SphereChargedObj(massScalar, 0, vec(-6,5,0), vec(0, 0, 0), True))
+    allChargedObjs.append(SphereChargedObj(massScalar, 0, vec(6,5,0), vec(0, 0, 0), True))
+    allChargedObjs.append(SphereChargedObj(massScalar, -chargeScalar, vec(0,5,0), vec(0, -1, 0), False))
+    allChargedObjs.append(SphereChargedObj(massScalar, -.25*chargeScalar, vec(2.5,-3.5,0), vec(0, 0, 0), False))
+    allChargedObjs.append(SphereChargedObj(massScalar, -.25*chargeScalar, vec(-3.5,-6.5,0), vec(0, 0, 0), False))
 
 def chargeTrampolinePreset():
     start()
-    allChargedObjs.append(ChargedObj(massScalar, -chargeScalar, vec(0,5,0), vec(0, 0, 0), True))
-    allChargedObjs.append(ChargedObj(massScalar, chargeScalar, vec(5,5,0), vec(0, 0, 0), False))
-    allChargedObjs.append(ChargedObj(massScalar, chargeScalar, vec(0,0,0), vec(0, 0, 0), True))
-    allChargedObjs.append(ChargedObj(massScalar, -chargeScalar, vec(5,0,0), vec(0, 0, 0), False))
+    allChargedObjs.append(SphereChargedObj(massScalar, -chargeScalar, vec(0,5,0), vec(0, 0, 0), True))
+    allChargedObjs.append(SphereChargedObj(massScalar, chargeScalar, vec(5,5,0), vec(0, 0, 0), False))
+    allChargedObjs.append(SphereChargedObj(massScalar, chargeScalar, vec(0,0,0), vec(0, 0, 0), True))
+    allChargedObjs.append(SphereChargedObj(massScalar, -chargeScalar, vec(5,0,0), vec(0, 0, 0), False))
     
 def figureEightPreset():
     start()
-    allChargedObjs.append(ChargedObj(massScalar, -chargeScalar, vec(0,0,0), vec(1,1, 0), False))
-    allChargedObjs.append(ChargedObj(massScalar, chargeScalar * 1.1, vec(0,-5,0), vec(0, 0, 0), True))
-    allChargedObjs.append(ChargedObj(massScalar, chargeScalar * 1.1, vec(0,5,0), vec(0, 0, 0), True))
+    allChargedObjs.append(SphereChargedObj(massScalar, -chargeScalar, vec(0,0,0), vec(1,1, 0), False))
+    allChargedObjs.append(SphereChargedObj(massScalar, chargeScalar * 1.1, vec(0,-5,0), vec(0, 0, 0), True))
+    allChargedObjs.append(SphereChargedObj(massScalar, chargeScalar * 1.1, vec(0,5,0), vec(0, 0, 0), True))
     
     
 def circularOrbitPreset(): 
     start()
-    allChargedObjs.append(ChargedObj(massScalar, -chargeScalar, vec(0,0,0), vec(0, 0, 0), True))
-    allChargedObjs.append(ChargedObj(massScalar, chargeScalar, vec(0,5,0), vec(sqrt((9E9*1E-9*1E-9)/(5*1E-9)), 0, 0), False))
+    allChargedObjs.append(SphereChargedObj(massScalar, -chargeScalar, vec(0,0,0), vec(0, 0, 0), True))
+    allChargedObjs.append(SphereChargedObj(massScalar, chargeScalar, vec(0,5,0), vec(sqrt((9E9*1E-9*1E-9)/(5*1E-9)), 0, 0), False))
     
 #same right now as circular orbit, but this is unfixed and the circular orbit will be fixed
 def loopWavePreset(): 
     start()
-    allChargedObjs.append(ChargedObj(massScalar, -chargeScalar, vec(-15,0,0), vec(0, 0, 0), False))
-    allChargedObjs.append(ChargedObj(massScalar, chargeScalar, vec(-15,5,0), vec(sqrt((9E9*1E-9*1E-9)/(5*1E-9)), 0, 0), False))
+    allChargedObjs.append(SphereChargedObj(massScalar, -chargeScalar, vec(-15,0,0), vec(0, 0, 0), False))
+    allChargedObjs.append(SphereChargedObj(massScalar, chargeScalar, vec(-15,5,0), vec(sqrt((9E9*1E-9*1E-9)/(5*1E-9)), 0, 0), False))
 
 # preset
 button(text = "Dipole", bind = dipolePreset)
@@ -1199,7 +1499,8 @@ def spawnMassInput():
 
 # spawn button
 def spawnChargedObj():
-    allChargedObjs.append(ChargedObj(spawnMass, spawnCharge, spawnPos, vec(0, 0, 0), False))
+    print("!!!")
+    allChargedObjs.append(SphereChargedObj(spawnMass, spawnCharge, spawnPos, vec(0, 0, 0), False))
     back()
 
 # back button
