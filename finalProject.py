@@ -163,7 +163,10 @@ spawnPosIndicator.visible = False
 
 # region Classes
 
-# region Charged Obj
+# Coulomb's Law for force of q2 on q1
+def calculateForce(q1, q2):
+    r12 = q1.pos - q2.pos
+    return norm(r12) * K * q1.charge * q2.charge / (mag(r12)**2)
 
 def clone(co):
     # copy stats including mass, charge, pos, vel, fixed, trail
@@ -175,10 +178,6 @@ def clone(co):
     if (not copy.trailState):
         copy.trail.stop()
     return copy
-
-# endregion
-
-# region Sphere
 
 class SphereChargedObj:       
     def __init__(self, mass, charge, spawnPos, spawnVel, spawnFixed):
@@ -303,8 +302,7 @@ class SphereChargedObj:
             arc.visible = True
     
     def hideSelect(self):
-        for x in range(4):
-            arc = self.selectDisplay[x]
+        for arc in self.selectDisplay:
             arc.visible = False
 
     # endregion
@@ -465,15 +463,6 @@ class SphereChargedObj:
                 for j in range(electricFieldPrecision):
                     self.electricFieldArrows[i][j].visible = False
 
-# Coulomb's Law for force of q2 on q1
-def calculateForce(q1, q2):
-    r12 = q1.pos - q2.pos
-    return norm(r12) * K * q1.charge * q2.charge / (mag(r12)**2)
-
-# endregion
-
-# region Plate
-
 class PlateChargedObj:       
     def __init__(self, mass, chargeDensity, spawnPos, spawnVel, spawnFixed):
         # patch for making sure deleting everything
@@ -553,6 +542,10 @@ class PlateChargedObj:
                 for j in range(electricFieldPrecision):
                     self.electricFieldArrows[i][j] = arrow(axis = vec(0, 0, 0), color = color.black)
 
+        # trail (not in use)
+        self.trailState = True
+        self.trail = attach_trail(self.display)
+
         # select display
         self.selectDisplay = []
         self.createSelectDisplay()
@@ -570,25 +563,25 @@ class PlateChargedObj:
         rotAngle = atan2(self.display.axis.y, self.display.axis.x)
 
         # right side
-        arc1 = curve()
-        arc1.append({"pos": vec(halfLen - len, halfHei, 0) + self.pos, "color": color.yellow})
-        arc1.append({"pos": vec(halfLen, halfHei, 0) + self.pos, "color": color.yellow})
-        arc1.append({"pos": vec(halfLen, - halfHei, 0) + self.pos, "color": color.yellow})
-        arc1.append({"pos": vec(halfLen - len, - halfHei, 0) + self.pos, "color": color.yellow})
-        arc1.rotate(angle = rotAngle, axis = vec(0, 0, 1), origin = self.pos)
-        self.selectDisplay.append(arc1)
+        curve1 = curve()
+        curve1.append({"pos": vec(halfLen - len, halfHei, 0) + self.pos, "color": color.yellow})
+        curve1.append({"pos": vec(halfLen, halfHei, 0) + self.pos, "color": color.yellow})
+        curve1.append({"pos": vec(halfLen, - halfHei, 0) + self.pos, "color": color.yellow})
+        curve1.append({"pos": vec(halfLen - len, - halfHei, 0) + self.pos, "color": color.yellow})
+        curve1.rotate(angle = rotAngle, axis = vec(0, 0, 1), origin = self.pos)
+        self.selectDisplay.append(curve1)
 
         # left side
-        arc2 = curve()
-        arc2.append({"pos": vec(- halfLen + len, halfHei, 0) + self.pos, "color": color.yellow})
-        arc2.append({"pos": vec(- halfLen, halfHei, 0) + self.pos, "color": color.yellow})
-        arc2.append({"pos": vec(- halfLen, - halfHei, 0) + self.pos, "color": color.yellow})
-        arc2.append({"pos": vec(- halfLen + len, - halfHei, 0) + self.pos, "color": color.yellow})
-        arc2.rotate(angle = rotAngle, axis = vec(0, 0, 1), origin = self.pos)
-        self.selectDisplay.append(arc2)
+        curve2 = curve()
+        curve2.append({"pos": vec(- halfLen + len, halfHei, 0) + self.pos, "color": color.yellow})
+        curve2.append({"pos": vec(- halfLen, halfHei, 0) + self.pos, "color": color.yellow})
+        curve2.append({"pos": vec(- halfLen, - halfHei, 0) + self.pos, "color": color.yellow})
+        curve2.append({"pos": vec(- halfLen + len, - halfHei, 0) + self.pos, "color": color.yellow})
+        curve2.rotate(angle = rotAngle, axis = vec(0, 0, 1), origin = self.pos)
+        self.selectDisplay.append(curve2)
 
-        for arc in self.selectDisplay:
-            arc.visible = False
+        for c in self.selectDisplay:
+            c.visible = False
     
     def displaySelect(self):
         # modify select display
@@ -600,25 +593,27 @@ class PlateChargedObj:
         rotAngle = atan2(self.display.axis.y, self.display.axis.x)
 
         # right side
-        arc1 = self.selectDisplay[0]
-        arc1.modify(0, pos = vec(halfLen - len, halfHei, 0) + self.pos)
-        arc1.append(1, pos = vec(halfLen, halfHei, 0) + self.pos)
-        arc1.append(2, pos = vec(halfLen, - halfHei, 0) + self.pos)
-        arc1.append(3, pos = vec(halfLen - len, - halfHei, 0) + self.pos)
-        arc1.rotate(angle = rotAngle, axis = vec(0, 0, 1), origin = self.pos)
+        curve1 = self.selectDisplay[0]
+        curve1.modify(0, pos = vec(halfLen - len, halfHei, 0) + self.pos)
+        curve1.modify(1, pos = vec(halfLen, halfHei, 0) + self.pos)
+        curve1.modify(2, pos = vec(halfLen, - halfHei, 0) + self.pos)
+        curve1.modify(3, pos = vec(halfLen - len, - halfHei, 0) + self.pos)
+        curve1.rotate(angle = rotAngle, axis = vec(0, 0, 1), origin = self.pos)
 
         # left side
-        arc2 = self.selectDisplay[1]
-        arc2.modify(0, pos = vec(-halfLen + len, halfHei, 0) + self.pos)
-        arc2.append(1, pos = vec(-halfLen, halfHei, 0) + self.pos)
-        arc2.append(2, pos = vec(-halfLen, + halfHei, 0) + self.pos)
-        arc2.append(3, pos = vec(-halfLen + len, - halfHei, 0) + self.pos)
-        arc2.rotate(angle = rotAngle, axis = vec(0, 0, 1), origin = self.pos)
+        curve2 = self.selectDisplay[1]
+        curve2.modify(0, pos = vec(-halfLen + len, halfHei, 0) + self.pos)
+        curve2.modify(1, pos = vec(-halfLen, halfHei, 0) + self.pos)
+        curve2.modify(2, pos = vec(-halfLen, + halfHei, 0) + self.pos)
+        curve2.modify(3, pos = vec(-halfLen + len, - halfHei, 0) + self.pos)
+        curve2.rotate(angle = rotAngle, axis = vec(0, 0, 1), origin = self.pos)
+
+        for curve in self.selectDisplay:
+            curve.visible = True
     
     def hideSelect(self):
-        for x in range(4):
-            arc = self.selectDisplay[x]
-            arc.visible = False
+        for curve in self.selectDisplay:
+            curve.visible = False
 
     # endregion
 
@@ -793,14 +788,9 @@ class PlateChargedObj:
         for i in range(4):
             v1 = vertices[i] - mousePos
             v2 = vertices[(i + 1) % 4] - mousePos
-            print(v1.cross(v2).z)
             if v1.cross(v2).z < 0:
-                print(str(i) + ": false \n")
                 return False
-        print("true")
         return True
-
-# endregion
 
 # endregion
 
@@ -1631,8 +1621,12 @@ def createCaptionSelectScreen():
     # select charge slider
     global selectedChargeSlider, selectedChargeInputField
     scene.append_to_caption("\n\n")
-    selectedChargeSlider = slider(bind = selectedChargeShift, min = -5, max = 5, value = chargedObjSelected.charge / chargeScalar, step = 0.1, length = sliderLength)
-    scene.append_to_caption("\n                             Charge: ")
+    if (chargedObjSelected.type == "Sphere"):
+        selectedChargeSlider = slider(bind = selectedChargeShift, min = -5, max = 5, value = chargedObjSelected.charge / chargeScalar, step = 0.1, length = sliderLength)
+        scene.append_to_caption("\n                             Charge: ")
+    elif (chargedObjSelected.type == "Plate"):
+        selectedChargeSlider = slider(bind = selectedChargeShift, min = -5, max = 5, value = chargedObjSelected.chargeDensity / chargeScalar, step = 0.1, length = sliderLength)
+        scene.append_to_caption("\n                             Charge Density: ")
     selectedChargeInputField = winput(bind = selectedChargeInput, text = selectedChargeSlider.value, width = 35)
     scene.append_to_caption(" nC")
 
