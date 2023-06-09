@@ -373,21 +373,22 @@ class SphereChargedObj:
             for i in range(numOfLine):
                 # determine starting position
                 theta = i * 2 * pi / numOfLine
-                curPos = self.pos + vec(cos(theta), sin(theta), 0) * self.display.radius
+                curPos = self.pos + vec(cos(theta), sin(theta), 0) * (self.display.radius + epsilon)
                 #for every step
                 for j in range(electricFieldPrecision):
-                    # don't display if too close to a charge
-                    # if (tooClose(self, curPos, size)):
-                    #     self.electricFieldArrows[i][j].visible = False
-                    # else:
                     # determine the arrow 
                     electricField = calculateNetElectricField(curPos)
                     arrowLength = norm(electricField) * size
+
                     self.electricFieldArrows[i][j].visible = True
                     self.electricFieldArrows[i][j].pos = curPos
                     if (self.charge < 0):
                         self.electricFieldArrows[i][j].pos -= arrowLength
                     self.electricFieldArrows[i][j].axis = arrowLength
+
+                    # don't display if too close to a charge
+                    if (tooClose(self.electricFieldArrows[i][j])):
+                        self.electricFieldArrows[i][j].visible = False
 
                     # opacity
                     if (electricOpacityMode):
@@ -525,10 +526,11 @@ class PlateChargedObj:
                 for j in range(electricFieldPrecision):
                     self.electricFieldArrows[i][j] = arrow(axis = vec(0, 0, 0), color = color.black)
 
-        # trail (not in use but sphere use it and not really matter so keep)
+        # not in use but there might be places I forgot to check
         self.trailState = False
         self.trail = attach_trail(self.display)
         self.trail.stop()
+        self.fixed = True
 
         # select display
         self.selectDisplay = []
@@ -631,7 +633,6 @@ class PlateChargedObj:
             return
         
         if (electricFieldMode == 1):
-            curList = []
             # determine size
             size = scene.range / electricFieldPrecision
             # for every direction
@@ -643,24 +644,25 @@ class PlateChargedObj:
                 curPos = self.pos - self.display.axis / 2 + vec(deltaX, deltaY, 0)
                 curPos += vec(deltaX * (i % (numOfLine / 2)), deltaY * (i % (numOfLine / 2)), 0)
                 if (i >= numOfLine / 2):
-                    curPos += self.display.height / 2 * norm(vec(-self.display.axis.y, self.display.axis.x, 0))
+                    curPos += (self.display.height / 2 + epsilon) / 2 * norm(vec(-self.display.axis.y, self.display.axis.x, 0))
                 else:
-                    curPos += self.display.height / 2 * norm(vec(self.display.axis.y, self.display.axis.x, 0))
-                curList.append(curPos)
+                    curPos += (self.display.height / 2 + epsilon) / 2 * norm(vec(self.display.axis.y, self.display.axis.x, 0))
+
                 #for every step
                 for j in range(electricFieldPrecision):
-                    # don't display if too close to a charge
-                    # if (tooClose(self, curPos, size)):
-                    #     self.electricFieldArrows[i][j].visible = False
-                    # else:
                     # determine the arrow 
                     electricField = calculateNetElectricField(curPos)
                     arrowLength = norm(electricField) * size
+
                     self.electricFieldArrows[i][j].visible = True
                     self.electricFieldArrows[i][j].pos = curPos
                     if (self.charge < 0):
                         self.electricFieldArrows[i][j].pos -= arrowLength
                     self.electricFieldArrows[i][j].axis = arrowLength
+
+                    # don't display if too close to a charge
+                    if (tooClose(self.electricFieldArrows[i][j])):
+                        self.electricFieldArrows[i][j].visible = False
 
                     # opacity
                     if (electricOpacityMode):
@@ -805,18 +807,16 @@ def calculateNetElectricFieldExclude(pos, exclude):
             electricField += co.calculateElectricField(pos)
     return electricField
 
-# !!!
-# def tooClose(owner, pos, size):
-#     for co in allChargedObjs:
-#         if (co != owner):
-#             if (co.type ==  "Sphere"):
-#                 # point to point distance
-#                 if mag(pos - co.pos) < co.display.radius:
-#                     return True
-#             # elif (co.type == "Plate"):
-#             #     # point to line distance
-
-#     return False
+def tooClose(arrow):
+    for co in allChargedObjs:
+        stepToCheck = 2
+        # check the middle point on the arrow
+        curPos = arrow.pos + arrow.axis /4
+        for i in range(round(stepToCheck) + 1):
+            if (co.onObj(curPos)):
+                return True
+            curPos += arrow.axis / 2 / stepToCheck 
+    return False
 
 # Electric Potential
 
@@ -1143,7 +1143,7 @@ button(text = "draw figure 8", bind = figureEightPreset)
 # endregion
 
 # number of electric field line slider
-numOfLine = 10
+numOfLine = 8
 
 def numOfLineShift():
     global numOfLine, numOfLineInputField
@@ -1407,19 +1407,20 @@ def timeShift():
     timeText.text = "<center>Time in program for every second in real life:" + str(time) + "s</center>"
 
 # vector menu
-vectorToShow = "Velocity"
+vectorToShow = "Neither"
 
 def selectVector():
     global vectorToShow
     # hide earlier vector
     for co in allChargedObjs:
-        if (not co.fixed):
-            if (vectorToShow == "Velocity"):
-                co.velVec.visible = False
-                co.velLabel.visible = False
-            elif (vectorToShow == "Force"):
-                co.forceVec.visible = False
-                co.forceLabel.visible = False
+        if (co.type == "Sphere"):
+            if (not co.fixed):
+                if (vectorToShow == "Velocity"):
+                    co.velVec.visible = False
+                    co.velLabel.visible = False
+                elif (vectorToShow == "Force"):
+                    co.forceVec.visible = False
+                    co.forceLabel.visible = False
 
     vectorToShow = vectorMenu.selected
 
@@ -2272,26 +2273,43 @@ while True:
             for charge in allChargedObjs:
                 if (chargedObj.type == "Sphere"):
                     charge.collided = []
-    for chargedObj in allChargedObjs:
-        chargedObj.displayElectricField()
 
-    # reset electric field arrows and electric potential grid for all if user zooms or pan
-    if (curRange != scene.range or curCameraPos != scene.camera.pos):
-        curRange = scene.range
-        curCameraPos = scene.camera.pos
-        setUnits()
-        setElectricFieldArrowsAll()
-        setElectricPotentialGrid()
+    # once per second if playing
+    if (playing and t % (numOfRate * time) == 0):
+        for chargedObj in allChargedObjs:
+            chargedObj.displayElectricField()
 
-    displayElectricFieldAll()
-    displayElectricPotential()
+        # reset electric field arrows and electric potential grid for all if user zooms or pan
+        if (curRange != scene.range or curCameraPos != scene.camera.pos):
+            curRange = scene.range
+            curCameraPos = scene.camera.pos
+            setUnits()
+            setElectricFieldArrowsAll()
+            setElectricPotentialGrid()
 
-    # update stats in select screen if necessary every second
-    if (playing and chargedObjSelected != None and t % (numOfRate * time) == 0):
-        updatePosStatSelectScreen()
-        if (chargedObjSelected.type == "Sphere"):
-            updateVelocityStatsSelectScreen()
-            updateForceStatSelectScreen()
+        displayElectricFieldAll()
+        displayElectricPotential()
+
+        # update stats in select screen
+        if (chargedObjSelected != None):
+            updatePosStatSelectScreen()
+            if (chargedObjSelected.type == "Sphere"):
+                updateVelocityStatsSelectScreen()
+                updateForceStatSelectScreen()
+    else:
+        for chargedObj in allChargedObjs:
+            chargedObj.displayElectricField()
+
+        # reset electric field arrows and electric potential grid for all if user zooms or pan
+        if (curRange != scene.range or curCameraPos != scene.camera.pos):
+            curRange = scene.range
+            curCameraPos = scene.camera.pos
+            setUnits()
+            setElectricFieldArrowsAll()
+            setElectricPotentialGrid()
+
+        displayElectricFieldAll()
+        displayElectricPotential()
 
     # update force vector because it is possible that mouse is not moving
     if (playing and mouseDown and chargedObjSelected != None and chargedObjSelected.type == "Sphere" and not chargedObjSelected.fixed):
