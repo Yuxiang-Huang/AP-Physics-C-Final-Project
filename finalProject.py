@@ -156,11 +156,8 @@ def createRulerLabel():
 
 # region select display
 spawnPosIndicator = curve()
-for i in range(steps * 8):
-    theta = i * 2 * pi / steps 
-    radius = scene.range / 75
-    spawnPosIndicator.append({"pos": vec(cos(theta) * radius, sin(theta) * radius, 0)
-                        , "color": color.yellow})
+for i in range(steps + 1):
+    spawnPosIndicator.append({"pos": vec(0, 0, 0), "color": color.yellow})
 spawnPosIndicator.visible = False
 
 #endregion
@@ -422,10 +419,14 @@ class SphereChargedObj:
 
     def calculateElectricField(self, pos):
         r = pos - self.pos
+        if (mag(r) == 0):
+            return vec(0, 0, 0)
         return norm(r) * K * self.charge / (mag(r)**2)
     
     def calculateElectricPotential(self, pos):
         r = pos - self.pos
+        if (mag(r) == 0):
+            return 0
         return  K * self.charge / mag(r)
     
     # endregion
@@ -540,10 +541,6 @@ class PlateChargedObj:
             for i in range(self.numOfLine):
                 for j in range(electricFieldPrecision):
                     self.electricFieldArrows[i][j] = arrow(axis = vec(0, 0, 0), color = color.black)
-
-        # trail (not in use)
-        self.trailState = True
-        self.trail = attach_trail(self.display)
 
         # select display
         self.selectDisplay = []
@@ -694,8 +691,9 @@ class PlateChargedObj:
                 curPos = vec(startPos.x + deltaX * i, startPos.y + deltaY * i, - self.display.width / 2 + deltaZ * j)
                 # dE = norm(r) * K * (dA * charge density) / r^2
                 r = pos - curPos
-                dA = self.display.length / deltaFactor * self.display.width / deltaFactor 
-                electricField += norm(r) * K * (dA * self.chargeDensity) / (mag(r)**2) * self.charge / abs(self.charge)
+                if (mag(r) > 0):
+                    dA = self.display.length / deltaFactor * self.display.width / deltaFactor 
+                    electricField += norm(r) * K * (dA * self.chargeDensity) / (mag(r)**2) * self.charge / abs(self.charge)
         return electricField
     
     def calculateElectricPotential(self, pos):
@@ -711,8 +709,9 @@ class PlateChargedObj:
                 curPos = vec(startPos.x + deltaX * i, startPos.y + deltaY * i, - self.display.width / 2 + deltaZ * j)
                 # dV = K * (dA * charge density) / r
                 r = pos - curPos
-                dA = self.display.length / deltaFactor * self.display.width / deltaFactor 
-                electricFieldPotential += K * (dA * self.chargeDensity) / mag(r) * self.charge / abs(self.charge)
+                if (mag(r) > 0):
+                    dA = self.display.length / deltaFactor * self.display.width / deltaFactor 
+                    electricFieldPotential += K * (dA * self.chargeDensity) / mag(r) * self.charge / abs(self.charge)
         return electricFieldPotential
     
     # endregion
@@ -789,7 +788,11 @@ def calculateNetElectricField(pos):
 def calculateNetElectricFieldExclude(pos, exclude):
     electricField = vec(0, 0, 0)
     for co in allChargedObjs:
-        if (co != exclude):
+        # shell theorem
+        if (co.type == "Sphere"):
+            if (mag(co.pos - exclude.pos) > (co.display.radius + exclude.display.radius)):
+                electricField += co.calculateElectricField(pos)
+        else:
             electricField += co.calculateElectricField(pos)
     return electricField
 
@@ -867,8 +870,8 @@ def getMousePos():
 
 def displaySpawnPosIndicator(pos):
     global spawnPosIndicator
-    for i in range(steps * 8):
-        theta = i * 2 * pi / steps 
+    for i in range(steps + 1):
+        theta = i * 2 * pi / steps + pi / 6
         radius = scene.range / 75
         spawnPosIndicator.modify(i, pos = vec(cos(theta) * radius, sin(theta) * radius, 0) + pos)
     spawnPosIndicator.visible = True
@@ -941,7 +944,7 @@ def onMouseMove():
                     updateSpawnScreen()
 
                 # update the force in select screen
-                if (chargedObjSelected != None):
+                if (chargedObjSelected != None and chargedObjSelected.type == "Sphere"):
                     updateForceStatSelectScreen()
         else:
             # conditions for setting velocity vectors: not playing, dragging, sphere, obj not fixed, and in show velocity vector mode, 
@@ -994,6 +997,8 @@ scene.append_to_caption("   ")
 startButton = button(text = "Start without preset", bind = start)
 scene.append_to_caption("\n\n   ")
 
+quantumTunneling = False
+
 # presets
 def dipolePreset():
     start()
@@ -1008,7 +1013,9 @@ def threeChargePreset():
     allChargedObjs.append(SphereChargedObj(massScalar, -1.5*chargeScalar, vec(-5*cos(pi/6),-5*sin(pi/6),0), vec(0, 0, 0), False))
 
 def butterflyPreset():
+    global quantumTunneling
     start()
+    quantumTunneling = True
     allChargedObjs.append(SphereChargedObj(massScalar, -chargeScalar, vec(0,5,0), vec(1, -1, 0), False))
     allChargedObjs.append(SphereChargedObj(massScalar, -chargeScalar, vec(5,5,0), vec(-1, -1, 0), False))
     allChargedObjs.append(SphereChargedObj(massScalar, 5*chargeScalar, vec(2.5,0,0), vec(0, 1, 0), False))
@@ -1026,7 +1033,9 @@ def helixGunPreset ():
     allChargedObjs.append(SphereChargedObj(massScalar, chargeScalar, vec(0,-1.5,0), vec(0, 0, 0), False))
     
 def dragonflyPreset ():
+    global quantumTunneling
     start()
+    quantumTunneling = True
     allChargedObjs.append(SphereChargedObj(massScalar, chargeScalar, vec(0,5,0), vec(0, 0, 0), False))
     allChargedObjs.append(SphereChargedObj(massScalar, chargeScalar, vec(4.33,-2.5,0), vec(0, 0, 0), False))
     allChargedObjs.append(SphereChargedObj(massScalar, chargeScalar, vec(-4.33,-2.5,0), vec(0, 0, 0), False))
@@ -2041,13 +2050,17 @@ def selectPosXInput():
     # change the x value of select position
     if (selectPosXInputField.number != None):
         chargedObjSelected.pos.x = selectPosXInputField.number
-        # change position without trail
-        chargedObjSelected.trail.stop()
-        chargedObjSelected.display.pos.x = chargedObjSelected.pos.x
-        if (chargedObjSelected.trailState):
-            chargedObjSelected.trail.start()
-        chargedObjSelected.updateDisplay()
-        updateForceStatSelectScreen()
+        if (chargedObjSelected.type == "Sphere"):
+            # change position without trail
+            chargedObjSelected.trail.stop()
+            chargedObjSelected.display.pos.x = chargedObjSelected.pos.x
+            if (chargedObjSelected.trailState):
+                chargedObjSelected.trail.start()
+            chargedObjSelected.updateDisplay()
+            updateForceStatSelectScreen()
+        elif (chargedObjSelected.type == "Plate"):
+            chargedObjSelected.display.pos.x = chargedObjSelected.pos.x
+            chargedObjSelected.updateDisplay()
     else: 
         # invalid input
         selectPosXInputField.text = '{:1.3f}'.format(chargedObjSelected.pos.x)
@@ -2057,11 +2070,17 @@ def selectPosYInput():
     # change the y value of select position
     if (selectPosYInputField.number != None):
         chargedObjSelected.pos.y = selectPosYInputField.number
-        chargedObjSelected.trail.stop()
-        chargedObjSelected.display.pos.y = chargedObjSelected.pos.y
-        if (chargedObjSelected.trailState):
-            chargedObjSelected.trail.start()
-        chargedObjSelected.updateDisplay()
+        if (chargedObjSelected.type == "Sphere"):
+            # change position without trail
+            chargedObjSelected.trail.stop()
+            chargedObjSelected.display.pos.y = chargedObjSelected.pos.y
+            if (chargedObjSelected.trailState):
+                chargedObjSelected.trail.start()
+            chargedObjSelected.updateDisplay()
+            updateForceStatSelectScreen()
+        elif (chargedObjSelected.type == "Plate"):
+            chargedObjSelected.display.pos.y = chargedObjSelected.pos.y
+            chargedObjSelected.updateDisplay()
         updateForceStatSelectScreen()
     else: 
         # invalid input
@@ -2158,11 +2177,12 @@ while True:
             if (chargedObj.type == "Sphere"):
                 chargedObj.applyVel()
         # collision
-        for charge in allChargedObjs:
-            charge.checkCollision()
-        for charge in allChargedObjs:
-            if (chargedObj.type == "Sphere"):
-                charge.collided = []
+        if (not quantumTunneling):
+            for charge in allChargedObjs:
+                charge.checkCollision()
+            for charge in allChargedObjs:
+                if (chargedObj.type == "Sphere"):
+                    charge.collided = []
     for chargedObj in allChargedObjs:
         chargedObj.displayElectricField()
 
