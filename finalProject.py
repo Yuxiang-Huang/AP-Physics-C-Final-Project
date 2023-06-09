@@ -380,26 +380,26 @@ class SphereChargedObj:
                 #for every step
                 for j in range(electricFieldPrecision):
                     # don't display if too close to a charge
-                    if (tooClose(self, curPos, size)):
-                        self.electricFieldArrows[i][j].visible = False
+                    # if (tooClose(self, curPos, size)):
+                    #     self.electricFieldArrows[i][j].visible = False
+                    # else:
+                    # determine the arrow 
+                    electricField = calculateNetElectricField(curPos)
+                    arrowLength = norm(electricField) * size
+                    self.electricFieldArrows[i][j].visible = True
+                    self.electricFieldArrows[i][j].pos = curPos
+                    if (self.charge < 0):
+                        self.electricFieldArrows[i][j].pos -= arrowLength
+                    self.electricFieldArrows[i][j].axis = arrowLength
+
+                    # opacity
+                    if (electricOpacityMode):
+                        self.electricFieldArrows[i][j].opacity = mag(electricField) / electricFieldOpacitySetter
                     else:
-                        # determine the arrow 
-                        electricField = calculateNetElectricField(curPos)
-                        arrowLength = norm(electricField) * size
-                        self.electricFieldArrows[i][j].visible = True
-                        self.electricFieldArrows[i][j].pos = curPos
-                        if (self.charge < 0):
-                            self.electricFieldArrows[i][j].pos -= arrowLength
-                        self.electricFieldArrows[i][j].axis = arrowLength
+                        self.electricFieldArrows[i][j].opacity = 1
 
-                        # opacity
-                        if (electricOpacityMode):
-                            self.electricFieldArrows[i][j].opacity = mag(electricField) / electricFieldOpacitySetter
-                        else:
-                            self.electricFieldArrows[i][j].opacity = 1
-
-                        # next position
-                        curPos += arrowLength * self.charge / abs(self.charge)
+                    # next position
+                    curPos += arrowLength * self.charge / abs(self.charge)
         else: 
             # hide all electric field arrows
             for i in range(self.numOfLine):   
@@ -490,7 +490,7 @@ class PlateChargedObj:
         # thin boxes
         self.display = box(pos = spawnPos, size = vec(spawnLen, spawnLen / plateHeightFactor, spawnLen),
                             axis = vec(cos(radians(spawnAngle)), sin(radians(spawnAngle)), 0))
-        
+
         # differ in charge sign
         if (self.charge > 0):
             # display and vectors
@@ -633,44 +633,54 @@ class PlateChargedObj:
     # region electric field and potential
 
     def displayElectricField(self):
-        # if (self.charge == 0):
-        return
-        # if (electricFieldMode == 1):
-        #     # determine size
-        #     size = scene.range / 10
-        #     # for every direction
-        #     for i in range(self.numOfLine):
-        #         # determine starting position
-        #         theta = i * 2 * pi / self.numOfLine
-        #         curPos = self.pos + vec(cos(theta), sin(theta), 0) * self.display.radius
-        #         #for every step
-        #         for j in range(electricFieldPrecision):
-        #             # don't display if too close to a charge
-        #             if (tooClose(self, curPos, size)):
-        #                 self.electricFieldArrows[i][j].visible = False
-        #             else:
-        #                 # determine the arrow 
-        #                 electricField = calculateElectricField(curPos)
-        #                 arrowLength = norm(electricField) * size
-        #                 self.electricFieldArrows[i][j].visible = True
-        #                 self.electricFieldArrows[i][j].pos = curPos
-        #                 if (self.charge < 0):
-        #                     self.electricFieldArrows[i][j].pos -= arrowLength
-        #                 self.electricFieldArrows[i][j].axis = arrowLength
+        if (self.charge == 0):
+            return
+        
+        if (electricFieldMode == 1):
+            curList = []
+            # determine size
+            size = scene.range / 10
+            # for every direction
+            for i in range(self.numOfLine):
+                # helper variables
+                deltaX = self.display.axis.x / (self.numOfLine / 2 + 1)
+                deltaY = self.display.axis.y / (self.numOfLine / 2 + 1)
+                 # determine starting position
+                curPos = self.pos - self.display.axis / 2 + vec(deltaX, deltaY, 0)
+                curPos += vec(deltaX * (i % (self.numOfLine / 2)), deltaY * (i % (self.numOfLine / 2)), 0)
+                if (i >= self.numOfLine / 2):
+                    curPos += self.display.height / 2 * norm(vec(-self.display.axis.y, self.display.axis.x, 0))
+                else:
+                    curPos += self.display.height / 2 * norm(vec(self.display.axis.y, self.display.axis.x, 0))
+                curList.append(curPos)
+                #for every step
+                for j in range(electricFieldPrecision):
+                    # don't display if too close to a charge
+                    # if (tooClose(self, curPos, size)):
+                    #     self.electricFieldArrows[i][j].visible = False
+                    # else:
+                    # determine the arrow 
+                    electricField = calculateNetElectricField(curPos)
+                    arrowLength = norm(electricField) * size
+                    self.electricFieldArrows[i][j].visible = True
+                    self.electricFieldArrows[i][j].pos = curPos
+                    if (self.charge < 0):
+                        self.electricFieldArrows[i][j].pos -= arrowLength
+                    self.electricFieldArrows[i][j].axis = arrowLength
 
-        #                 # opacity
-        #                 if (electricOpacityMode):
-        #                     self.electricFieldArrows[i][j].opacity = mag(electricField) / electricFieldOpacitySetter
-        #                 else:
-        #                     self.electricFieldArrows[i][j].opacity = 1
+                    # opacity
+                    if (electricOpacityMode):
+                        self.electricFieldArrows[i][j].opacity = mag(electricField) / electricFieldOpacitySetter
+                    else:
+                        self.electricFieldArrows[i][j].opacity = 1
 
-        #                 # next position
-        #                 curPos += arrowLength * self.charge / abs(self.charge)
-        # else: 
-        #     # hide all electric field arrows
-        #     for i in range(self.numOfLine):   
-        #         for j in range(electricFieldPrecision):
-        #             self.electricFieldArrows[i][j].visible = False
+                    # next position
+                    curPos += arrowLength * self.charge / abs(self.charge)
+        else: 
+            # hide all electric field arrows
+            for i in range(self.numOfLine):   
+                for j in range(electricFieldPrecision):
+                    self.electricFieldArrows[i][j].visible = False
 
     def calculateElectricField(self, pos):
         electricField = vec(0, 0, 0)
@@ -678,7 +688,7 @@ class PlateChargedObj:
         deltaX = self.display.axis.x / (deltaFactor - 1)
         deltaY = self.display.axis.y / (deltaFactor - 1)
         deltaZ = self.display.width / (deltaFactor - 1)
-        startPos = self.pos - norm(self.display.axis) * self.display.length / 2
+        startPos = self.pos - self.display.axis / 2
         # loop to find pos of each dA
         for i in range(deltaFactor):
             for j in range(deltaFactor):
@@ -764,7 +774,7 @@ def clone(co):
 
 def testPlate():
     start()
-    allChargedObjs.append(SphereChargedObj(massScalar, 0, vec(2,0,0), vec(-1, 0, 0), False))
+    allChargedObjs.append(SphereChargedObj(massScalar, -chargeScalar, vec(1,0,0), vec(0, 0, 0), False))
     allChargedObjs.append(PlateChargedObj(chargeScalar, 10 * chargeDensityScalar, 90, vec(0, 0, 0)))
 
 ####################################################################################################
@@ -801,12 +811,18 @@ def calculateNetElectricFieldExclude(pos, exclude):
             electricField += co.calculateElectricField(pos)
     return electricField
 
-def tooClose(owner, pos, size):
-    for chargedObj in allChargedObjs:
-            if (chargedObj != owner):
-                if mag(pos - chargedObj.pos) < chargedObj.display.radius + size:
-                    return True
-    return False
+# !!!
+# def tooClose(owner, pos, size):
+#     for co in allChargedObjs:
+#         if (co != owner):
+#             if (co.type ==  "Sphere"):
+#                 # point to point distance
+#                 if mag(pos - co.pos) < co.display.radius:
+#                     return True
+#             # elif (co.type == "Plate"):
+#             #     # point to line distance
+
+#     return False
 
 # Electric Potential
 
@@ -935,8 +951,8 @@ def onMouseMove():
     else: 
         # when charge selected is not the charge you are draging
         if (chargedObjSelected != chargedObjToDrag):
-            # set position
-            if (chargedObjToDrag != None):
+            if (not playing and chargedObjToDrag != None):
+                # set position
                 mousePos = getMousePos()
                 chargedObjToDrag.pos = mousePos + dragOffset
                 chargedObjToDrag.updateDisplay()
