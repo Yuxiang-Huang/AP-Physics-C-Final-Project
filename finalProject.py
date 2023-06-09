@@ -42,9 +42,9 @@ electricFieldOpacitySetter = 1
 
 # caption
 sliderLength = 450
-# the space before text under a slider
-sliderTextSpaceLess = "                    "
-sliderTextSpaceMore = "                             "
+# for the space before text under a slider
+slider20Spaces = "                    "
+slider30Spaces = "                              "
 
 # texture links
 positiveSphereTexture = "https://i.imgur.com/9c10QCm.png"
@@ -194,9 +194,6 @@ class SphereChargedObj:
         # radius
         spawnRadius = ((mass) / (((4/3)* pi*sphereMassDensity)))**(1/3)
 
-        # possibly sliders for more variables
-        self.numOfLine = 8
-
         self.trailState = True
 
         # spheres
@@ -212,8 +209,8 @@ class SphereChargedObj:
             self.impulseVec = arrow(axis = vec(0, 0, 0), color = color.red)
 
             # initialize all electric field arrows
-            self.electricFieldArrows = [ [0]*electricFieldPrecision for i in range(self.numOfLine)]
-            for i in range(self.numOfLine):
+            self.electricFieldArrows = [ [0]*electricFieldPrecision for i in range(numOfLine)]
+            for i in range(numOfLine):
                 for j in range(electricFieldPrecision):
                     self.electricFieldArrows[i][j] = arrow(axis = vec(0, 0, 0), color = color.red)
 
@@ -231,8 +228,8 @@ class SphereChargedObj:
             self.impulseVec = arrow(axis = vec(0, 0, 0), color = color.blue)
 
             # initialize all electric field arrows
-            self.electricFieldArrows = [ [0]*electricFieldPrecision for i in range(self.numOfLine)]
-            for i in range(self.numOfLine):
+            self.electricFieldArrows = [ [0]*electricFieldPrecision for i in range(numOfLine)]
+            for i in range(numOfLine):
                 for j in range(electricFieldPrecision):
                     self.electricFieldArrows[i][j] = arrow(axis = vec(0, 0, 0), color = color.blue)
             
@@ -250,8 +247,8 @@ class SphereChargedObj:
             self.impulseVec = arrow(axis = vec(0, 0, 0), color = color.black)
 
             # initialize all electric field arrows
-            self.electricFieldArrows = [ [0]*electricFieldPrecision for i in range(self.numOfLine)]
-            for i in range(self.numOfLine):
+            self.electricFieldArrows = [ [0]*electricFieldPrecision for i in range(numOfLine)]
+            for i in range(numOfLine):
                 for j in range(electricFieldPrecision):
                     self.electricFieldArrows[i][j] = arrow(axis = vec(0, 0, 0), color = color.black)
 
@@ -371,11 +368,11 @@ class SphereChargedObj:
         
         if (electricFieldMode == 1):
             # determine size
-            size = scene.range / 10
+            size = scene.range / electricFieldPrecision
             # for every direction
-            for i in range(self.numOfLine):
+            for i in range(numOfLine):
                 # determine starting position
-                theta = i * 2 * pi / self.numOfLine
+                theta = i * 2 * pi / numOfLine
                 curPos = self.pos + vec(cos(theta), sin(theta), 0) * self.display.radius
                 #for every step
                 for j in range(electricFieldPrecision):
@@ -402,7 +399,7 @@ class SphereChargedObj:
                     curPos += arrowLength * self.charge / abs(self.charge)
         else: 
             # hide all electric field arrows
-            for i in range(self.numOfLine):   
+            for i in range(numOfLine):   
                 for j in range(electricFieldPrecision):
                     self.electricFieldArrows[i][j].visible = False
 
@@ -484,9 +481,6 @@ class PlateChargedObj:
         # radius
         spawnLen = sqrt(abs(self.charge) / self.chargeDensity)
 
-        # possibly sliders for more variables
-        self.numOfLine = 8
-
         # thin boxes
         self.display = box(pos = spawnPos, size = vec(spawnLen, spawnLen / plateHeightFactor, spawnLen),
                             axis = vec(cos(radians(spawnAngle)), sin(radians(spawnAngle)), 0))
@@ -500,8 +494,8 @@ class PlateChargedObj:
             self.impulseVec = arrow(axis = vec(0, 0, 0), color = color.red)
 
             # initialize all electric field arrows
-            self.electricFieldArrows = [ [0]*electricFieldPrecision for i in range(self.numOfLine)]
-            for i in range(self.numOfLine):
+            self.electricFieldArrows = [ [0]*electricFieldPrecision for i in range(numOfLine)]
+            for i in range(numOfLine):
                 for j in range(electricFieldPrecision):
                     self.electricFieldArrows[i][j] = arrow(axis = vec(0, 0, 0), color = color.red)
 
@@ -513,8 +507,8 @@ class PlateChargedObj:
             self.impulseVec = arrow(axis = vec(0, 0, 0), color = color.blue)
 
             # initialize all electric field arrows
-            self.electricFieldArrows = [ [0]*electricFieldPrecision for i in range(self.numOfLine)]
-            for i in range(self.numOfLine):
+            self.electricFieldArrows = [ [0]*electricFieldPrecision for i in range(numOfLine)]
+            for i in range(numOfLine):
                 for j in range(electricFieldPrecision):
                     self.electricFieldArrows[i][j] = arrow(axis = vec(0, 0, 0), color = color.blue)
         
@@ -526,8 +520,8 @@ class PlateChargedObj:
             self.impulseVec = arrow(axis = vec(0, 0, 0), color = color.black)
 
             # initialize all electric field arrows
-            self.electricFieldArrows = [ [0]*electricFieldPrecision for i in range(self.numOfLine)]
-            for i in range(self.numOfLine):
+            self.electricFieldArrows = [ [0]*electricFieldPrecision for i in range(numOfLine)]
+            for i in range(numOfLine):
                 for j in range(electricFieldPrecision):
                     self.electricFieldArrows[i][j] = arrow(axis = vec(0, 0, 0), color = color.black)
 
@@ -639,16 +633,16 @@ class PlateChargedObj:
         if (electricFieldMode == 1):
             curList = []
             # determine size
-            size = scene.range / 10
+            size = scene.range / electricFieldPrecision
             # for every direction
-            for i in range(self.numOfLine):
+            for i in range(numOfLine):
                 # helper variables
-                deltaX = self.display.axis.x / (self.numOfLine / 2 + 1)
-                deltaY = self.display.axis.y / (self.numOfLine / 2 + 1)
+                deltaX = self.display.axis.x / (numOfLine / 2 + 1)
+                deltaY = self.display.axis.y / (numOfLine / 2 + 1)
                  # determine starting position
                 curPos = self.pos - self.display.axis / 2 + vec(deltaX, deltaY, 0)
-                curPos += vec(deltaX * (i % (self.numOfLine / 2)), deltaY * (i % (self.numOfLine / 2)), 0)
-                if (i >= self.numOfLine / 2):
+                curPos += vec(deltaX * (i % (numOfLine / 2)), deltaY * (i % (numOfLine / 2)), 0)
+                if (i >= numOfLine / 2):
                     curPos += self.display.height / 2 * norm(vec(-self.display.axis.y, self.display.axis.x, 0))
                 else:
                     curPos += self.display.height / 2 * norm(vec(self.display.axis.y, self.display.axis.x, 0))
@@ -678,7 +672,7 @@ class PlateChargedObj:
                     curPos += arrowLength * self.charge / abs(self.charge)
         else: 
             # hide all electric field arrows
-            for i in range(self.numOfLine):   
+            for i in range(numOfLine):   
                 for j in range(electricFieldPrecision):
                     self.electricFieldArrows[i][j].visible = False
 
@@ -1028,7 +1022,7 @@ scene.append_to_caption("\n\n   ")
 
 quantumTunneling = False
 
-# presets
+# region presets
 def dipolePreset():
     start()
     allChargedObjs.append(SphereChargedObj(massScalar, chargeScalar, vec(5,0,0), vec(0, 0, 0), False))
@@ -1146,29 +1140,85 @@ button(text = "loop Wave Thing", bind = loopWavePreset)
 scene.append_to_caption("\n\n   ")
 button(text = "draw figure 8", bind = figureEightPreset)
 
-# electric field Slider
+# endregion
+
+# number of electric field line slider
+numOfLine = 10
+
+def numOfLineShift():
+    global numOfLine, numOfLineInputField
+    numOfLine = numOfLineSlider.value
+    numOfLineInputField.text = numOfLineSlider.value
+
+def numOfLineInput():
+    global numOfLine, numOfLineSlider
+    if (numOfLineInputField.number != None):
+        # min max
+        num = max(numOfLineSlider.min, numOfLineInputField.number)
+        num = min(numOfLineSlider.max, num)
+        # set values
+        numOfLineSlider.value = num
+        numOfLineInputField.text = num
+        numOfLine = num
+    else:
+        numOfLineInputField.text = numOfLine
+
+scene.append_to_caption("\n\n")
+numOfLineSlider = slider(min = 4, max = 16, value = numOfLine, step = 1, bind = numOfLineShift, length = sliderLength)
+scene.append_to_caption("\n         Number of Electric Field Line Directions: ")
+numOfLineInputField = winput(bind = numOfLineInput, text = numOfLine, width = 35)
+
+# electric field slider and input field
 electricFieldPrecision = 10
 
 def electricFieldPrecisionShift():
-    global electricFieldPrecision, electricFieldPrecisionText
+    global electricFieldPrecision, electricFieldPrecisionInputField
     electricFieldPrecision = electricFieldPrecisionSlider.value
-    electricFieldPrecisionText.text = "<center>Electric Field Precision: " + str(electricFieldPrecision) + "</center>"
+    electricFieldPrecisionInputField.text = electricFieldPrecisionSlider.value
+
+def electricFieldPrecisionInput():
+    global electricFieldPrecision, electricFieldPrecisionSlider
+    if (electricFieldPrecisionInputField.number != None):
+        # min max
+        num = max(electricFieldPrecisionSlider.min, electricFieldPrecisionInputField.number)
+        num = min(electricFieldPrecisionSlider.max, num)
+        # set values
+        electricFieldPrecisionSlider.value = num
+        electricFieldPrecisionInputField.text = num
+        electricFieldPrecision = num
+    else:
+        electricFieldPrecisionInputField.text = electricFieldPrecision
 
 scene.append_to_caption("\n\n")
-electricFieldPrecisionSlider = slider(min = 5, max = 20, value = 10, step = 1, bind = electricFieldPrecisionShift, length = sliderLength)
-electricFieldPrecisionText = wtext(text = "<center>Electric Field Precision: 10</center>")
+electricFieldPrecisionSlider = slider(min = 5, max = 20, value = electricFieldPrecision, step = 1, bind = electricFieldPrecisionShift, length = sliderLength)
+scene.append_to_caption("\n      Number of Electric Field Lines Per Direction: ")
+electricFieldPrecisionInputField = winput(bind = electricFieldPrecisionInput, text = electricFieldPrecision, width = 35)
 
-# gridPrecision Slider
+# grid precision slider and input field
 gridPrecision = 10
 
 def gridPrecisionShift():
-    global gridPrecision, gridPrecisionText
+    global gridPrecision, gridPrecisionInputField
     gridPrecision = gridPrecisionSlider.value
-    gridPrecisionText.text = "<center>Grid Precision: " + str(gridPrecision) + "</center>"
+    gridPrecisionInputField.text = gridPrecisionSlider.value
 
-scene.append_to_caption("\n")
-gridPrecisionSlider = slider(min = 5, max = 20, value = 10, step = 1, bind = gridPrecisionShift, length = sliderLength)
-gridPrecisionText = wtext(text = "<center>Grid Precision: 10</center>")
+def gridPrecisionInput():
+    global gridPrecision, gridPrecisionSlider
+    if (gridPrecisionInputField.number != None):
+        # min max
+        num = max(gridPrecisionSlider.min, gridPrecisionInputField.number)
+        num = min(gridPrecisionSlider.max, num)
+        # set values
+        gridPrecisionSlider.value = num
+        gridPrecisionInputField.text = num
+        gridPrecision = num
+    else:
+        gridPrecisionInputField.text = gridPrecision
+
+scene.append_to_caption("\n\n")
+gridPrecisionSlider = slider(min = 5, max = 20, value = gridPrecision, step = 1, bind = gridPrecisionShift, length = sliderLength)
+scene.append_to_caption("\n" + slider20Spaces + "    Number of Grid Lines: ")
+gridPrecisionInputField = winput(bind = gridPrecisionInput, text = gridPrecision, width = 35)
 
 # Instruction
 def createInstruction():
@@ -1483,7 +1533,7 @@ def createCaptionSpawnScreen():
         spawnChargeSlider = slider(bind = spawnChargeShift, min = -5, max = 5, value = spawnChargeSphere / chargeScalar, step = 0.1, length = sliderLength)
     elif (chargeMenu.selected == "Plate"):
         spawnChargeSlider = slider(bind = spawnChargeShift, min = -5, max = 5, value = spawnChargePlate / chargeScalar, step = 0.1, length = sliderLength)
-    scene.append_to_caption("\n" + sliderTextSpaceMore + "Charge: ")
+    scene.append_to_caption("\n" + slider30Spaces + "Charge: ")
     spawnChargeInputField = winput(bind = spawnChargeInput, text = spawnChargeSlider.value, width = 35)
     scene.append_to_caption(" nC")
 
@@ -1491,7 +1541,7 @@ def createCaptionSpawnScreen():
     if (chargeMenu.selected == "Plate"):
         scene.append_to_caption("\n\n")
         spawnChargeDensitySlider = slider(bind = spawnChargeDensityShift, min = 1, max = 100, value = spawnChargeDensity / chargeDensityScalar, step = 1, length = sliderLength)
-        scene.append_to_caption("\n" + sliderTextSpaceLess + "Charge Density: ")
+        scene.append_to_caption("\n" + slider20Spaces + "Charge Density: ")
         spawnChargeDensityInputField = winput(bind = spawnChargeDensityInput, text = spawnChargeDensitySlider.value, width = 35)
         scene.append_to_caption(" pC/m^2")
 
@@ -1500,7 +1550,7 @@ def createCaptionSpawnScreen():
     if (chargeMenu.selected == "Sphere"):
         scene.append_to_caption("\n\n")
         spawnMassSlider = slider(bind = spawnMassShift, min = 1, max = 5, value = spawnMass / massScalar, step = 0.1, length = sliderLength)
-        scene.append_to_caption("\n" + sliderTextSpaceMore + "Mass: ")
+        scene.append_to_caption("\n" + slider30Spaces + "Mass: ")
         spawnMassInputField = winput(bind = spawnMassInput, text = spawnMassSlider.value, width = 35)
         scene.append_to_caption(" * 10^-9 Kg")
 
@@ -1509,7 +1559,7 @@ def createCaptionSpawnScreen():
     if (chargeMenu.selected == "Plate"):
         scene.append_to_caption("\n\n")
         spawnAngleSlider = slider(bind = spawnAngleShift, min = 0, max = 180, value = spawnAngle, step = 1, length = sliderLength)
-        scene.append_to_caption("\n" + sliderTextSpaceMore + "Angle: ")
+        scene.append_to_caption("\n" + slider30Spaces + "Angle: ")
         spawnAngleInputField = winput(bind = spawnAngleInput, text = spawnAngleSlider.value, width = 35)
         scene.append_to_caption(" degrees")
 
@@ -1713,7 +1763,7 @@ def createCaptionSelectScreen():
     global selectedChargeSlider, selectedChargeInputField
     scene.append_to_caption("\n\n")
     selectedChargeSlider = slider(bind = selectedChargeShift, min = -5, max = 5, value = chargedObjSelected.charge / chargeScalar, step = 0.1, length = sliderLength)
-    scene.append_to_caption("\n" + sliderTextSpaceMore + "Charge: ")
+    scene.append_to_caption("\n" + slider30Spaces + "Charge: ")
     selectedChargeInputField = winput(bind = selectedChargeInput, text = selectedChargeSlider.value, width = 35)
     scene.append_to_caption(" nC")
 
@@ -1725,7 +1775,7 @@ def createCaptionSelectScreen():
     if (chargedObjSelected.type == "Plate"):
         scene.append_to_caption("\n\n")
         selectedChargeDensitySlider = slider(bind = selectedChargeDensityShift, min = 1, max = 100, value = chargedObjSelected.chargeDensity / chargeDensityScalar, step = 1, length = sliderLength)
-        scene.append_to_caption("\n" + sliderTextSpaceLess + "Charge Density: ")
+        scene.append_to_caption("\n" + slider20Spaces + "Charge Density: ")
         selectedChargeDensityInputField = winput(bind = selectedChargeDensityInput, text = selectedChargeDensitySlider.value, width = 35)
         scene.append_to_caption(" pC/m^2")
 
@@ -1737,7 +1787,7 @@ def createCaptionSelectScreen():
     if (chargedObjSelected.type == "Sphere"):
         scene.append_to_caption("\n\n")
         selectedMassSlider = slider(bind = selectedMassShift, min = 1, max = 5, value = chargedObjSelected.mass / massScalar, step = 0.1, length = sliderLength)
-        scene.append_to_caption("\n" + sliderTextSpaceMore + "Mass: ")
+        scene.append_to_caption("\n" + slider30Spaces + "Mass: ")
         selectedMassInputField = winput(bind = selectedMassInput, text = selectedMassSlider.value, width = 35)
         scene.append_to_caption(" * 10^-9 Kg")
 
@@ -1750,7 +1800,7 @@ def createCaptionSelectScreen():
         scene.append_to_caption("\n\n")
         selectedAngleSlider = slider(bind = selectedAngleShift, min = 0, max = 180, 
                                      value = degrees(atan2(chargedObjSelected.display.axis.y, chargedObjSelected.display.axis.x)), step = 1, length = sliderLength)
-        scene.append_to_caption("\n" + sliderTextSpaceMore + "Angle: ")
+        scene.append_to_caption("\n" + slider30Spaces + "Angle: ")
         selectedAngleInputField = winput(bind = selectedAngleInput, text = selectedAngleSlider.value, width = 35)
         scene.append_to_caption(" degrees")
 
@@ -1872,7 +1922,7 @@ def selectedChargeModified():
         chargedObjSelected.velVec.color = curColor
         chargedObjSelected.impulseVec.color = curColor
 
-        for i in range(chargedObjSelected.numOfLine):
+        for i in range(numOfLine):
             for j in range(electricFieldPrecision):
                 chargedObjSelected.electricFieldArrows[i][j].color = curColor
 
@@ -2071,7 +2121,7 @@ def deleteChargedObj(co):
         co.impulseLabel.visible = False
     co.deleted = True
     co.hideSelect()
-    for i in range(co.numOfLine):   
+    for i in range(numOfLine):   
             for j in range(electricFieldPrecision):
                 co.electricFieldArrows[i][j].visible = False
     if (co == cameraFollowedObj):
