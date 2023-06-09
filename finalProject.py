@@ -542,6 +542,11 @@ class PlateChargedObj:
                 for j in range(electricFieldPrecision):
                     self.electricFieldArrows[i][j] = arrow(axis = vec(0, 0, 0), color = color.black)
 
+        # trail (not in use but sphere use it and not really matter so keep)
+        self.trailState = False
+        self.trail = attach_trail(self.display)
+        self.trail.stop()
+
         # select display
         self.selectDisplay = []
         self.selectDisplayReset = []
@@ -582,7 +587,7 @@ class PlateChargedObj:
         curve2.rotate(angle = rotAngle, axis = vec(0, 0, 1), origin = self.pos)
         self.selectDisplay.append(curve2)
 
-        self.selectDisplayReset.append(self.pos)
+        self.selectDisplayReset.append(vec(self.pos.x, self.pos.y, self.pos.z))
         self.selectDisplayReset.append(rotAngle)
 
         for c in self.selectDisplay:
@@ -624,7 +629,7 @@ class PlateChargedObj:
 
         # new reset
         self.selectDisplayReset = []
-        self.selectDisplayReset.append(self.pos)
+        self.selectDisplayReset.append(vec(self.pos.x, self.pos.y, self.pos.z))
         self.selectDisplayReset.append(rotAngle)
 
         for c in self.selectDisplay:
@@ -2023,12 +2028,13 @@ def deleteChargedObj(co):
     # hide everything, remove from list, reset chargedObjSelected
     allChargedObjs.remove(co)
     co.display.visible = False
-    co.velVec.visible = False
-    co.velLabel.visible = False
-    co.forceVec.visible = False
-    co.forceLabel.visible = False
-    co.impulseVec.visible = False
-    co.impulseLabel.visible = False
+    if (co.type == "Sphere"):
+        co.velVec.visible = False
+        co.velLabel.visible = False
+        co.forceVec.visible = False
+        co.forceLabel.visible = False
+        co.impulseVec.visible = False
+        co.impulseLabel.visible = False
     co.deleted = True
     co.hideSelect()
     for i in range(co.numOfLine):   
@@ -2081,7 +2087,6 @@ def selectPosYInput():
         elif (chargedObjSelected.type == "Plate"):
             chargedObjSelected.display.pos.y = chargedObjSelected.pos.y
             chargedObjSelected.updateDisplay()
-        updateForceStatSelectScreen()
     else: 
         # invalid input
         selectPosYInputField.text = '{:1.3f}'.format(chargedObjSelected.pos.y)
