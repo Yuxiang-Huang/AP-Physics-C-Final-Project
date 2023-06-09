@@ -1283,8 +1283,15 @@ def createCaptionMainScreen():
     scene.append_to_caption("\n\n")
     timeSlider = slider(bind=timeShift, min = 0.1, max = 5, value = time, step = 0.1, length = sliderLength) 
     scene.append_to_caption("\n")
-    timeText = wtext(text = "<center>Time in program for every second in real life:" + str(time) + "s</center>")
-    
+    timeText = wtext(text = "<center>Time in program for every second in real life: " + str(time) + "s</center>")
+
+    # update timer
+    global updateTimeSlider, updateTimeText
+    scene.append_to_caption("\n")
+    updateTimeSlider = slider(bind=updateTimeShift, min = 0.1, max = 2, value = updateTime, step = 0.1, length = sliderLength) 
+    scene.append_to_caption("\n")
+    updateTimeText = wtext(text = "<center>Physical Varibles updates every " + str(time) + "s</center>")
+
     # vector menu
     global vectorMenu
     scene.append_to_caption("\n   Show Vectors: ")
@@ -1405,6 +1412,14 @@ def timeShift():
     global time, timeText
     time = timeSlider.value
     timeText.text = "<center>Time in program for every second in real life:" + str(time) + "s</center>"
+
+# time slider
+updateTime = 1
+
+def updateTimeShift():
+    global updateTime, updateTimeText
+    updateTime = updateTimeSlider.value
+    updateTimeText.text = "<center>Physical Varibles updates every " + str(updateTime) + "s</center>"
 
 # vector menu
 vectorToShow = "Neither"
@@ -1588,7 +1603,7 @@ def createCaptionSpawnScreen():
     updateSpawnScreen()
 
 # spawn charge menu
-spawnType = "Plate"
+spawnType = "Sphere"
 
 def selectSpawnChargeObj():
     global spawnType
@@ -2275,7 +2290,7 @@ while True:
                     charge.collided = []
 
     # once per second if playing
-    if (playing and t % (numOfRate * time) == 0):
+    if (playing and t % (numOfRate * updateTime) == 0):
         for chargedObj in allChargedObjs:
             chargedObj.displayElectricField()
 
@@ -2296,7 +2311,7 @@ while True:
             if (chargedObjSelected.type == "Sphere"):
                 updateVelocityStatsSelectScreen()
                 updateForceStatSelectScreen()
-    else:
+    elif (not playing):
         for chargedObj in allChargedObjs:
             chargedObj.displayElectricField()
 
