@@ -168,17 +168,6 @@ spawnPosIndicator.visible = False
 
 # region Classes
 
-def clone(co):
-    # copy stats including mass, charge, pos, vel, fixed, trail
-    if (co.type == "Sphere"):
-        copy = SphereChargedObj(co.mass, co.charge, co.pos, co.vel, co.fixed)
-    elif (co.type == "Plate"):
-        copy = PlateChargedObj(co.mass, co.charge, co.pos, co.vel)
-    copy.trailState = co.trailState
-    if (not copy.trailState):
-        copy.trail.stop()
-    return copy
-
 # region Sphere
 
 class SphereChargedObj:       
@@ -760,6 +749,17 @@ class PlateChargedObj:
 
 # endregion
 
+def clone(co):
+    # copy stats including mass, charge, pos, vel, fixed, trail
+    if (co.type == "Sphere"):
+        copy = SphereChargedObj(co.mass, co.charge, co.pos, co.vel, co.fixed)
+    elif (co.type == "Plate"):
+        copy = PlateChargedObj(co.mass, co.charge, co.pos, co.vel)
+    copy.trailState = co.trailState
+    if (not copy.trailState):
+        copy.trail.stop()
+    return copy
+
 # endregion
 
 def testPlate():
@@ -952,18 +952,26 @@ def onMouseMove():
                 if (chargedObjSelected != None and chargedObjSelected.type == "Sphere"):
                     updateForceStatSelectScreen()
         else:
-            # conditions for setting velocity vectors: not playing, dragging, sphere, obj not fixed, and in show velocity vector mode, 
-            if not playing and chargedObjToDrag != None and chargedObjToDrag.type == "Sphere" and not chargedObjToDrag.fixed and vectorToShow == "Velocity":
-                # set velocity vector
-                chargedObjToDrag.velVec.axis = getMousePos() - chargedObjToDrag.pos
-                chargedObjToDrag.vel = chargedObjToDrag.velVec.axis
-                chargedObjToDrag.createVelVec()
-                # reset if velocity vector is too small
-                if (mag(chargedObjToDrag.velVec.axis) < chargedObjToDrag.display.radius):
-                    chargedObjToDrag.vel = vec(0, 0, 0)
-                    chargedObjToDrag.velVec.visible = False
-                    chargedObjToDrag.velLabel.visible = False
-                updateVelocityStatsSelectScreen()
+            # common conditions: not playing, dragging 
+            if not playing and chargedObjToDrag != None:
+                # additional contiditional for velocity vector: sphere, obj not fixed, and in show velocity vector mode 
+                if (chargedObjToDrag.type == "Sphere" and not chargedObjToDrag.fixed and vectorToShow == "Velocity"):
+                    # set velocity vector
+                    chargedObjToDrag.velVec.axis = getMousePos() - chargedObjToDrag.pos
+                    chargedObjToDrag.vel = chargedObjToDrag.velVec.axis
+                    chargedObjToDrag.createVelVec()
+                    # reset if velocity vector is too small
+                    if (mag(chargedObjToDrag.velVec.axis) < chargedObjToDrag.display.radius):
+                        chargedObjToDrag.vel = vec(0, 0, 0)
+                        chargedObjToDrag.velVec.visible = False
+                        chargedObjToDrag.velLabel.visible = False
+                    updateVelocityStatsSelectScreen()  
+                # angle for plate
+                elif (chargedObjToDrag.type == "Plate"):
+                    # find angle to mouse
+                    difVec = getMousePos() - chargedObjToDrag.pos
+                    angle = round(degrees(atan2(difVec.y, difVec.x)))
+                    angleModified(angle % 180)
 
 # endregion
 
@@ -1945,7 +1953,7 @@ def selectedMassInput():
     else:
         selectedMassInputField.text = chargedObjSelected.mass / massScalar
 
-# selected mass slider and input field
+# selected angle slider and input field
 def selectedAngleShift(): 
     global chargedObjSelected, selectedAngleSlider, selectedAngleInputField
     selectedAngleInputField.text = selectedAngleSlider.value
@@ -1969,6 +1977,16 @@ def selectedAngleInput():
         chargedObjSelected.displaySelect()
     else:
         selectedAngleInputField.text = degrees(atan2(chargedObjSelected.display.axis.y, chargedObjSelected.display.axis.x))
+
+# use for mouse control
+def angleModified(angle):
+    global chargedObjSelected, selectedAngleInputField, selectedAngleSlider
+    # slider and input field
+    selectedAngleSlider.value = angle
+    selectedAngleInputField.text = angle
+    # change display
+    chargedObjSelected.display.axis = vec(cos(radians(angle)), sin(radians(angle)), 0) * mag(chargedObjSelected.display.axis)
+    chargedObjSelected.displaySelect()
 
 # fix button
 def fixChargedObj():
@@ -2210,7 +2228,7 @@ while True:
             updateForceStatSelectScreen()
 
     # update force vector because it is possible that mouse is not moving
-    if (playing and mouseDown and chargedObjSelected != None and not chargedObjSelected.fixed):
+    if (playing and mouseDown and chargedObjSelected != None and chargedObjSelected.type == "Sphere" and not chargedObjSelected.fixed):
         chargedObjSelected.impulseVec.pos = chargedObjSelected.pos
         chargedObjSelected.impulseVec.axis = getMousePos() - chargedObjSelected.pos 
         chargedObjSelected.createImpulseLabel()
