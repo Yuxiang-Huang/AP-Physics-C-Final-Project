@@ -351,7 +351,7 @@ class SphereChargedObj:
 
     def updateDisplay(self):
         self.display.pos = self.pos
-        if (self == chargedObjSelected):
+        if (self == chargedObjSelected and not self.deleted):
             self.displaySelect()
         
         # vectors
@@ -480,16 +480,8 @@ class PlateChargedObj:
         # physics variables
         self.charge = spawnCharge
         self.chargeDensity = spawnChargeDensity
-        self.mass = 1 #!!!
         self.pos = spawnPos
-        self.fixed = True
-        self.vel = vec(0, 0, 0)
         self.collided = []
-
-        # force labels
-        self.velLabel = label(text = "0", visible = False)
-        self.forceLabel = label(text = "0", visible = False)
-        self.impulseLabel = label(text = "0", visible = False)
 
         # radius
         spawnLen = sqrt(abs(self.charge) / self.chargeDensity)
@@ -555,17 +547,6 @@ class PlateChargedObj:
         self.display.pos = self.pos
         if (self == chargedObjSelected and not self.deleted):
             self.displaySelect()
-        
-        # vectors
-        if (self.fixed or self.deleted):
-            self.hideVec()
-        else:
-            if (vectorToShow == "Velocity"):
-                self.createVelVec()
-            elif (vectorToShow == "Force"):
-                self.createForceVec()
-            else:
-                self.hideVec()
     
     # region select display
 
@@ -648,56 +629,7 @@ class PlateChargedObj:
         for curve in self.selectDisplay:
             curve.visible = False
 
-    # endregion
-
-    # region force, velocity, and impulse
-    def calculateNetForce(self):
-        force = calculateNetElectricFieldExclude(self.pos)
-        return force
-
-    def applyForce(self):
-        # calculate force from every other charge
-        if (not self.fixed):
-            # apply force: F * ∆t = m * ∆v
-            self.vel += self.calculateNetForce() / numOfRate / self.mass
-
-    def createForceVec(self):
-        # arrow
-        self.forceVec.visible = True
-        self.forceVec.pos = self.pos
-        self.forceVec.axis = self.calculateNetForce() * 1E9
-        # label
-        self.forceLabel.text = "{0:.3f}".format(mag(self.forceVec.axis)) + "nN"
-        self.forceLabel.pos = self.forceVec.pos + self.forceVec.axis
-        self.forceLabel.visible = True
-
-    def applyVel(self):
-        if (not self.fixed):
-            self.pos += self.vel / numOfRate
-        self.updateDisplay()
-
-    def createVelVec(self):
-        # arrow    
-        self.velVec.visible = True
-        self.velVec.pos = self.pos
-        self.velVec.axis = self.vel
-        # label
-        self.velLabel.text = "{0:.3f}".format(mag(self.velVec.axis)) + "m/s"
-        self.velLabel.pos = self.velVec.pos + self.velVec.axis
-        self.velLabel.visible = True
-
-    def createImpulseLabel(self):
-        self.impulseLabel.text = "{0:.3f}".format(mag(self.impulseVec.axis)) + "μN * " + str(1 / numOfRate) + "s"
-        self.impulseLabel.pos = self.impulseVec.pos + self.impulseVec.axis
-        self.impulseLabel.visible = True
-
-    def hideVec(self):
-        self.velVec.visible = False
-        self.velLabel.visible = False
-        self.forceVec.visible = False
-        self.forceLabel.visible = False
-
-    # endregion
+    # endregion    
 
     # region electric field and potential
 
@@ -889,7 +821,7 @@ class PlateChargedObj:
 
 def testPlate():
     start()
-    allChargedObjs.append(SphereChargedObj(massScalar, chargeScalar, vec(1,0,0), vec(0, 0, 0), False))
+    allChargedObjs.append(SphereChargedObj(massScalar, chargeScalar, vec(2,0,0), vec(0, 0, 0), False))
     allChargedObjs.append(PlateChargedObj(chargeScalar, 10 * chargeDensityScalar, 90, vec(0, 0, 0)))
 
 ####################################################################################################
@@ -1073,8 +1005,8 @@ def onMouseMove():
                 if (chargedObjSelected != None):
                     updateForceStatSelectScreen()
         else:
-            # conditions for setting velocity vectors: not playing, dragging, obj not fixed, in show velocity vector mode, and sphere
-            if not playing and chargedObjToDrag != None and not chargedObjToDrag.fixed and vectorToShow == "Velocity" and chargedObjToDrag.type == "Sphere":
+            # conditions for setting velocity vectors: not playing, dragging, sphere, obj not fixed, and in show velocity vector mode, 
+            if not playing and chargedObjToDrag != None and chargedObjToDrag.type == "Sphere" and not chargedObjToDrag.fixed and vectorToShow == "Velocity":
                 # set velocity vector
                 chargedObjToDrag.velVec.axis = getMousePos() - chargedObjToDrag.pos
                 chargedObjToDrag.vel = chargedObjToDrag.velVec.axis
@@ -1837,27 +1769,32 @@ def createCaptionSelectScreen():
     #     selectedAngleInputField = winput(bind = selectedAngleInput, text = selectedAngleSlider.value, width = 35)
     #     scene.append_to_caption(" degrees")
 
-    # fix button
-    global deleteButton, fixButton
-    scene.append_to_caption("\n\n   ")
-    if (chargedObjSelected.fixed):
-        fixButton = button(text = "Unfix", bind=fixChargedObj)
-    else:
-        fixButton = button(text = "Fix", bind=fixChargedObj)
+    # need for both types but not in the same place...
+    global deleteButton
+        
+    # for sphere
+    if (chargedObjSelected.type == "Sphere"):
+        # fix button
+        global fixButton
+        scene.append_to_caption("\n\n   ")
+        if (chargedObjSelected.fixed):
+            fixButton = button(text = "Unfix", bind=fixChargedObj)
+        else:
+            fixButton = button(text = "Fix", bind=fixChargedObj)
 
-    # trail checkbox
-    global trailCheckbox
-    scene.append_to_caption("   ")
-    trailCheckbox = checkbox(text = "Trail", bind = changeTrailState, checked = chargedObjSelected.trailState)
+        # trail checkbox
+        global trailCheckbox
+        scene.append_to_caption("   ")
+        trailCheckbox = checkbox(text = "Trail", bind = changeTrailState, checked = chargedObjSelected.trailState)
 
-    # clear trail button
-    global clearTrailButton
-    scene.append_to_caption("   ")
-    clearTrailButton = button (text = "Clear Trail", bind = clearTrail)
+        # clear trail button
+        global clearTrailButton
+        scene.append_to_caption("   ")
+        clearTrailButton = button (text = "Clear Trail", bind = clearTrail)
 
-    # delete button
-    scene.append_to_caption("   ")
-    deleteButton = button(text = "Delete", bind=deleteSelectChargedObj)
+        # delete button
+        scene.append_to_caption("   ")
+        deleteButton = button(text = "Delete", bind=deleteSelectChargedObj)
 
     # select position input fields
     global selectPosXInputField, selectPosYInputField
@@ -1866,6 +1803,11 @@ def createCaptionSelectScreen():
     scene.append_to_caption(", ")
     selectPosYInputField = winput(bind = selectPosYInput, text = '{:1.3f}'.format(chargedObjSelected.pos.y), width = 60) 
     scene.append_to_caption(">")
+
+    # delete button for plate
+    if (chargedObjSelected.type == "Plate"):
+        scene.append_to_caption("   ")
+        deleteButton = button(text = "Delete", bind=deleteSelectChargedObj)
     
     if (chargedObjSelected.type == "Sphere"):
         # select velocity XY setter
@@ -2210,7 +2152,7 @@ def selectVelAngleInput():
 def updateForceStatSelectScreen():
     global selectedChargeForceXYText, selectedChargeForceMAText
 
-    force = chargedObjSelected.calculateNetForce(chargedObjSelected.pos, chargedObjSelected) * 1E9
+    force = chargedObjSelected.calculateNetForce() * 1E9
 
     selectedChargeForceXYText.text = ("Force: <" + 
                     '{:1.5f}'.format(force.x) + ", " + 
@@ -2260,8 +2202,9 @@ while True:
     # update stats in select screen if necessary every second
     if (playing and chargedObjSelected != None and t % (numOfRate * time) == 0):
         updatePosStatSelectScreen()
-        updateVelocityStatsSelectScreen()
-        updateForceStatSelectScreen()
+        if (chargedObjSelected.type == "Sphere"):
+            updateVelocityStatsSelectScreen()
+            updateForceStatSelectScreen()
 
     # update force vector because it is possible that mouse is not moving
     if (playing and mouseDown and chargedObjSelected != None and not chargedObjSelected.fixed):
