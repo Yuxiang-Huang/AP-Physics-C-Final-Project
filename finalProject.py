@@ -22,8 +22,8 @@ chargeDensityScalar = 1E-12
 massScalar = 1E-9
 sphereMassDensity = 2.5E-9
 
-# ratio of length to width for a plate
-plateWidthFactor = 20
+# ratio of length to height for a plate
+plateHeightFactor = 20
 # ratio of length to length of select display
 plateSelectDisplayFactor = 40
 # for plate when calculating electric field and potential
@@ -52,10 +52,6 @@ fixedNeutralSphereTexture = "https://i.imgur.com/b80Axoa.png"
 positivePlateTexture = "https://i.imgur.com/0nKY4ns.png"
 negativePlateTexture = "https://i.imgur.com/Ccmo21E.png"
 neutralPlateTexture = "https://i.imgur.com/eLOxvSS.png"
-
-fixedPositivePlateTexture = "https://i.imgur.com/0nKY4ns.png"
-fixedNegativePlateTexture = "https://i.imgur.com/Ccmo21E.png"
-fixedNeutralPlateTexture = "https://i.imgur.com/eLOxvSS.png"
 
 # endregion
 
@@ -176,7 +172,7 @@ def clone(co):
     if (co.type == "Sphere"):
         copy = SphereChargedObj(co.mass, co.charge, co.pos, co.vel, co.fixed)
     elif (co.type == "Plate"):
-        copy = PlateChargedObj(co.mass, co.charge, co.pos, co.vel, co.fixed)
+        copy = PlateChargedObj(co.mass, co.charge, co.pos, co.vel)
     copy.trailState = co.trailState
     if (not copy.trailState):
         copy.trail.stop()
@@ -474,7 +470,7 @@ class SphereChargedObj:
 # region Plate
 
 class PlateChargedObj:       
-    def __init__(self, charge, chargeDensity, spawnAngle, spawnPos, spawnFixed):
+    def __init__(self, spawnCharge, spawnChargeDensity, spawnAngle, spawnPos):
         # patch for making sure deleting everything
         self.deleted = False
 
@@ -482,11 +478,12 @@ class PlateChargedObj:
         self.type = "Plate"
 
         # physics variables
-        self.chargeDensity = chargeDensity
+        self.charge = spawnCharge
+        self.chargeDensity = spawnChargeDensity
         self.mass = 1 #!!!
         self.pos = spawnPos
+        self.fixed = True
         self.vel = vec(0, 0, 0)
-        self.fixed = spawnFixed
         self.collided = []
 
         # force labels
@@ -495,22 +492,19 @@ class PlateChargedObj:
         self.impulseLabel = label(text = "0", visible = False)
 
         # radius
-        spawnLen = sqrt((charge) / chargeDensity)
+        spawnLen = sqrt(abs(self.charge) / self.chargeDensity)
 
         # possibly sliders for more variables
         self.numOfLine = 8
 
         # thin boxes
-        self.display = box(pos = spawnPos, size = vec(spawnLen, spawnLen / plateWidthFactor, spawnLen),
+        self.display = box(pos = spawnPos, size = vec(spawnLen, spawnLen / plateHeightFactor, spawnLen),
                             axis = vec(cos(radians(spawnAngle)), sin(radians(spawnAngle)), 0))
         
         # differ in charge sign
-        if (chargeDensity > 0):
+        if (self.charge > 0):
             # display and vectors
-            if (self.fixed):
-                self.display.texture = fixedPositivePlateTexture
-            else:
-                self.display.texture = positivePlateTexture
+            self.display.texture = positivePlateTexture
             self.velVec = arrow(axis = vec(0, 0, 0), color = color.red)
             self.forceVec = arrow(axis = vec(0, 0, 0), color = color.red)
             self.impulseVec = arrow(axis = vec(0, 0, 0), color = color.red)
@@ -521,12 +515,9 @@ class PlateChargedObj:
                 for j in range(electricFieldPrecision):
                     self.electricFieldArrows[i][j] = arrow(axis = vec(0, 0, 0), color = color.red)
 
-        elif (charge < 0):
+        elif (self.charge < 0):
             # display and vectors
-            if (self.fixed):
-                self.display.texture = fixedNegativePlateTexture
-            else:
-                self.display.texture = negativePlateTexture
+            self.display.texture = negativePlateTexture
             self.velVec = arrow(axis = vec(0, 0, 0), color = color.blue)
             self.forceVec = arrow(axis = vec(0, 0, 0), color = color.blue)
             self.impulseVec = arrow(axis = vec(0, 0, 0), color = color.blue)
@@ -539,10 +530,7 @@ class PlateChargedObj:
         
         else:
             # display and vectors
-            if (self.fixed):
-                self.display.texture = fixedNeutralPlateTexture
-            else:
-                self.display.texture = neutralPlateTexture
+            self.display.texture = neutralPlateTexture
             self.velVec = arrow(axis = vec(0, 0, 0), color = color.black)
             self.forceVec = arrow(axis = vec(0, 0, 0), color = color.black)
             self.impulseVec = arrow(axis = vec(0, 0, 0), color = color.black)
@@ -767,7 +755,7 @@ class PlateChargedObj:
                 # dE = norm(r) * K * (dA * charge density) / r^2
                 r = pos - curPos
                 dA = self.display.length / deltaFactor * self.display.width / deltaFactor 
-                electricField += norm(r) * K * (dA * self.chargeDensity) / (mag(r)**2)
+                electricField += norm(r) * K * (dA * self.chargeDensity) / (mag(r)**2) * self.charge / abs(self.charge)
         return electricField
     
     def calculateElectricPotential(self, pos):
@@ -784,7 +772,7 @@ class PlateChargedObj:
                 # dV = K * (dA * charge density) / r
                 r = pos - curPos
                 dA = self.display.length / deltaFactor * self.display.width / deltaFactor 
-                electricFieldPotential += K * (dA * self.chargeDensity) / mag(r)
+                electricFieldPotential += K * (dA * self.chargeDensity) / mag(r) * self.charge / abs(self.charge)
         return electricFieldPotential
     
     # endregion
@@ -902,7 +890,7 @@ class PlateChargedObj:
 def testPlate():
     start()
     allChargedObjs.append(SphereChargedObj(massScalar, chargeScalar, vec(1,0,0), vec(0, 0, 0), False))
-    allChargedObjs.append(PlateChargedObj(chargeScalar, 10 * chargeDensityScalar, 90, vec(0, 0, 0), False))
+    allChargedObjs.append(PlateChargedObj(chargeScalar, 10 * chargeDensityScalar, 90, vec(0, 0, 0)))
 
 ####################################################################################################
 
@@ -1605,15 +1593,16 @@ def createCaptionSpawnScreen():
     if (chargeMenu.selected == "Sphere"):
         scene.append_to_caption("\n\n")
         spawnMassSlider = slider(bind = spawnMassShift, min = 1, max = 5, value = spawnMass / massScalar, step = 0.1, length = sliderLength)
-        scene.append_to_caption("\n                          Mass: ")
+        scene.append_to_caption("\n" + sliderTextSpaceMore + "Mass: ")
         spawnMassInputField = winput(bind = spawnMassInput, text = spawnMassSlider.value, width = 35)
         scene.append_to_caption(" * 10^-9 Kg")
-    
+
+    # spawn angle slider and input field
     global spawnAngleSlider, spawnAngleInputField
     if (chargeMenu.selected == "Plate"):
         scene.append_to_caption("\n\n")
         spawnAngleSlider = slider(bind = spawnAngleShift, min = 0, max = 180, value = spawnAngle, step = 1, length = sliderLength)
-        scene.append_to_caption("\n                          Angle: ")
+        scene.append_to_caption("\n" + sliderTextSpaceMore + "Angle: ")
         spawnAngleInputField = winput(bind = spawnAngleInput, text = spawnAngleSlider.value, width = 35)
         scene.append_to_caption(" degrees")
 
@@ -1751,7 +1740,7 @@ def spawnChargedObj():
     if (spawnType == "Sphere"):
         allChargedObjs.append(SphereChargedObj(spawnMass, spawnChargeSphere, spawnPos, vec(0, 0, 0), False))
     elif (spawnType == "Plate"):
-        allChargedObjs.append(PlateChargedObj(spawnChargePlate, spawnChargeDensity, spawnAngle, spawnPos, False))
+        allChargedObjs.append(PlateChargedObj(spawnChargePlate, spawnChargeDensity, spawnAngle, spawnPos))
     back()
 
 # back button
@@ -1813,26 +1802,40 @@ def createCaptionSelectScreen():
     else:
         cameraFollowButton = button(text = "Camera Follow", bind = cameraFollow)
 
-    if (not playing):
-        # select charge slider
-        global selectedChargeSlider, selectedChargeInputField
-        scene.append_to_caption("\n\n")
-        if (chargedObjSelected.type == "Sphere"):
-            selectedChargeSlider = slider(bind = selectedChargeShift, min = -5, max = 5, value = chargedObjSelected.charge / chargeScalar, step = 0.1, length = sliderLength)
-            scene.append_to_caption("\n" + sliderTextSpaceMore + "Charge: ")
-        elif (chargedObjSelected.type == "Plate"):
-            selectedChargeSlider = slider(bind = selectedChargeShift, min = -5, max = 5, value = chargedObjSelected.chargeDensity / chargeScalar, step = 0.1, length = sliderLength)
-            scene.append_to_caption("\n" + sliderTextSpaceLess + "Charge Density: ")
-        selectedChargeInputField = winput(bind = selectedChargeInput, text = selectedChargeSlider.value, width = 35)
-        scene.append_to_caption(" nC")
+    # select charge slider and input field
+    global selectedChargeSlider, selectedChargeInputField
+    scene.append_to_caption("\n\n")
+    selectedChargeSlider = slider(bind = selectedChargeShift, min = -5, max = 5, value = chargedObjSelected.charge / chargeScalar, step = 0.1, length = sliderLength)
+    scene.append_to_caption("\n" + sliderTextSpaceMore + "Charge: ")
+    selectedChargeInputField = winput(bind = selectedChargeInput, text = selectedChargeSlider.value, width = 35)
+    scene.append_to_caption(" nC")
 
-        # select mass slider
-        global selectedMassSlider, selectedMassInputField
+    # select charge density slider and input field
+    global selectedChargeDensitySlider, selectedChargeDensityInputField
+    if (chargedObjSelected.type == "Plate"):
         scene.append_to_caption("\n\n")
-        selectedMassSlider = slider(bind = selectedMassShift, min = 1, max = 5, value = chargedObjSelected.mass / massScalar, step = 0.1, length = sliderLength) 
-        scene.append_to_caption("\n                          Mass: ")
-        selectedMassInputField = winput(bind = selectedMassInput, text = selectedMassSlider.value, width = 35)
+        selectedChargeDensitySlider = slider(bind = selectedChargeDensityShift, min = 1, max = 100, value = chargedObjSelected.chargeDensity / chargeDensityScalar, step = 1, length = sliderLength)
+        scene.append_to_caption("\n" + sliderTextSpaceLess + "Charge Density: ")
+        selectedChargeDensityInputField = winput(bind = selectedChargeDensityInput, text = selectedChargeDensitySlider.value, width = 35)
+        scene.append_to_caption(" pC/m^2")
+
+    # select mass slider and input field
+    global selectMassSlider, selectMassInputField
+    if (chargedObjSelected.type == "Sphere"):
+        scene.append_to_caption("\n\n")
+        selectMassSlider = slider(bind = selectedMassShift, min = 1, max = 5, value = chargedObjSelected.mass / massScalar, step = 0.1, length = sliderLength)
+        scene.append_to_caption("\n" + sliderTextSpaceMore + "Mass: ")
+        selectMassInputField = winput(bind = selectedMassInput, text = selectMassSlider.value, width = 35)
         scene.append_to_caption(" * 10^-9 Kg")
+
+    # # select angle slider and input field
+    # global selectedAngleSlider, selectedAngleInputField
+    # if (chargedObjSelected.type == "Plate"):
+    #     scene.append_to_caption("\n\n")
+    #     selectedAngleSlider = slider(bind = selectedAngleShift, min = 0, max = 180, value = selectedAngle, step = 1, length = sliderLength)
+    #     scene.append_to_caption("\n" + sliderTextSpaceMore + "Angle: ")
+    #     selectedAngleInputField = winput(bind = selectedAngleInput, text = selectedAngleSlider.value, width = 35)
+    #     scene.append_to_caption(" degrees")
 
     # fix button
     global deleteButton, fixButton
@@ -1907,42 +1910,58 @@ def cameraFollow():
         cameraFollowedObj = chargedObjSelected.display
         cameraFollowButton.text = "Camera Unfollow"
 
-# select charge slider and input field
+# selected charge slider and input field
 def selectedChargeModified():
     global chargedObjSelected
-    # change the texture
-    if (chargedObjSelected.charge > 0):
-        if (chargedObjSelected.fixed):
-            chargedObjSelected.display.texture = fixedPositiveSphereTexture
+    if (chargedObjSelected.type == "Sphere"):
+        # change the texture
+        if (chargedObjSelected.charge > 0):
+            if (chargedObjSelected.fixed):
+                chargedObjSelected.display.texture = fixedPositiveSphereTexture
+            else:
+                chargedObjSelected.display.texture = positiveSphereTexture
+        elif (chargedObjSelected.charge < 0): 
+            if (chargedObjSelected.fixed):
+                chargedObjSelected.display.texture = fixedNegativeSphereTexture
+            else:
+                chargedObjSelected.display.texture = negativeSphereTexture
         else:
-            chargedObjSelected.display.texture = positiveSphereTexture
-    elif (chargedObjSelected.charge < 0): 
-        if (chargedObjSelected.fixed):
-            chargedObjSelected.display.texture = fixedNegativeSphereTexture
+            if (chargedObjSelected.fixed):
+                chargedObjSelected.display.texture = fixedNeutralSphereTexture
+            else:
+                chargedObjSelected.display.texture = neutralSphereTexture
+
+        # colors
+        if (chargedObjSelected.charge > 0):
+            curColor = color.red
+        elif (chargedObjSelected.charge < 0):
+            curColor = color.blue
         else:
-            chargedObjSelected.display.texture = negativeSphereTexture
-    else:
-        if (chargedObjSelected.fixed):
-            chargedObjSelected.display.texture = fixedNeutralSphereTexture
+            curColor = color.black
+
+        chargedObjSelected.velVec.color = curColor
+        chargedObjSelected.impulseVec.color = curColor
+
+        for i in range(chargedObjSelected.numOfLine):
+            for j in range(electricFieldPrecision):
+                chargedObjSelected.electricFieldArrows[i][j].color = curColor
+
+        chargedObjSelected.trail.color = curColor
+    elif (chargedObjSelected.type == "Plate"):
+        # change the texture
+        if (chargedObjSelected.charge > 0):
+            chargedObjSelected.display.texture = positivePlateTexture
+        elif (chargedObjSelected.charge < 0): 
+            chargedObjSelected.display.texture = negativePlateTexture
         else:
-            chargedObjSelected.display.texture = neutralSphereTexture
+            chargedObjSelected.display.texture = neutralPlateTexture
 
-    # colors
-    if (chargedObjSelected.charge > 0):
-        curColor = color.red
-    elif (chargedObjSelected.charge < 0):
-        curColor = color.blue
-    else:
-        curColor = color.black
-
-    chargedObjSelected.velVec.color = curColor
-    chargedObjSelected.impulseVec.color = curColor
-
-    for i in range(chargedObjSelected.numOfLine):
-        for j in range(electricFieldPrecision):
-            chargedObjSelected.electricFieldArrows[i][j].color = curColor
-
-    chargedObjSelected.trail.color = curColor
+        # change length
+        len = sqrt(abs(chargedObjSelected.charge) / chargedObjSelected.chargeDensity)
+        chargedObjSelected.display.length = len
+        chargedObjSelected.display.height = len / plateHeightFactor
+        chargedObjSelected.display.width = len
+        chargedObjSelected.displaySelect()
 
 def selectedChargeShift(): 
     global chargedObjSelected, selectedChargeSlider, selectedChargeInputField
@@ -1964,7 +1983,38 @@ def selectedChargeInput():
     else:
         selectedChargeInputField.text = chargedObjSelected.charge / chargeScalar
 
-# select mass slider and input field
+# selected charge density slider and input field
+def selectedChargeDensityShift(): 
+    global chargedObjSelected, selectedChargeDensitySlider, selectedChargeDensityInputField
+    chargedObjSelected.chargeDensity = selectedChargeDensitySlider.value * chargeDensityScalar   
+    selectedChargeDensityInputField.text = selectedChargeDensitySlider.value
+    # change length
+    len = sqrt(abs(chargedObjSelected.charge) / chargedObjSelected.chargeDensity)
+    chargedObjSelected.display.length = len
+    chargedObjSelected.display.height = len / plateHeightFactor
+    chargedObjSelected.display.width = len
+    chargedObjSelected.displaySelect()
+
+def selectedChargeDensityInput():
+    global chargedObjSelected, selectedChargeDensitySlider, selectedChargeDensityInputField 
+    if (selectedChargeDensityInputField.number != None):
+        # min max
+        num = max(selectedChargeDensitySlider.min, selectedChargeDensityInputField.number)
+        num = min(selectedChargeDensitySlider.max, num)
+        # set values
+        chargedObjSelected.chargeDensity = num * chargeDensityScalar
+        selectedChargeDensitySlider.value = num
+        selectedChargeDensityInputField.text = num
+        # change length
+        len = sqrt(abs(chargedObjSelected.charge) / chargedObjSelected.chargeDensity)
+        chargedObjSelected.display.length = len
+        chargedObjSelected.display.height = len / plateHeightFactor
+        chargedObjSelected.display.width = len
+        chargedObjSelected.displaySelect()
+    else:
+        selectedChargeDensityInputField.text = chargedObjSelected.chargeDensity / chargeDensityScalar
+
+# selected mass slider and input field
 def selectedMassShift(): 
     global chargedObjSelected, selectedMassSlider, selectedMassInputField
     chargedObjSelected.mass = selectedMassSlider.value * massScalar   
@@ -2160,7 +2210,7 @@ def selectVelAngleInput():
 def updateForceStatSelectScreen():
     global selectedChargeForceXYText, selectedChargeForceMAText
 
-    force = chargedObjSelected.calculateNetForce() * 1E9
+    force = chargedObjSelected.calculateNetForce(chargedObjSelected.pos, chargedObjSelected) * 1E9
 
     selectedChargeForceXYText.text = ("Force: <" + 
                     '{:1.5f}'.format(force.x) + ", " + 
