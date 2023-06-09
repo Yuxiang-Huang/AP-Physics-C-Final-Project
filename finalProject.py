@@ -1714,7 +1714,7 @@ def updateSpawnScreen():
                                         '{:1.3f}'.format(electricField.x) + ", " + 
                                         '{:1.3f}'.format(electricField.y) + "> N/C \n   Electric Field: "+
                                         '{:1.3f}'.format((mag(electricField))) + " N/C @ " +
-                                        '{:1.2f}'.format(atan2(electricField.y, electricField.x) / pi * 180) + " degree")
+                                        '{:1.2f}'.format(degrees(atan2(electricField.y, electricField.x))) + " degree")
     electricPotentialText.text = "Electric Potential: " '{:1.3f}'.format(calculateNetElectricPotential(spawnPos)) + " V"
 
 # endregion
@@ -1742,6 +1742,9 @@ def createCaptionSelectScreen():
     selectedChargeInputField = winput(bind = selectedChargeInput, text = selectedChargeSlider.value, width = 35)
     scene.append_to_caption(" nC")
 
+    selectedChargeSlider.disabled = playing
+    selectedChargeInputField.disabled = playing
+
     # select charge density slider and input field
     global selectedChargeDensitySlider, selectedChargeDensityInputField
     if (chargedObjSelected.type == "Plate"):
@@ -1751,23 +1754,33 @@ def createCaptionSelectScreen():
         selectedChargeDensityInputField = winput(bind = selectedChargeDensityInput, text = selectedChargeDensitySlider.value, width = 35)
         scene.append_to_caption(" pC/m^2")
 
+        selectedChargeDensitySlider.disabled = playing
+        selectedChargeDensityInputField.disabled = playing
+
     # select mass slider and input field
-    global selectMassSlider, selectMassInputField
+    global selectedMassSlider, selectedMassInputField
     if (chargedObjSelected.type == "Sphere"):
         scene.append_to_caption("\n\n")
-        selectMassSlider = slider(bind = selectedMassShift, min = 1, max = 5, value = chargedObjSelected.mass / massScalar, step = 0.1, length = sliderLength)
+        selectedMassSlider = slider(bind = selectedMassShift, min = 1, max = 5, value = chargedObjSelected.mass / massScalar, step = 0.1, length = sliderLength)
         scene.append_to_caption("\n" + sliderTextSpaceMore + "Mass: ")
-        selectMassInputField = winput(bind = selectedMassInput, text = selectMassSlider.value, width = 35)
+        selectedMassInputField = winput(bind = selectedMassInput, text = selectedMassSlider.value, width = 35)
         scene.append_to_caption(" * 10^-9 Kg")
 
-    # # select angle slider and input field
-    # global selectedAngleSlider, selectedAngleInputField
-    # if (chargedObjSelected.type == "Plate"):
-    #     scene.append_to_caption("\n\n")
-    #     selectedAngleSlider = slider(bind = selectedAngleShift, min = 0, max = 180, value = selectedAngle, step = 1, length = sliderLength)
-    #     scene.append_to_caption("\n" + sliderTextSpaceMore + "Angle: ")
-    #     selectedAngleInputField = winput(bind = selectedAngleInput, text = selectedAngleSlider.value, width = 35)
-    #     scene.append_to_caption(" degrees")
+        selectedMassSlider.disabled = playing
+        selectedMassInputField.disabled = playing
+
+    # select angle slider and input field
+    global selectedAngleSlider, selectedAngleInputField
+    if (chargedObjSelected.type == "Plate"):
+        scene.append_to_caption("\n\n")
+        selectedAngleSlider = slider(bind = selectedAngleShift, min = 0, max = 180, 
+                                     value = degrees(atan2(chargedObjSelected.display.axis.y, chargedObjSelected.display.axis.x)), step = 1, length = sliderLength)
+        scene.append_to_caption("\n" + sliderTextSpaceMore + "Angle: ")
+        selectedAngleInputField = winput(bind = selectedAngleInput, text = selectedAngleSlider.value, width = 35)
+        scene.append_to_caption(" degrees")
+
+        selectedAngleSlider.disabled = playing
+        selectedAngleInputField.disabled = playing
 
     # need for both types but not in the same place...
     global deleteButton
@@ -1981,6 +1994,31 @@ def selectedMassInput():
     else:
         selectedMassInputField.text = chargedObjSelected.mass / massScalar
 
+# selected mass slider and input field
+def selectedAngleShift(): 
+    global chargedObjSelected, selectedAngleSlider, selectedAngleInputField
+    selectedAngleInputField.text = selectedAngleSlider.value
+    # change angle
+    angle = radians(selectedAngleSlider.value)
+    chargedObjSelected.display.axis = vec(cos(angle), sin(angle), 0) * mag(chargedObjSelected.display.axis)
+    chargedObjSelected.displaySelect()
+
+def selectedAngleInput():
+    global chargedObjSelected, selectedAngleSlider, selectedAngleInputField 
+    if (selectedAngleInputField.number != None):
+        # min max
+        num = max(selectedAngleSlider.min, selectedAngleInputField.number)
+        num = min(selectedAngleSlider.max, num)
+        # set values
+        selectedAngleSlider.value = num
+        selectedAngleInputField.text = num
+        # change angle
+        angle = radians(num)
+        chargedObjSelected.display.axis = vec(cos(angle), sin(angle), 0) * mag(chargedObjSelected.display.axis)
+        chargedObjSelected.displaySelect()
+    else:
+        selectedAngleInputField.text = degrees(atan2(chargedObjSelected.display.axis.y, chargedObjSelected.display.axis.x))
+
 # fix button
 def fixChargedObj():
     global chargedObjSelected
@@ -2098,7 +2136,7 @@ def updateVelocityStatsSelectScreen():
     selectedVelXInputField.text = '{:1.3f}'.format(chargedObjSelected.vel.x)
     selectedVelYInputField.text = '{:1.3f}'.format(chargedObjSelected.vel.y)
     selectedVelMagInputField.text = '{:1.3f}'.format((mag(chargedObjSelected.vel)))
-    selectedVelAngleInputField.text = '{:1.3f}'.format(atan2(chargedObjSelected.vel.y, chargedObjSelected.vel.x) / pi * 180)
+    selectedVelAngleInputField.text = '{:1.3f}'.format(degrees(atan2(chargedObjSelected.vel.y, chargedObjSelected.vel.x)))
 
 def selectVelXInput():
     global chargedObjSelected, selectedVelXInputField
@@ -2140,13 +2178,13 @@ def selectVelAngleInput():
     # change the angle of select velocity
     if (selectedVelAngleInputField.number != None):
         magnitude = mag(chargedObjSelected.vel)
-        chargedObjSelected.vel.x = magnitude * cos(selectedVelAngleInputField.number * pi / 180)
-        chargedObjSelected.vel.y = magnitude * sin(selectedVelAngleInputField.number * pi / 180)
+        chargedObjSelected.vel.x = magnitude * cos(radians(selectedVelAngleInputField.number))
+        chargedObjSelected.vel.y = magnitude * sin(radians(selectedVelAngleInputField.number))
         chargedObjSelected.createVelVec()
         updateVelocityStatsSelectScreen()
     else: 
         # invalid input
-        selectedVelAngleInputField.text = '{:1.3f}'.format(atan2(chargedObjSelected.vel.y, chargedObjSelected.vel.x) / pi * 180)
+        selectedVelAngleInputField.text = '{:1.3f}'.format(degrees(atan2(chargedObjSelected.vel.y, chargedObjSelected.vel.x)))
 
 # select force stats
 def updateForceStatSelectScreen():
@@ -2159,7 +2197,7 @@ def updateForceStatSelectScreen():
                     '{:1.5f}'.format(force.y) + "> nN") 
     selectedChargeForceMAText.text = ("Force: "+
                     '{:1.5f}'.format((mag(force))) + " nN @ " +
-                    '{:1.2f}'.format(atan2(force.y, force.x) / pi * 180) + " degree")
+                    '{:1.2f}'.format(degrees(atan2(force.y, force.x))) + " degree")
 
 # endregion 
 
