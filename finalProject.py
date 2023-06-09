@@ -17,6 +17,7 @@ scene.align = "left"
 
 #constants
 K = 9E9
+# scalar because there will be units for these variables
 chargeScalar = 1E-9
 chargeDensityScalar = 1E-12
 massScalar = 1E-9
@@ -29,9 +30,14 @@ plateSelectDisplayFactor = 40
 # for plate when calculating electric field and potential
 deltaFactor = 10
 
+# runs this many times per second
 numOfRate = 2000
-steps = 10
+
+# generally for drawing
+steps = 3
+# for small gap
 epsilon = 0.01
+
 electricFieldOpacitySetter = 1
 
 # caption
@@ -63,9 +69,6 @@ neutralPlateTexture = "https://i.imgur.com/eLOxvSS.png"
 allChargedObjs = []
 allTrails = []
 
-unitWidth = None
-unitHeight = None
-
 # Math for rescaling (assume height > width)
 def setUnits():
     global unitWidth, unitHeight
@@ -73,7 +76,6 @@ def setUnits():
     unitHeight = 2 * scene.range / gridPrecision
 
 # region electric field for mode 2
-electricFieldArrowsAll = None
 
 # create when click start after know precision
 def createElectricFieldArrowsAll():
@@ -96,7 +98,6 @@ def setElectricFieldArrowsAll():
 # region electric potential
 potentialGridRows = []
 potentialGridCols = []
-electricPotentialLabels = None
 
 # create when click start after know precision
 def createPotentialGrid():
@@ -120,17 +121,20 @@ def setElectricPotentialGrid():
     for i in range(gridPrecision):
         # rows
         potentialGridRows[i].size = vec(unitWidth * gridPrecision, thickness, thickness)
-        potentialGridRows[i].pos = vec(0, (i - gridPrecision / 2 + 1/2) * unitHeight, 0)
+        potentialGridRows[i].pos = (vec(0, (i - gridPrecision / 2 + 1/2) * unitHeight, 0) 
+                                    + vec(scene.camera.pos.x, scene.camera.pos.y, 0))
 
         # cols
         potentialGridCols[i].size = vec(thickness, unitHeight * gridPrecision, thickness)
-        potentialGridCols[i].pos = vec((i - gridPrecision / 2 + 1/2) * unitWidth, 0, 0)
+        potentialGridCols[i].pos = (vec((i - gridPrecision / 2 + 1/2) * unitWidth, 0, 0)
+                                    + vec(scene.camera.pos.x, scene.camera.pos.y, 0))
 
     # labels
     for i in range(gridPrecision-1):
         for j in range(gridPrecision-1):
-            electricPotentialLabels[i][j].pos = vec((i - gridPrecision / 2 + 1) * unitWidth, 
-                                                            (j - gridPrecision / 2 + 1) * unitHeight, 0)
+            electricPotentialLabels[i][j].pos = (vec((i - gridPrecision / 2 + 1) * unitWidth, 
+                                                    (j - gridPrecision / 2 + 1) * unitHeight, 0) 
+                                                + vec(scene.camera.pos.x, scene.camera.pos.y, 0))
             electricPotentialLabels[i][j].height = 10
 
 # endregion 
@@ -273,6 +277,22 @@ class SphereChargedObj:
         allTrails.append(self.trail)
         self.updateDisplay()
 
+    def updateDisplay(self):
+        self.display.pos = self.pos
+        if (self == chargedObjSelected and not self.deleted):
+            self.displaySelect()
+        
+        # vectors
+        if (self.fixed or self.deleted):
+            self.hideVec()
+        else:
+            if (vectorToShow == "Velocity"):
+                self.createVelVec()
+            elif (vectorToShow == "Force"):
+                self.createForceVec()
+            else:
+                self.hideVec()
+
     # region select display
 
     def createSelectDisplay(self):
@@ -349,22 +369,6 @@ class SphereChargedObj:
         self.impulseLabel.pos = self.impulseVec.pos + self.impulseVec.axis
         self.impulseLabel.visible = True
 
-    def updateDisplay(self):
-        self.display.pos = self.pos
-        if (self == chargedObjSelected and not self.deleted):
-            self.displaySelect()
-        
-        # vectors
-        if (self.fixed or self.deleted):
-            self.hideVec()
-        else:
-            if (vectorToShow == "Velocity"):
-                self.createVelVec()
-            elif (vectorToShow == "Force"):
-                self.createForceVec()
-            else:
-                self.hideVec()
-    
     def hideVec(self):
         self.velVec.visible = False
         self.velLabel.visible = False
@@ -1216,8 +1220,6 @@ Controls:
 """)
 
 createInstruction()
-
-backButton = None
 
 # endregion
 
@@ -2205,6 +2207,7 @@ def updateForceStatSelectScreen():
 
 # region Program Runs Here
 curRange = scene.range
+curCameraPos = scene.camera.pos
 
 t = 0
 
@@ -2220,16 +2223,17 @@ while True:
             if (chargedObj.type == "Sphere"):
                 chargedObj.applyVel()
         # collision
-        # for charge in allChargedObjs:
-        #     charge.checkCollision()
-        # for charge in allChargedObjs:
-        #     charge.collided = []
+        for charge in allChargedObjs:
+            charge.checkCollision()
+        for charge in allChargedObjs:
+            charge.collided = []
     for chargedObj in allChargedObjs:
         chargedObj.displayElectricField()
 
-    # reset electric field arrows and electric potential grid for all if user zooms
-    if (curRange != scene.range):
+    # reset electric field arrows and electric potential grid for all if user zooms or pan
+    if (curRange != scene.range or curCameraPos != scene.camera.pos):
         curRange = scene.range
+        curCameraPos = scene.camera.pos
         setUnits()
         setElectricFieldArrowsAll()
         setElectricPotentialGrid()
