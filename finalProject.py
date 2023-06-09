@@ -440,6 +440,10 @@ class SphereChargedObj:
         
         for chargedObj in allChargedObjs:
             if (self != chargedObj):
+                # skip plates
+                if (chargedObj.type == "Plate"):
+                    continue
+                # colliding distance
                 if (mag(self.pos - chargedObj.pos) <= self.display.radius + chargedObj.display.radius):
                     if (not (chargedObj in self.collided)):
                         # collide with fixed obj
@@ -712,92 +716,8 @@ class PlateChargedObj:
         return electricFieldPotential
     
     # endregion
-    
-    def checkCollision(self):
-        # skip if fixed
-        if (self.fixed):
-            return
-        
-        for chargedObj in allChargedObjs:
-            if (self != chargedObj):
-                if (mag(self.pos - chargedObj.pos) <= self.display.radius + chargedObj.display.radius):
-                    if (not (chargedObj in self.collided)):
-                        # collide with fixed obj
-                        if (chargedObj.fixed):
-                            # reverse velocity
-                            self.vel = - self.vel
 
-                            # apply force again
-                            # self.vel += calculateForce(chargedObj, self) / numOfRate / self.mass
-
-                            # position check
-                            self.pos = chargedObj.pos + norm(self.pos - chargedObj.pos) * (self.display.radius + chargedObj.display.radius)
-                        else:
-                            # v1 = 2 * m2 / (m1 + m2) * v2 + (m1 - m2) / (m1 + m2) * v1
-                            tempvel = (2 * chargedObj.mass / (chargedObj.mass + self.mass) * chargedObj.vel +
-                            (self.mass - chargedObj.mass) / (chargedObj.mass + self.mass) * self.vel)
-
-                            # v2 = 2 * m1 / (m1 + m2) * v1 + (m2 - m1) / (m1 + m2) * v2
-                            chargedObj.vel = (2 * self.mass / (chargedObj.mass + self.mass) * self.vel +
-                            (chargedObj.mass - self.mass) / (chargedObj.mass + self.mass) * chargedObj.vel)
-
-                            self.vel = tempvel
-
-                            # apply force again
-                            # self.vel += calculateForce(chargedObj, self) / numOfRate / self.mass
-                            # chargedObj.vel += calculateForce(self, chargedObj) / numOfRate / self.mass
-
-                            # position check
-                            dif = self.display.radius + chargedObj.display.radius - mag(self.pos - chargedObj.pos) 
-                            tempPos = self.pos + norm(self.pos - chargedObj.pos) * dif / 2
-                            chargedObj.pos = chargedObj.pos + norm(chargedObj.pos - self.pos) * dif / 2
-                            self.pos = tempPos
-
-                        # prevent collision calculation twice
-                        chargedObj.collided.append(self)
-
-
-        # if (self.charge == 0):
-        #     return
-        
-        # if (electricFieldMode == 1):
-        #     # determine size
-        #     size = scene.range / 10
-        #     # for every direction
-        #     for i in range(self.numOfLine):
-        #         # determine starting position
-        #         theta = i * 2 * pi / self.numOfLine
-        #         curPos = self.pos + vec(cos(theta), sin(theta), 0) * self.display.radius
-        #         #for every step
-        #         for j in range(electricFieldPrecision):
-        #             # don't display if too close to a charge
-        #             if (tooClose(self, curPos, size)):
-        #                 self.electricFieldArrows[i][j].visible = False
-        #             else:
-        #                 # determine the arrow 
-        #                 electricField = calculateElectricField(curPos)
-        #                 arrowLength = norm(electricField) * size
-        #                 self.electricFieldArrows[i][j].visible = True
-        #                 self.electricFieldArrows[i][j].pos = curPos
-        #                 if (self.charge < 0):
-        #                     self.electricFieldArrows[i][j].pos -= arrowLength
-        #                 self.electricFieldArrows[i][j].axis = arrowLength
-
-        #                 # opacity
-        #                 if (electricOpacityMode):
-        #                     self.electricFieldArrows[i][j].opacity = mag(electricField) / electricFieldOpacitySetter
-        #                 else:
-        #                     self.electricFieldArrows[i][j].opacity = 1
-
-        #                 # next position
-        #                 curPos += arrowLength * self.charge / abs(self.charge)
-        # else: 
-            # hide all electric field arrows
-            for i in range(self.numOfLine):   
-                for j in range(electricFieldPrecision):
-                    self.electricFieldArrows[i][j].visible = False
-
-    def onObj(self, mousePos):
+    def onObj(self, pos):
         # find vertices
         halfLen = self.display.length / 2
         halfHei = self.display.height / 2
@@ -813,11 +733,26 @@ class PlateChargedObj:
         
         # use cross products to determine if inside
         for i in range(4):
-            v1 = vertices[i] - mousePos
-            v2 = vertices[(i + 1) % 4] - mousePos
+            v1 = vertices[i] - pos
+            v2 = vertices[(i + 1) % 4] - pos
             if v1.cross(v2).z < 0:
                 return False
         return True
+
+    def checkCollision(self):
+        for co in allChargedObjs:
+            if (co.type == "Sphere"):
+                # colliding point
+                if (self.pos.x < co.pos.x):
+                    collidingPoint = co.pos + norm(vec(-self.display.axis.y, self.display.axis.x, 0)) * co.display.radius
+                else:
+                    collidingPoint = co.pos + norm(vec(self.display.axis.y, -self.display.axis.x, 0)) * co.display.radius
+                # colliding distance
+                if (self.onObj(collidingPoint)):
+                    angleIn = acos(dot(co.vel, self.display.axis) / mag(co.vel) / mag(self.display.axis))
+                    magnitude = mag(co.vel)
+                    finalAngle = atan2(self.display.axis.y, self.display.axis.x) - angleIn
+                    co.vel = vec(magnitude * cos(finalAngle), magnitude * sin(finalAngle), 0)
 
 # endregion
 
@@ -825,7 +760,7 @@ class PlateChargedObj:
 
 def testPlate():
     start()
-    allChargedObjs.append(SphereChargedObj(massScalar, chargeScalar, vec(2,0,0), vec(0, 0, 0), False))
+    allChargedObjs.append(SphereChargedObj(massScalar, 0, vec(2,0,0), vec(-1, 0, 0), False))
     allChargedObjs.append(PlateChargedObj(chargeScalar, 10 * chargeDensityScalar, 90, vec(0, 0, 0)))
 
 ####################################################################################################
@@ -2226,7 +2161,8 @@ while True:
         for charge in allChargedObjs:
             charge.checkCollision()
         for charge in allChargedObjs:
-            charge.collided = []
+            if (chargedObj.type == "Sphere"):
+                charge.collided = []
     for chargedObj in allChargedObjs:
         chargedObj.displayElectricField()
 
