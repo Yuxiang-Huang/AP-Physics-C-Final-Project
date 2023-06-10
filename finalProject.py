@@ -2036,10 +2036,21 @@ def selectedChargeModified():
         updateForceStatSelectScreen()
     elif (chargedObjSelected.type == "Plate"):
         num = selectedChargeSlider.value
-        if ((chargedObjSelected.charge == 0 and num != 0) or (chargedObjSelected.charge != 0 and num == 0)):
+        # change to 0 charge
+        if (chargedObjSelected.charge != 0 and num == 0):
             # change charge density to length
             chargedObjSelected.charge = num * chargeScalar
-            # createCaptionSelectScreen()
+            createCaptionSelectScreen()
+        # change from 0 charge
+        elif (chargedObjSelected.charge == 0 and num != 0):
+            chargedObjSelected.charge = num * chargeScalar  
+            len = sqrt(abs(chargedObjSelected.charge) / chargedObjSelected.chargeDensity)
+            chargedObjSelected.display.length = len
+            chargedObjSelected.display.height = len / plateHeightFactor
+            chargedObjSelected.display.width = len
+            chargedObjSelected.displaySelect()
+            createCaptionSelectScreen()
+        # not related to 0 charge
         elif (chargedObjSelected.charge != 0 and num != 0):
             chargedObjSelected.charge = num * chargeScalar  
             len = sqrt(abs(chargedObjSelected.charge) / chargedObjSelected.chargeDensity)
