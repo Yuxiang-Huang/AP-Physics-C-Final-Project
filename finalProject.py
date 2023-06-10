@@ -692,7 +692,7 @@ class PlateChargedObj:
                 # dE = norm(r) * K * (dA * charge density) / r^2
                 r = pos - curPos
                 if (mag(r) > 0):
-                    dA = self.display.length / deltaFactor * self.display.width / deltaFactor 
+                    dA = self.display.length / deltaFactor * self.display.width / deltaFactor
                     electricField += norm(r) * K * (dA * self.chargeDensity) / (mag(r)**2) * self.charge / abs(self.charge)
         return electricField
     
@@ -778,10 +778,8 @@ def clone(co):
 
 def testPlate():
     start()
-    allChargedObjs.append(PlateChargedObj(5*chargeScalar, 100 * chargeDensityScalar, 90, vec(3, 0, 0)))
-    allChargedObjs.append(PlateChargedObj(-5*chargeScalar, 100 * chargeDensityScalar, 90, vec(-3, 0, 0)))
-    allChargedObjs.append(SphereChargedObj(massScalar, chargeScalar, vec(-1,2,0), vec(0, -1, 0), False))
-    allChargedObjs.append(SphereChargedObj(massScalar, -chargeScalar, vec(1,2,0), vec(0, -1, 0), False))
+    allChargedObjs.append(PlateChargedObj(chargeScalar, 100 * chargeDensityScalar, 90, vec(0, 0, 0)))
+    allChargedObjs.append(SphereChargedObj(massScalar, chargeScalar, vec(2,0,0), vec(0, 0, 0), False))
 
 ####################################################################################################
 
@@ -1693,9 +1691,10 @@ def spawnChargeShift():
 def spawnChargeInput():
     global spawnChargeSphere, spawnChargePlate, spawnChargeSlider, spawnChargeInputField
     if (spawnChargeInputField.number != None):
-        # min max
+        # min max and restrain on magnitude
         num = max(spawnChargeSlider.min, spawnChargeInputField.number)
         num = min(spawnChargeSlider.max, num)
+        num = max(spawnChargeSlider.step, abs(num)) * round(abs(num) / num)
         # set values
         if (chargeMenu.selected == "Sphere"):
             spawnChargeSphere = num * chargeScalar
@@ -2011,6 +2010,9 @@ def selectedChargeModified():
                 chargedObjSelected.electricFieldArrows[i][j].color = curColor
 
         chargedObjSelected.trail.color = curColor
+
+        # update force
+        updateForceStatSelectScreen()
     elif (chargedObjSelected.type == "Plate"):
         # change the texture
         if (chargedObjSelected.charge > 0):
@@ -2036,9 +2038,10 @@ def selectedChargeShift():
 def selectedChargeInput():
     global chargedObjSelected, selectedChargeSlider, selectedChargeInputField
     if (selectedChargeInputField.number != None):
-        # min max
+        # min max and restrain on magnitude
         num = max(selectedChargeSlider.min, selectedChargeInputField.number)
         num = min(selectedChargeSlider.max, num)
+        num = max(selectedChargeSlider.step, abs(num)) * round(abs(num) / num)
         # set values
         chargedObjSelected.charge = num * chargeScalar
         selectedChargeSlider.value = num
