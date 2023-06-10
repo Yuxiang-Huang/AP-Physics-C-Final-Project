@@ -1920,12 +1920,9 @@ def createCaptionSelectScreen():
     # for sphere
     if (chargedObjSelected.type == "Sphere"):
         # fix button
-        global fixButton
+        global fixCheckBox
         scene.append_to_caption("\n\n   ")
-        if (chargedObjSelected.fixed):
-            fixButton = button(text = "Unfix", bind=fixChargedObj)
-        else:
-            fixButton = button(text = "Fix", bind=fixChargedObj)
+        fixCheckBox = checkbox(text = "Fixed", bind=fixChargedObj, checked = chargedObjSelected.fixed)
 
         # trail checkbox
         global trailCheckbox
