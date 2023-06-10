@@ -11,7 +11,7 @@ scene.width = 1000
 scene.height = 650
 scene.range = 10
 scene.userzoom = False
-# scene.userspin = False
+scene.userspin = False
 scene.fov = pi / 50
 scene.align = "left"
 
@@ -1268,7 +1268,6 @@ def toSaved(version):
 
 # clear button
 def clear():
-    global chargedObjSelected
     # clear all charged objs
     i = len(allChargedObjs) - 1
     while i >= 0:
@@ -2311,6 +2310,10 @@ def startSimulation():
     if (not secondScreen):
         return
     
+    global playing, secondScreenText
+    playing = False
+    secondScreenText.visible = False
+
     scene.userzoom = True
 
     # initialize the electric field arrows and grids
@@ -2466,6 +2469,8 @@ configurationList.append(parallelPlatesExperimentPreset)
 # endregion    
 
 def createSecondScreen():
+    scene.caption = ""
+
     # region preset buttons
     scene.append_to_caption("   ")
     button(text = "Start without preset", bind = start)
@@ -2595,8 +2600,7 @@ def gridPrecisionInput():
 
 # instruction
 def createInstruction():
-    scene.append_to_caption(""" 
-Instruction: 
+    scene.append_to_caption("""Instruction: 
 
 Controls:
     Not Playing:
@@ -2636,11 +2640,34 @@ startBox = box(pos = vec(0, -6, -20), size = vec(12, 6, 0.1), color = color.gree
 secondScreen = False
 
 def start():
-    global secondScreen, introText
+    global secondScreen, introText, startText
     if (hover):
-        introText.visible = False
         secondScreen = True
-        clear()
+        # clear
+        introText.visible = False
+        startText.visible = False
+        startBox.visible = False
+    
+        # clear all charged objs
+        i = len(allChargedObjs) - 1
+        while i >= 0:
+            deleteChargedObj(allChargedObjs[i])
+            i -= 1
+        # clear all trails
+        i = len(allTrails) - 1
+        while i >= 0:
+            allTrails[i].clear()
+            allTrails.remove(allTrails[i])
+            i -= 1
+        
+        # new text
+        global secondScreenText
+        secondScreenText = text(pos = vec(0, -3, -10), text="Pick Your Preset", align='center', color = color.cyan, visible = False)
+        secondScreenText.height = 10    
+        secondScreenText.length = 30
+        secondScreenText.visible = True
+
+        # caption
         createSecondScreen()
     
 scene.bind('click', start)
