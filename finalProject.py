@@ -518,7 +518,7 @@ class PlateChargedObj:
 
         # physics variables
         self.charge = spawnCharge
-        self.chargeDensity = abs(spawnCharge) / spawnArea
+        self.chargeDensity = max(abs(spawnCharge) / spawnArea, 10 * chargeDensityScalar)
         self.pos = spawnPos
         self.collided = []
 
@@ -839,7 +839,7 @@ def clone(co):
 def testPlate():
     start()
     allChargedObjs.append(PlateChargedObj(chargeScalar, chargeScalar / 25 / chargeDensityScalar, 90, vec(0, 0, 0)))
-    allChargedObjs.append(SphereChargedObj(massScalar, 0, vec(0,6,0), vec(0, -3, 0), False))
+    allChargedObjs.append(SphereChargedObj(massScalar, chargeScalar, vec(0,6,0), vec(0, -3, 0), False))
 
 ####################################################################################################
 
@@ -1223,8 +1223,8 @@ def parallelPlatesExperimentPreset():
     start()
     allChargedObjs.append(PlateChargedObj(5*chargeScalar, 5*chargeScalar / (25 * chargeDensityScalar), 90, vec(3, 0, 0)))
     allChargedObjs.append(PlateChargedObj(-5*chargeScalar, 5*chargeScalar / (25 * chargeDensityScalar), 90, vec(-3, 0, 0)))
-    allChargedObjs.append(SphereChargedObj(massScalar, chargeScalar, vec(-1,10,0), vec(0, -1, 0), False))
-    allChargedObjs.append(SphereChargedObj(massScalar, -chargeScalar, vec(1,10,0), vec(0, -1, 0), False))
+    allChargedObjs.append(SphereChargedObj(massScalar, 0.5*chargeScalar, vec(-1,10,0), vec(0, -1, 0), False))
+    allChargedObjs.append(SphereChargedObj(massScalar, -0.5*chargeScalar, vec(1,10,0), vec(0, -1, 0), False))
 
 # endregion    
 
@@ -2181,6 +2181,12 @@ def selectedChargeModified():
             chargedObjSelected.display.width = len
             chargedObjSelected.displaySelect()
 
+    # update force vectors
+    if (vectorToShow == "Force"):
+        for co in allChargedObjs:
+            if (co.type == "Sphere"):
+                co.createForceVec()
+
 def selectedChargeShift(): 
     global chargedObjSelected, selectedChargeSlider, selectedChargeInputField    
     selectedChargeInputField.text = selectedChargeSlider.value
@@ -2213,6 +2219,11 @@ def selectedChargeDensityShift():
     chargedObjSelected.display.height = len / plateHeightFactor
     chargedObjSelected.display.width = len
     chargedObjSelected.displaySelect()
+    # update force vectors
+    if (vectorToShow == "Force"):
+        for co in allChargedObjs:
+            if (co.type == "Sphere"):
+                co.createForceVec()
 
 def selectedChargeDensityInput():
     global chargedObjSelected, selectedChargeDensitySlider, selectedChargeDensityInputField 
@@ -2230,6 +2241,11 @@ def selectedChargeDensityInput():
         chargedObjSelected.display.height = len / plateHeightFactor
         chargedObjSelected.display.width = len
         chargedObjSelected.displaySelect()
+        # update force vectors
+        if (vectorToShow == "Force"):
+            for co in allChargedObjs:
+                if (co.type == "Sphere"):
+                    co.createForceVec()
     else:
         selectedChargeDensityInputField.text = chargedObjSelected.chargeDensity / chargeDensityScalar
 
@@ -2317,6 +2333,11 @@ def angleModified(angle):
     # change display
     chargedObjSelected.display.axis = vec(cos(radians(angle)), sin(radians(angle)), 0) * mag(chargedObjSelected.display.axis)
     chargedObjSelected.displaySelect()
+    # update force vectors
+    if (vectorToShow == "Force"):
+        for co in allChargedObjs:
+            if (co.type == "Sphere"):
+                co.createForceVec()
 
 # fix button
 def fixChargedObj():
@@ -2390,6 +2411,11 @@ def deleteChargedObj(co):
         scene.camera.follow(None)
         cameraFollowedObj = None
     co = None
+    # update force vectors
+    if (vectorToShow == "Force"):
+        for co in allChargedObjs:
+            if (co.type == "Sphere"):
+                co.createForceVec()
 
 # select position input fields
 def updatePosStatSelectScreen():
