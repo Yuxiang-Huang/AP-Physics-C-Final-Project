@@ -11,7 +11,7 @@ scene.width = 1000
 scene.height = 650
 scene.range = 10
 scene.userzoom = False
-scene.userspin = False
+# scene.userspin = False
 scene.fov = pi / 50
 scene.align = "left"
 
@@ -2303,17 +2303,15 @@ def updateForceStatSelectScreen():
 
 ####################################################################################################
 
-# region Intro Screen (Need everything else initialized)
+# region Intro Screen
 
-# intro text
-startText = text(pos = vec(0, -3, -10), text="JackXiang", align='center', color = color.cyan)
-startText.height = 10
-startText.length = 25
-
-# start Button
-def start():
+# start simulation button
+def startSimulation():
+    # also use in intro screen random charge configuration
+    if (not secondScreen):
+        return
+    
     scene.userzoom = True
-    startText.visible = False
 
     # initialize the electric field arrows and grids
     setUnits()
@@ -2332,10 +2330,6 @@ def start():
     scene.bind('mouseup', onMouseUp)
     scene.bind('mousemove', onMouseMove)
 
-scene.append_to_caption("   ")
-startButton = button(text = "Start without preset", bind = start)
-scene.append_to_caption("\n\n   ")
-
 quantumTunneling = False
 
 configurationList = []
@@ -2344,28 +2338,33 @@ configurationList = []
 def butterflyPreset():
     global quantumTunneling
     quantumTunneling = True
+    startSimulation()
     allChargedObjs.append(SphereChargedObj(massScalar, -chargeScalar, vec(0,5,0), vec(1, -1, 0), False))
     allChargedObjs.append(SphereChargedObj(massScalar, -chargeScalar, vec(5,5,0), vec(-1, -1, 0), False))
     allChargedObjs.append(SphereChargedObj(massScalar, 5*chargeScalar, vec(2.5,0,0), vec(0, 1, 0), False))
 
 def dipolePreset():
+    startSimulation()
     allChargedObjs.append(SphereChargedObj(massScalar, chargeScalar, vec(5,0,0), vec(0, 0, 0), False))
     allChargedObjs.append(SphereChargedObj(massScalar, -chargeScalar, vec(-5, 0, 0) , vec(0, 0, 0), False))
     allChargedObjs.append(SphereChargedObj(massScalar, 0, vec(5, -1, 0) , vec(0, 0, 0), False))
 configurationList.append(dipolePreset)
 
 def threeChargePreset(): 
+    startSimulation()
     allChargedObjs.append(SphereChargedObj(massScalar, chargeScalar, vec(0,5,0), vec(0, 0, 0), False))
     allChargedObjs.append(SphereChargedObj(massScalar, chargeScalar, vec(5*cos(pi/6),-5*sin(pi/6),0), vec(0, 0, 0), False))
     allChargedObjs.append(SphereChargedObj(massScalar, -1.5*chargeScalar, vec(-5*cos(pi/6),-5*sin(pi/6),0), vec(0, 0, 0), False))
 configurationList.append(threeChargePreset)
 
 def helixPreset(): 
+    startSimulation()
     allChargedObjs.append(SphereChargedObj(massScalar, -chargeScalar, vec(-1.5,10,0), vec(.25, -2, 0), False))
     allChargedObjs.append(SphereChargedObj(massScalar, chargeScalar, vec(1.5,10,0), vec(-.25, -2, 0), False))
 configurationList.append(helixPreset)
 
 def helixGunPreset ():
+    startSimulation()
     allChargedObjs.append(SphereChargedObj(massScalar, -chargeScalar, vec(-15,1.5,0), vec(2, -.25, 0), False))
     allChargedObjs.append(SphereChargedObj(massScalar, chargeScalar, vec(-15,-1.5,0), vec(2, .25, 0), False))
     allChargedObjs.append(SphereChargedObj(massScalar, -chargeScalar, vec(0,1.5,0), vec(0, 0, 0), False))
@@ -2373,11 +2372,13 @@ def helixGunPreset ():
 configurationList.append(helixGunPreset)  
 
 def somethingPreset():
+    startSimulation()
     allChargedObjs.append(SphereChargedObj(massScalar, -5*chargeScalar, vec(0,5,0), vec(3, 0, 0), False))
     allChargedObjs.append(SphereChargedObj(massScalar, chargeScalar, vec(5*cos(30),-5*sin(30),0), vec(-1, 2, 0), False))
     allChargedObjs.append(SphereChargedObj(massScalar, 5*chargeScalar, vec(-5*cos(30),-5*sin(30),0), vec(1, 2, 0), False))
 
 def yPreset():
+    startSimulation()
     allChargedObjs.append(SphereChargedObj(massScalar, 0, vec(0,5,0), vec(1, -1, 0), False))
     allChargedObjs.append(SphereChargedObj(.1*massScalar, 0, vec(4.5,.5,0), vec(0, 0, 0), True))
     allChargedObjs.append(SphereChargedObj(massScalar, 0, vec(10,5,0), vec(-1, -1, 0), False))
@@ -2387,6 +2388,7 @@ def yPreset():
 configurationList.append(yPreset)
 
 def jPreset():
+    startSimulation()
     allChargedObjs.append(SphereChargedObj(massScalar, 0, vec(-5,5,0), vec(.3, 0, 0), False))
     allChargedObjs.append(SphereChargedObj(massScalar, 0, vec(-6,5,0), vec(0, 0, 0), True))
     allChargedObjs.append(SphereChargedObj(massScalar, 0, vec(6,5,0), vec(0, 0, 0), True))
@@ -2398,6 +2400,7 @@ def jPreset():
 configurationList.append(jPreset)
 
 def chargeTrampolinePreset():
+    startSimulation()
     allChargedObjs.append(SphereChargedObj(massScalar, -chargeScalar, vec(0,5,0), vec(0, 0, 0), True))
     allChargedObjs.append(SphereChargedObj(massScalar, chargeScalar, vec(5,5,0), vec(0, 0, 0), False))
     allChargedObjs.append(SphereChargedObj(massScalar, chargeScalar, vec(0,0,0), vec(0, 0, 0), True))
@@ -2405,40 +2408,47 @@ def chargeTrampolinePreset():
 configurationList.append(chargeTrampolinePreset)
 
 def figureEightPreset():
+    startSimulation()
     allChargedObjs.append(SphereChargedObj(massScalar, -chargeScalar, vec(0,0,0), vec(1,1, 0), False))
     allChargedObjs.append(SphereChargedObj(massScalar, 1.1*chargeScalar, vec(0,-5,0), vec(0, 0, 0), True))
     allChargedObjs.append(SphereChargedObj(massScalar, 1.1*chargeScalar, vec(0,5,0), vec(0, 0, 0), True))
 configurationList.append(figureEightPreset)
 
 def circularOrbitPreset(): 
+    startSimulation()
     allChargedObjs.append(SphereChargedObj(massScalar, -chargeScalar, vec(0,0,0), vec(0, 0, 0), True))
     allChargedObjs.append(SphereChargedObj(massScalar, chargeScalar, vec(0,5,0), vec(sqrt((9E9*1E-9*1E-9)/(5*1E-9)), 0, 0), False))
 configurationList.append(circularOrbitPreset)
 
 #same right now as circular orbit, but this is unfixed and the circular orbit will be fixed
 def loopWavePreset(): 
+    startSimulation()
     allChargedObjs.append(SphereChargedObj(massScalar, -chargeScalar, vec(-15,0,0), vec(0, 0, 0), False))
     allChargedObjs.append(SphereChargedObj(massScalar, chargeScalar, vec(-15,5,0), vec(sqrt((9E9*1E-9*1E-9)/(5*1E-9)), 0, 0), False))
 configurationList.append(loopWavePreset)
 
 def collisionWavePreset():
+    startSimulation()
     allChargedObjs.append(SphereChargedObj(massScalar, chargeScalar, vec(-5.675+15+5,-3.158+10+4,0), vec(-1.991, -.786, 0), False))
     allChargedObjs.append(SphereChargedObj(massScalar, -1.5*chargeScalar, vec(-4.467+15+5,-4.987+10+4,0), vec(.273, -.382, 0), False))
 configurationList.append(collisionWavePreset)
 
 def elipticalObritPreset(): 
+    startSimulation()
     allChargedObjs.append(SphereChargedObj(massScalar, -5*chargeScalar, vec(0,5,0), vec(0, 0, 0), True))
     allChargedObjs.append(SphereChargedObj(massScalar, chargeScalar, vec(5,0,0), vec(-.5, 2.55, 0), False))
 configurationList.append(elipticalObritPreset)
 
 #(self, spawnCharge, spawnArea, spawnAngle, spawnPos)
 def parallelPlatesPreset():
+    startSimulation()
     allChargedObjs.append(PlateChargedObj(chargeScalar, 100, 90, vec(5, 0, 0)))
     allChargedObjs.append(PlateChargedObj(-chargeScalar, 100, 90, vec(-5, 0, 0)))
     allChargedObjs.append(SphereChargedObj(massScalar, chargeScalar, vec(0,5,0), vec(0, -1, 0), False))
 configurationList.append(parallelPlatesPreset)
   
 def faradayBucketPreset(): 
+    startSimulation()
     allChargedObjs.append(PlateChargedObj(-chargeScalar, 100, 0, vec(0, -7, 0)))
     allChargedObjs.append(PlateChargedObj(-chargeScalar, 100, 90, vec(-5, -2, 0)))
     allChargedObjs.append(PlateChargedObj(-chargeScalar, 100, 90, vec(5, -2, 0)))
@@ -2446,6 +2456,7 @@ def faradayBucketPreset():
 configurationList.append(faradayBucketPreset)   
 
 def parallelPlatesExperimentPreset():
+    startSimulation()
     allChargedObjs.append(PlateChargedObj(5*chargeScalar, 5*chargeScalar / (25 * chargeDensityScalar), 90, vec(3, 0, 0)))
     allChargedObjs.append(PlateChargedObj(-5*chargeScalar, 5*chargeScalar / (25 * chargeDensityScalar), 90, vec(-3, 0, 0)))
     allChargedObjs.append(SphereChargedObj(massScalar, 0.5*chargeScalar, vec(-1,10,0), vec(0, -1, 0), False))
@@ -2454,46 +2465,67 @@ configurationList.append(parallelPlatesExperimentPreset)
 
 # endregion    
 
-# region preset buttons
-button(text = "test plate", bind = testPlate)
-scene.append_to_caption("  ")
-button(text = "Something Preset", bind = parallelPlatesExperimentPreset)
-scene.append_to_caption("\n\n   ")
-button(text = "Dipole", bind = dipolePreset)
-scene.append_to_caption("  ")
-button(text = "Three-Charge Motion", bind = threeChargePreset)
-scene.append_to_caption("\n\n   ")
-button(text = "Parallel Plates", bind = parallelPlatesPreset)
-scene.append_to_caption("  ")
-button(text = "Faraday Bucket", bind = faradayBucketPreset)
-scene.append_to_caption("\n\n   ")
-button(text = "Draw Butterfly", bind = butterflyPreset) 
-scene.append_to_caption("\n\n   ")
-button(text = "Draw Helix", bind = helixPreset) 
-scene.append_to_caption("  ")
-button(text = "helix gun (kinda)", bind = helixGunPreset)
-scene.append_to_caption("\n\n   ")
-button(text = "Draw a Y", bind = yPreset)
-scene.append_to_caption("  ")
-button(text = "Draw a J", bind = jPreset)
-scene.append_to_caption("\n\n   ")
-button(text = "model circular orbit", bind = circularOrbitPreset)
-scene.append_to_caption("  ")
-button(text = 'model eliptical orbit', bind = elipticalObritPreset) 
-scene.append_to_caption("\n\n   ")
-button(text = "loop Wave", bind = loopWavePreset)
-scene.append_to_caption("  ")
-button(text="Collision Wave", bind = collisionWavePreset) 
-scene.append_to_caption("\n\n   ")
-button(text = "draw figure 8", bind = figureEightPreset)
-scene.append_to_caption("  ")
-button(text = "Charge Trampoline", bind = chargeTrampolinePreset) 
+def createSecondScreen():
+    # region preset buttons
+    scene.append_to_caption("   ")
+    button(text = "Start without preset", bind = start)
+    scene.append_to_caption("\n\n   ")
+    button(text = "test plate", bind = testPlate)
+    scene.append_to_caption("  ")
+    button(text = "Something Preset", bind = parallelPlatesExperimentPreset)
+    scene.append_to_caption("\n\n   ")
+    button(text = "Dipole", bind = dipolePreset)
+    scene.append_to_caption("  ")
+    button(text = "Three-Charge Motion", bind = threeChargePreset)
+    scene.append_to_caption("\n\n   ")
+    button(text = "Parallel Plates", bind = parallelPlatesPreset)
+    scene.append_to_caption("  ")
+    button(text = "Faraday Bucket", bind = faradayBucketPreset)
+    scene.append_to_caption("\n\n   ")
+    button(text = "Draw Butterfly", bind = butterflyPreset) 
+    scene.append_to_caption("\n\n   ")
+    button(text = "Draw Helix", bind = helixPreset) 
+    scene.append_to_caption("  ")
+    button(text = "helix gun (kinda)", bind = helixGunPreset)
+    scene.append_to_caption("\n\n   ")
+    button(text = "Draw a Y", bind = yPreset)
+    scene.append_to_caption("  ")
+    button(text = "Draw a J", bind = jPreset)
+    scene.append_to_caption("\n\n   ")
+    button(text = "model circular orbit", bind = circularOrbitPreset)
+    scene.append_to_caption("  ")
+    button(text = 'model eliptical orbit', bind = elipticalObritPreset) 
+    scene.append_to_caption("\n\n   ")
+    button(text = "loop Wave", bind = loopWavePreset)
+    scene.append_to_caption("  ")
+    button(text="Collision Wave", bind = collisionWavePreset) 
+    scene.append_to_caption("\n\n   ")
+    button(text = "draw figure 8", bind = figureEightPreset)
+    scene.append_to_caption("  ")
+    button(text = "Charge Trampoline", bind = chargeTrampolinePreset) 
+    # endregion
+    
+    # number of electric field lines slider and input field
+    scene.append_to_caption("\n\n")
+    slider(min = 4, max = 16, value = numOfLine, step = 1, bind = numOfLineShift, length = sliderLength)
+    scene.append_to_caption("\n         Number of Electric Field Line Directions: ")
+    winput(bind = numOfLineInput, text = numOfLine, width = 25)
 
-# endregion
+    # electric field precision slider and input field
+    scene.append_to_caption("\n\n")
+    slider(min = 5, max = 20, value = electricFieldPrecision, step = 1, bind = electricFieldPrecisionShift, length = sliderLength)
+    scene.append_to_caption("\n      Number of Electric Field Lines Per Direction: ")
+    winput(bind = electricFieldPrecisionInput, text = electricFieldPrecision, width = 25)
+
+    # grid precision slider and input field
+    scene.append_to_caption("\n\n")
+    slider(min = 5, max = 20, value = gridPrecision, step = 1, bind = gridPrecisionShift, length = sliderLength)
+    scene.append_to_caption("\n" + slider20Spaces + "    Number of Grid Lines: ")
+    winput(bind = gridPrecisionInput, text = gridPrecision, width = 25)
 
 # region intro screen sliders and input fields
 
-# number of electric field line slider
+# number of electric field lines slider and input field
 numOfLine = 8
 
 def numOfLineShift():
@@ -2515,12 +2547,7 @@ def numOfLineInput():
     else:
         numOfLineInputField.text = numOfLine
 
-scene.append_to_caption("\n\n")
-numOfLineSlider = slider(min = 4, max = 16, value = numOfLine, step = 1, bind = numOfLineShift, length = sliderLength)
-scene.append_to_caption("\n         Number of Electric Field Line Directions: ")
-numOfLineInputField = winput(bind = numOfLineInput, text = numOfLine, width = 25)
-
-# electric field slider and input field
+# electric field precision slider and input field
 electricFieldPrecision = 10
 
 def electricFieldPrecisionShift():
@@ -2541,11 +2568,6 @@ def electricFieldPrecisionInput():
         electricFieldPrecision = num
     else:
         electricFieldPrecisionInputField.text = electricFieldPrecision
-
-scene.append_to_caption("\n\n")
-electricFieldPrecisionSlider = slider(min = 5, max = 20, value = electricFieldPrecision, step = 1, bind = electricFieldPrecisionShift, length = sliderLength)
-scene.append_to_caption("\n      Number of Electric Field Lines Per Direction: ")
-electricFieldPrecisionInputField = winput(bind = electricFieldPrecisionInput, text = electricFieldPrecision, width = 25)
 
 # grid precision slider and input field
 gridPrecision = 10
@@ -2569,14 +2591,9 @@ def gridPrecisionInput():
     else:
         gridPrecisionInputField.text = gridPrecision
 
-scene.append_to_caption("\n\n")
-gridPrecisionSlider = slider(min = 5, max = 20, value = gridPrecision, step = 1, bind = gridPrecisionShift, length = sliderLength)
-scene.append_to_caption("\n" + slider20Spaces + "    Number of Grid Lines: ")
-gridPrecisionInputField = winput(bind = gridPrecisionInput, text = gridPrecision, width = 25)
-
 # endregion
 
-# Instruction
+# instruction
 def createInstruction():
     scene.append_to_caption(""" 
 Instruction: 
@@ -2600,8 +2617,35 @@ Controls:
 
 createInstruction()
 
-#intro configuration
+# after everything is initialized
 
+# intro text
+introText = text(pos = vec(0, -1, -10), text="Electric Draw", align='center', color = color.cyan)
+introText.height = 10
+introText.length = 30
+
+# start text
+startText = text(pos = vec(0, -8, -10), text="start", align='center', color = color.white)
+startText.height = 5
+startText.length = 10
+
+hover = False
+startBox = box(pos = vec(0, -6, -20), size = vec(12, 6, 0.1), color = color.green)
+
+# click to the second screen
+secondScreen = False
+
+def start():
+    global secondScreen, introText
+    if (hover):
+        introText.visible = False
+        secondScreen = True
+        clear()
+        createSecondScreen()
+    
+scene.bind('click', start)
+
+# intro configuration
 configurationList[int(random() * len(configurationList))]()
 
 # endregion
@@ -2617,6 +2661,20 @@ t = 0
 while True:
     rate(numOfRate * time)
     t += 1
+
+    # before simulation
+    if (not secondScreen):
+        mousePos = getMousePos()
+        # hover over start text
+        if (mousePos.x < startBox.pos.x + startBox.length / 2 and 
+            mousePos.x > startBox.pos.x - startBox.length / 2 and 
+            mousePos.y < startBox.pos.y + startBox.height / 2 and 
+            mousePos.y > startBox.pos.y - startBox.height / 2):
+            startText.color = color.black
+            hover = True
+        else:
+            startText.color = color.white
+            hover = False
 
     if (playing):
         for chargedObj in allChargedObjs:
