@@ -260,12 +260,37 @@ class SphereChargedObj:
         allTrails.append(self.trail)
         self.updateDisplay()
 
-    def updateDisplay(self):
+    def noTrailUpdateDisplay(self):
+        # update pos
+        self.trail.stop()
         self.display.pos = self.pos
+        if (self.trailState):
+            self.trail.start()
+
+        # update select display
         if (self == chargedObjSelected and not self.deleted):
             self.displaySelect()
         
-        # vectors
+        # update vectors
+        if (self.fixed or self.deleted):
+            self.hideVec()
+        else:
+            if (vectorToShow == "Velocity"):
+                self.createVelVec()
+            elif (vectorToShow == "Force"):
+                self.createForceVec()
+            else:
+                self.hideVec()
+
+    def updateDisplay(self):
+        # update pos
+        self.display.pos = self.pos
+
+        # update select display
+        if (self == chargedObjSelected and not self.deleted):
+            self.displaySelect()
+        
+        # update vectors
         if (self.fixed or self.deleted):
             self.hideVec()
         else:
@@ -418,8 +443,10 @@ class SphereChargedObj:
     
     # endregion
 
-    def onObj(self, mousePos):
-        return mag(mousePos - self.pos) <= self.display.radius
+    # region collision body
+
+    def onObj(self, pos):
+        return mag(pos - self.pos) <= self.display.radius
 
     def checkCollision(self):
         # skip if fixed
@@ -458,8 +485,24 @@ class SphereChargedObj:
                             chargedObj.pos = chargedObj.pos + norm(chargedObj.pos - self.pos) * dif / 2
                             self.pos = tempPos
 
+                        chargedObj.updateDisplay()
+
                         # prevent collision calculation twice
                         chargedObj.collided.append(self)
+        # update position                
+        self.updateDisplay()
+
+    def posCheck(self):
+        for co in allChargedObjs:
+            if (co.type == "Sphere"):
+                if (mag(self.pos - co.pos) <= self.display.radius + co.display.radius):
+                    dif = self.display.radius + co.display.radius - mag(self.pos - co.pos) 
+                    tempPos = self.pos + norm(self.pos - co.pos) * dif / 2
+                    co.pos = co.pos + norm(co.pos - self.pos) * dif / 2
+                    self.pos = tempPos
+                    co.noTrailUpdateDisplay()
+        self.noTrailUpdateDisplay()
+    # endregion
 
 # endregion
 
@@ -943,10 +986,12 @@ def onMouseUp():
         ruler.modify(0, vec(0, 0, 0))
         ruler.modify(1, vec(0, 0, 0))
     
-    if (chargedObjToDrag != None):
+    # after set position
+    if (not playing and chargedObjToDrag != None and chargedObjSelected != chargedObjToDrag):
         # start trail if necessary
         if (chargedObjToDrag.trailState):
             chargedObjToDrag.trail.start()
+        chargedObjToDrag.posCheck()
 
     # reset variables
     chargedObjToDrag = None
@@ -1679,7 +1724,7 @@ def createCaptionSpawnScreen():
     updateSpawnScreen()
 
 # spawn charge menu
-spawnType = "Plate"
+spawnType = "Sphere"
 
 def selectSpawnChargeObj():
     global spawnType
@@ -2289,16 +2334,12 @@ def selectPosXInput():
     if (selectPosXInputField.number != None):
         chargedObjSelected.pos.x = selectPosXInputField.number
         if (chargedObjSelected.type == "Sphere"):
-            # change position without trail
-            chargedObjSelected.trail.stop()
-            chargedObjSelected.display.pos.x = chargedObjSelected.pos.x
-            if (chargedObjSelected.trailState):
-                chargedObjSelected.trail.start()
-            chargedObjSelected.updateDisplay()
+            chargedObjSelected.noTrailUpdateDisplay()
             updateForceStatSelectScreen()
         elif (chargedObjSelected.type == "Plate"):
             chargedObjSelected.display.pos.x = chargedObjSelected.pos.x
             chargedObjSelected.updateDisplay()
+        chargedObjSelected.posCheck()
     else: 
         # invalid input
         selectPosXInputField.text = '{:1.3f}'.format(chargedObjSelected.pos.x)
@@ -2309,16 +2350,12 @@ def selectPosYInput():
     if (selectPosYInputField.number != None):
         chargedObjSelected.pos.y = selectPosYInputField.number
         if (chargedObjSelected.type == "Sphere"):
-            # change position without trail
-            chargedObjSelected.trail.stop()
-            chargedObjSelected.display.pos.y = chargedObjSelected.pos.y
-            if (chargedObjSelected.trailState):
-                chargedObjSelected.trail.start()
-            chargedObjSelected.updateDisplay()
+            chargedObjSelected.noTrailUpdateDisplay()
             updateForceStatSelectScreen()
         elif (chargedObjSelected.type == "Plate"):
             chargedObjSelected.display.pos.y = chargedObjSelected.pos.y
             chargedObjSelected.updateDisplay()
+        chargedObjSelected.posCheck()
     else: 
         # invalid input
         selectPosYInputField.text = '{:1.3f}'.format(chargedObjSelected.pos.y)
