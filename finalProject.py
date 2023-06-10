@@ -765,6 +765,8 @@ class PlateChargedObj:
     
     # endregion
 
+    # region collision body
+
     def onObj(self, pos):
         # find vertices
         halfLen = self.display.length / 2
@@ -814,6 +816,11 @@ class PlateChargedObj:
                 if (co.onObj(self.pos + self.display.axis / 2)):
                     co.vel = - co.vel
 
+    def posCheck(self):
+        return
+    
+    # endregion
+
 # endregion
 
 def clone(co):
@@ -831,7 +838,7 @@ def clone(co):
 
 def testPlate():
     start()
-    allChargedObjs.append(PlateChargedObj(chargeScalar, 25 * chargeDensityScalar, 90, vec(0, 0, 0)))
+    allChargedObjs.append(PlateChargedObj(chargeScalar, chargeScalar / 25 / chargeDensityScalar, 90, vec(0, 0, 0)))
     allChargedObjs.append(SphereChargedObj(massScalar, 0, vec(0,6,0), vec(0, -3, 0), False))
 
 ####################################################################################################
@@ -1985,7 +1992,7 @@ def createCaptionSelectScreen():
         # select charge density slider and input field
             global selectedChargeDensitySlider, selectedChargeDensityInputField
             scene.append_to_caption("\n\n")
-            selectedChargeDensitySlider = slider(bind = selectedChargeDensityShift, min = 10, max = 25, value = chargedObjSelected.chargeDensity / chargeDensityScalar, step = 1, length = sliderLength)
+            selectedChargeDensitySlider = slider(bind = selectedChargeDensityShift, min = 10, max = 25, value = round(chargedObjSelected.chargeDensity / chargeDensityScalar), step = 1, length = sliderLength)
             scene.append_to_caption("\n" + slider20Spaces + "Charge Density: ")
             selectedChargeDensityInputField = winput(bind = selectedChargeDensityInput, text = selectedChargeDensitySlider.value, width = 35)
             scene.append_to_caption(" pC/m^2")
@@ -2143,6 +2150,14 @@ def selectedChargeModified():
         updateForceStatSelectScreen()
     elif (chargedObjSelected.type == "Plate"):
         num = selectedChargeSlider.value
+        # change the texture
+        if (chargedObjSelected.charge <= 0 and num > 0):
+            chargedObjSelected.display.texture = positivePlateTexture
+        elif (chargedObjSelected.charge >= 0 and num < 0): 
+            chargedObjSelected.display.texture = negativePlateTexture
+        elif (chargedObjSelected.charge != 0 and num == 0): 
+            chargedObjSelected.display.texture = neutralPlateTexture
+
         # change to 0 charge
         if (chargedObjSelected.charge != 0 and num == 0):
             # change charge density to length
@@ -2150,12 +2165,12 @@ def selectedChargeModified():
             createCaptionSelectScreen()
         # change from 0 charge
         elif (chargedObjSelected.charge == 0 and num != 0):
-            chargedObjSelected.charge = num * chargeScalar  
-            len = sqrt(abs(chargedObjSelected.charge) / chargedObjSelected.chargeDensity)
-            chargedObjSelected.display.length = len
-            chargedObjSelected.display.height = len / plateHeightFactor
-            chargedObjSelected.display.width = len
-            chargedObjSelected.displaySelect()
+            if (num > 0):
+                chargedObjSelected.charge = selectedChargeSlider.max * chargeScalar
+            else:  
+                chargedObjSelected.charge = selectedChargeSlider.min * chargeScalar
+            len = chargedObjSelected.display.length
+            chargedObjSelected.chargeDensity = chargedObjSelected.charge / len / len
             createCaptionSelectScreen()
         # not related to 0 charge
         elif (chargedObjSelected.charge != 0 and num != 0):
@@ -2165,14 +2180,6 @@ def selectedChargeModified():
             chargedObjSelected.display.height = len / plateHeightFactor
             chargedObjSelected.display.width = len
             chargedObjSelected.displaySelect()
-
-        # change the texture
-        if (chargedObjSelected.charge > 0):
-            chargedObjSelected.display.texture = positivePlateTexture
-        elif (chargedObjSelected.charge < 0): 
-            chargedObjSelected.display.texture = negativePlateTexture
-        else:
-            chargedObjSelected.display.texture = neutralPlateTexture
 
 def selectedChargeShift(): 
     global chargedObjSelected, selectedChargeSlider, selectedChargeInputField    
