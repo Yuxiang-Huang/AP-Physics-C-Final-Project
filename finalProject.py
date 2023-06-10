@@ -28,7 +28,7 @@ plateHeightFactor = 20
 # ratio of length to length of select display
 plateSelectDisplayFactor = 40
 # for plate when calculating electric field and potential
-deltaFactor = 10
+deltaFactor = 25
 
 # runs this many times per second
 numOfRate = 2000
@@ -778,8 +778,8 @@ def clone(co):
 
 def testPlate():
     start()
-    allChargedObjs.append(PlateChargedObj(chargeScalar, 100 * chargeDensityScalar, 90, vec(0, 0, 0)))
-    allChargedObjs.append(SphereChargedObj(massScalar, chargeScalar, vec(2,0,0), vec(0, 0, 0), False))
+    allChargedObjs.append(PlateChargedObj(chargeScalar, 25 * chargeDensityScalar, 90, vec(0, 0, 0)))
+    allChargedObjs.append(SphereChargedObj(massScalar, chargeScalar, vec(1,0,0), vec(0, 0, 0), False))
 
 ####################################################################################################
 
@@ -1159,8 +1159,8 @@ def faradayBucketPreset():
     
 def parallelPlatesExperimentPreset():
     start()
-    allChargedObjs.append(PlateChargedObj(5*chargeScalar, 100 * chargeDensityScalar, 90, vec(3, 0, 0)))
-    allChargedObjs.append(PlateChargedObj(-5*chargeScalar, 100 * chargeDensityScalar, 90, vec(-3, 0, 0)))
+    allChargedObjs.append(PlateChargedObj(5*chargeScalar, 25 * chargeDensityScalar, 90, vec(3, 0, 0)))
+    allChargedObjs.append(PlateChargedObj(-5*chargeScalar, 25 * chargeDensityScalar, 90, vec(-3, 0, 0)))
     allChargedObjs.append(SphereChargedObj(massScalar, chargeScalar, vec(-1,10,0), vec(0, -1, 0), False))
     allChargedObjs.append(SphereChargedObj(massScalar, -chargeScalar, vec(1,10,0), vec(0, -1, 0), False))
 
@@ -1622,7 +1622,7 @@ def createCaptionSpawnScreen():
     global spawnChargeDensitySlider, spawnChargeDensityInputField
     if (chargeMenu.selected == "Plate"):
         scene.append_to_caption("\n\n")
-        spawnChargeDensitySlider = slider(bind = spawnChargeDensityShift, min = 1, max = 100, value = spawnChargeDensity / chargeDensityScalar, step = 1, length = sliderLength)
+        spawnChargeDensitySlider = slider(bind = spawnChargeDensityShift, min = 10, max = 25, value = spawnChargeDensity / chargeDensityScalar, step = 1, length = sliderLength)
         scene.append_to_caption("\n" + slider20Spaces + "Charge Density: ")
         spawnChargeDensityInputField = winput(bind = spawnChargeDensityInput, text = spawnChargeDensitySlider.value, width = 35)
         scene.append_to_caption(" pC/m^2")
@@ -1857,7 +1857,7 @@ def createCaptionSelectScreen():
     global selectedChargeDensitySlider, selectedChargeDensityInputField
     if (chargedObjSelected.type == "Plate"):
         scene.append_to_caption("\n\n")
-        selectedChargeDensitySlider = slider(bind = selectedChargeDensityShift, min = 1, max = 100, value = chargedObjSelected.chargeDensity / chargeDensityScalar, step = 1, length = sliderLength)
+        selectedChargeDensitySlider = slider(bind = selectedChargeDensityShift, min = 10, max = 25, value = chargedObjSelected.chargeDensity / chargeDensityScalar, step = 1, length = sliderLength)
         scene.append_to_caption("\n" + slider20Spaces + "Charge Density: ")
         selectedChargeDensityInputField = winput(bind = selectedChargeDensityInput, text = selectedChargeDensitySlider.value, width = 35)
         scene.append_to_caption(" pC/m^2")
