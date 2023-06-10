@@ -778,8 +778,10 @@ def clone(co):
 
 def testPlate():
     start()
-    allChargedObjs.append(SphereChargedObj(massScalar, -chargeScalar, vec(2,0,0), vec(-2, 0, 0), False))
-    allChargedObjs.append(PlateChargedObj(chargeScalar, 100 * chargeDensityScalar, 90, vec(0, 0, 0)))
+    allChargedObjs.append(PlateChargedObj(5*chargeScalar, 100 * chargeDensityScalar, 90, vec(3, 0, 0)))
+    allChargedObjs.append(PlateChargedObj(-5*chargeScalar, 100 * chargeDensityScalar, 90, vec(-3, 0, 0)))
+    allChargedObjs.append(SphereChargedObj(massScalar, chargeScalar, vec(-1,2,0), vec(0, -1, 0), False))
+    allChargedObjs.append(SphereChargedObj(massScalar, -chargeScalar, vec(1,2,0), vec(0, -1, 0), False))
 
 ####################################################################################################
 
@@ -972,8 +974,19 @@ def onMouseMove():
         else:
             # common conditions: not playing, dragging 
             if not playing and chargedObjToDrag != None:
-                # additional contiditional for velocity vector: sphere, obj not fixed, and in show velocity vector mode 
-                if (chargedObjToDrag.type == "Sphere" and not chargedObjToDrag.fixed and vectorToShow == "Velocity"):
+                # additional contiditional for velocity vector: sphere, and obj not fixed
+                if (chargedObjToDrag.type == "Sphere" and not chargedObjToDrag.fixed):
+                    # set vector to shownmode to velocity
+                    global vectorToShow, vectorMenu
+                    for co in allChargedObjs:
+                        if (co.type == "Sphere" and not co.fixed):
+                            co.createVelVec()
+                            if (vectorToShow == "Force"):
+                                co.forceVec.visible = False
+                                co.forceLabel.visible = False
+                    vectorToShow = "Velocity"
+                    vectorMenu.selected = vectorToShow
+
                     # set velocity vector
                     chargedObjToDrag.velVec.axis = getMousePos() - chargedObjToDrag.pos
                     chargedObjToDrag.vel = chargedObjToDrag.velVec.axis
