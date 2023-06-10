@@ -741,13 +741,13 @@ class PlateChargedObj:
     def checkCollision(self):
         for co in allChargedObjs:
             if (co.type == "Sphere"):
-                # colliding point
-                if (self.pos.x < co.pos.x):
-                    collidingPoint = co.pos + norm(vec(-self.display.axis.y, self.display.axis.x, 0)) * co.display.radius
-                else:
-                    collidingPoint = co.pos + norm(vec(self.display.axis.y, -self.display.axis.x, 0)) * co.display.radius
+                # colliding point (Just check both points...)
+                # if (mag((co.pos - self.pos).cross(self.display.axis)) > 0):
+                collidingPoint0 = co.pos + norm(vec(-self.display.axis.y, self.display.axis.x, 0)) * co.display.radius
+                # else:
+                collidingPoint1 = co.pos + norm(vec(self.display.axis.y, -self.display.axis.x, 0)) * co.display.radius
                 # colliding distance
-                if (self.onObj(collidingPoint)):
+                if (self.onObj(collidingPoint0) or self.onObj(collidingPoint1)):
                     angleIn = acos(dot(co.vel, self.display.axis) / mag(co.vel) / mag(self.display.axis))
                     magnitude = mag(co.vel)
                     finalAngle = atan2(self.display.axis.y, self.display.axis.x) - angleIn
@@ -770,8 +770,8 @@ def clone(co):
 
 def testPlate():
     start()
-    allChargedObjs.append(SphereChargedObj(massScalar, -chargeScalar, vec(1,0,0), vec(0, 0, 0), False))
-    allChargedObjs.append(PlateChargedObj(chargeScalar, 10 * chargeDensityScalar, 90, vec(0, 0, 0)))
+    allChargedObjs.append(SphereChargedObj(massScalar, -chargeScalar, vec(2,0,0), vec(-2, 0, 0), False))
+    allChargedObjs.append(PlateChargedObj(chargeScalar, 100 * chargeDensityScalar, 90, vec(0, 0, 0)))
 
 ####################################################################################################
 
@@ -1036,6 +1036,8 @@ def threeChargePreset():
     allChargedObjs.append(SphereChargedObj(massScalar, -1.5*chargeScalar, vec(-5*cos(pi/6),-5*sin(pi/6),0), vec(0, 0, 0), False))
 
 def butterflyPreset():
+    global quantumTunneling
+    quantumTunneling = True
     start()
     allChargedObjs.append(SphereChargedObj(massScalar, -chargeScalar, vec(0,5,0), vec(1, -1, 0), False))
     allChargedObjs.append(SphereChargedObj(massScalar, -chargeScalar, vec(5,5,0), vec(-1, -1, 0), False))
@@ -1054,6 +1056,8 @@ def helixGunPreset ():
     allChargedObjs.append(SphereChargedObj(massScalar, chargeScalar, vec(0,-1.5,0), vec(0, 0, 0), False))
     
 def dragonflyPreset ():
+    global quantumTunneling
+    quantumTunneling = True
     start()
     allChargedObjs.append(SphereChargedObj(massScalar, chargeScalar, vec(0,5,0), vec(0, 0, 0), False))
     allChargedObjs.append(SphereChargedObj(massScalar, chargeScalar, vec(4.33,-2.5,0), vec(0, 0, 0), False))
@@ -1120,17 +1124,42 @@ def elipticalObritPreset():
     start()
     allChargedObjs.append(SphereChargedObj(massScalar, -5*chargeScalar, vec(0,5,0), vec(0, 0, 0), True))
     allChargedObjs.append(SphereChargedObj(massScalar, chargeScalar, vec(5,0,0), vec(-.5, 2.55, 0), False))
+
+#(self, spawnCharge, spawnChargeDensity, spawnAngle, spawnPos)
+def parallelPlatesPreset():
+    start()
+    allChargedObjs.append(PlateChargedObj(chargeScalar, 10 * chargeDensityScalar, 90, vec(5, 0, 0)))
+    allChargedObjs.append(PlateChargedObj(-chargeScalar, 10 * chargeDensityScalar, 90, vec(-5, 0, 0)))
+    allChargedObjs.append(SphereChargedObj(massScalar, chargeScalar, vec(0,5,0), vec(0, -1, 0), False))
     
-# preset buttons
+def faradayBucketPreset(): 
+    start()
+    allChargedObjs.append(PlateChargedObj(-chargeScalar, 10 * chargeDensityScalar, 0, vec(0, -7, 0)))
+    allChargedObjs.append(PlateChargedObj(-chargeScalar, 10 * chargeDensityScalar, 90, vec(-5, -2, 0)))
+    allChargedObjs.append(PlateChargedObj(-chargeScalar, 10 * chargeDensityScalar, 90, vec(5, -2, 0)))
+    allChargedObjs.append(SphereChargedObj(massScalar, chargeScalar, vec(0,5,0), vec(0, 0, 0), False))
+    
+def parallelPlatesExperimentPreset():
+    start()
+    allChargedObjs.append(PlateChargedObj(5*chargeScalar, 125 * chargeDensityScalar, 90, vec(3, 0, 0)))
+    allChargedObjs.append(PlateChargedObj(-5*chargeScalar, 125 * chargeDensityScalar, 90, vec(-3, 0, 0)))
+    allChargedObjs.append(SphereChargedObj(massScalar, chargeScalar, vec(-1,10,0), vec(0, -1, 0), False))
+    allChargedObjs.append(SphereChargedObj(massScalar, -chargeScalar, vec(1,10,0), vec(0, -1, 0), False))
+
+# endregion    
+
+# region preset buttons
 button(text = "test plate", bind = testPlate)
+scene.append_to_caption("  ")
+button(text = "Something Preset", bind = parallelPlatesExperimentPreset)
 scene.append_to_caption("\n\n   ")
 button(text = "Dipole", bind = dipolePreset)
 scene.append_to_caption("  ")
 button(text = "Three-Charge Motion", bind = threeChargePreset)
 scene.append_to_caption("\n\n   ")
-button(text = "Parallel Plates", bind = start)
+button(text = "Parallel Plates", bind = parallelPlatesPreset)
 scene.append_to_caption("  ")
-button(text = "Faraday Bucket", bind = start)
+button(text = "Faraday Bucket", bind = faradayBucketPreset)
 scene.append_to_caption("\n\n   ")
 button(text = "Draw Butterfly", bind = butterflyPreset) 
 scene.append_to_caption("  ")
@@ -1155,7 +1184,6 @@ scene.append_to_caption("\n\n   ")
 button(text = "draw figure 8", bind = figureEightPreset)
 scene.append_to_caption("  ")
 button(text = "Charge Trampoline", bind = chargeTrampolinePreset) 
-scene.append_to_caption("\n\n   ")
 
 # endregion
 
@@ -1310,7 +1338,7 @@ def createCaptionMainScreen():
     scene.append_to_caption("\n")
     updateTimeSlider = slider(bind=updateTimeShift, min = 0.1, max = 2, value = updateTime, step = 0.1, length = sliderLength) 
     scene.append_to_caption("\n")
-    updateTimeText = wtext(text = "<center>Physical Varibles updates every " + str(time) + "s</center>")
+    updateTimeText = wtext(text = "<center>Physical variables update every " + str(time) + "s</center>")
 
     # vector menu
     global vectorMenu
@@ -1439,7 +1467,7 @@ updateTime = 1
 def updateTimeShift():
     global updateTime, updateTimeText
     updateTime = updateTimeSlider.value
-    updateTimeText.text = "<center>Physical Varibles updates every " + str(updateTime) + "s</center>"
+    updateTimeText.text = "<center>Physical variables update every " + str(updateTime) + "s</center>"
 
 # vector menu
 vectorToShow = "Neither"
