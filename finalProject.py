@@ -493,12 +493,12 @@ class SphereChargedObj:
         self.updateDisplay()
 
     def posCheck(self):
+        # push away other objs on top of obj
         for co in allChargedObjs:
             if (co != self):
                 if (co.type == "Sphere"):
                     # colliding distance
-                    if (mag(self.pos - co.pos) <= self.display.radius + co.display.radius):
-                        # push away
+                    if (mag(self.pos - co.pos) < self.display.radius + co.display.radius):
                         dif = self.display.radius + co.display.radius - mag(self.pos - co.pos) 
                         dir = norm(co.pos - self.pos)
                         if (mag(dir) == 0):
@@ -506,15 +506,18 @@ class SphereChargedObj:
                             dir = vec(cos(randomTheta), sin(randomTheta), 0)
                         co.pos += dir * dif
                         co.noTrailUpdateDisplay()
+                        co.posCheck()
                 elif (co.type == "Plate"):
                     # colliding distance
-                    if (co.onObj(self.pos)):
+                    dif = pointLineDist(self.pos, co.pos, co.display.axis) - (self.display.radius + co.display.height / 2)
+                    if (dif < 0):
                         # using cross product to find colliding point
                         if ((self.pos - co.pos).cross(co.display.axis).z > 0):
-                            co.pos += norm(vec(-co.display.axis.y, co.display.axis.x, 0)) * (self.display.radius + co.display.height)
+                            co.pos -= norm(vec(-co.display.axis.y, co.display.axis.x, 0)) * dif
                         else:
-                            co.pos += norm(vec(co.display.axis.y, -co.display.axis.x, 0)) * (self.display.radius + co.display.height)
-                        co.display.pos = co.pos
+                            co.pos -= norm(vec(co.display.axis.y, -co.display.axis.x, 0)) * dif
+                        co.updateDisplay()
+                        co.posCheck()
                     
     # endregion 
 
@@ -831,21 +834,34 @@ class PlateChargedObj:
                     co.vel = - co.vel
 
     def posCheck(self):
+        # push away other objs on top of obj
         for co in allChargedObjs:
             if (co != self):
                 if (co.type == "Sphere"):
                     # colliding distance
-                    if (self.onObj(co.pos)):
+                    dif = pointLineDist(co.pos, self.pos, self.display.axis) - (co.display.radius + self.display.height / 2)
+                    if (dif < 0):
                         # using cross product to find colliding point
                         if ((co.pos - self.pos).cross(self.display.axis).z > 0):
-                            co.pos -= norm(vec(-self.display.axis.y, self.display.axis.x, 0)) * (co.display.radius + self.display.height)
+                            co.pos += norm(vec(-self.display.axis.y, self.display.axis.x, 0)) * dif
                         else:
-                            co.pos -= norm(vec(self.display.axis.y, -self.display.axis.x, 0)) * (co.display.radius + self.display.height)
+                            co.pos += norm(vec(self.display.axis.y, -self.display.axis.x, 0)) * dif
                         co.noTrailUpdateDisplay()
+                        co.posCheck()
     
     # endregion
 
 # endregion
+
+def pointLineDist(pointPos, linePos, lineAxis):
+    # too far away to draw perpendicular case
+    if (mag(pointPos - linePos) > mag(lineAxis/2)):
+        # two endpoints
+        return min(mag(linePos + lineAxis / 2 - pointPos), mag(linePos - lineAxis / 2 - pointPos))
+    else:    
+        # vector way to find distance between point and line from multi
+        v0 = linePos - pointPos
+        return mag(v0.cross(lineAxis)) / mag(lineAxis)
 
 def clone(co):
     # copy stats including mass, charge, pos, vel, fixed, trail
@@ -863,7 +879,7 @@ def clone(co):
 def testPlate():
     start()
     allChargedObjs.append(PlateChargedObj(chargeScalar, chargeScalar / 25 / chargeDensityScalar, 90, vec(0, 0, 0)))
-    allChargedObjs.append(SphereChargedObj(massScalar, chargeScalar, vec(0,6,0), vec(0, -3, 0), False))
+    allChargedObjs.append(SphereChargedObj(massScalar, chargeScalar, vec(1,0,0), vec(0, -3, 0), False))
 
 ####################################################################################################
 
@@ -1022,7 +1038,6 @@ def onMouseUp():
         # start trail if necessary
         if (chargedObjToDrag.trailState):
             chargedObjToDrag.trail.start()
-        chargedObjToDrag.posCheck()
 
     # reset variables
     chargedObjToDrag = None
@@ -1047,6 +1062,8 @@ def onMouseMove():
 
                 # don't display trail when move
                 chargedObjToDrag.trail.stop()
+
+                chargedObjToDrag.posCheck()
 
                 # could have impacted electric field and potential in the spawn screen
                 if (spawnPos != None):
