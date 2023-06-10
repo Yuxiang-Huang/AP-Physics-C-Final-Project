@@ -28,7 +28,7 @@ plateHeightFactor = 20
 # ratio of length to length of select display
 plateSelectDisplayFactor = 40
 # for plate when calculating electric field and potential
-deltaFactor = 25
+deltaFactor = 10
 
 # runs this many times per second
 numOfRate = 2000
@@ -518,7 +518,7 @@ class PlateChargedObj:
 
         # physics variables
         self.charge = spawnCharge
-        self.chargeDensity = spawnCharge / spawnArea
+        self.chargeDensity = abs(spawnCharge) / spawnArea
         self.pos = spawnPos
         self.collided = []
 
@@ -1205,24 +1205,24 @@ def elipticalObritPreset():
     allChargedObjs.append(SphereChargedObj(massScalar, -5*chargeScalar, vec(0,5,0), vec(0, 0, 0), True))
     allChargedObjs.append(SphereChargedObj(massScalar, chargeScalar, vec(5,0,0), vec(-.5, 2.55, 0), False))
 
-#(self, spawnCharge, spawnChargeDensity, spawnAngle, spawnPos)
+#(self, spawnCharge, spawnArea, spawnAngle, spawnPos)
 def parallelPlatesPreset():
     start()
-    allChargedObjs.append(PlateChargedObj(chargeScalar, 10 * chargeDensityScalar, 90, vec(5, 0, 0)))
-    allChargedObjs.append(PlateChargedObj(-chargeScalar, 10 * chargeDensityScalar, 90, vec(-5, 0, 0)))
+    allChargedObjs.append(PlateChargedObj(chargeScalar, 100, 90, vec(5, 0, 0)))
+    allChargedObjs.append(PlateChargedObj(-chargeScalar, 100, 90, vec(-5, 0, 0)))
     allChargedObjs.append(SphereChargedObj(massScalar, chargeScalar, vec(0,5,0), vec(0, -1, 0), False))
     
 def faradayBucketPreset(): 
     start()
-    allChargedObjs.append(PlateChargedObj(-chargeScalar, 10 * chargeDensityScalar, 0, vec(0, -7, 0)))
-    allChargedObjs.append(PlateChargedObj(-chargeScalar, 10 * chargeDensityScalar, 90, vec(-5, -2, 0)))
-    allChargedObjs.append(PlateChargedObj(-chargeScalar, 10 * chargeDensityScalar, 90, vec(5, -2, 0)))
+    allChargedObjs.append(PlateChargedObj(-chargeScalar, 100, 0, vec(0, -7, 0)))
+    allChargedObjs.append(PlateChargedObj(-chargeScalar, 100, 90, vec(-5, -2, 0)))
+    allChargedObjs.append(PlateChargedObj(-chargeScalar, 100, 90, vec(5, -2, 0)))
     allChargedObjs.append(SphereChargedObj(massScalar, chargeScalar, vec(0,5,0), vec(0, 0, 0), False))
     
 def parallelPlatesExperimentPreset():
     start()
-    allChargedObjs.append(PlateChargedObj(5*chargeScalar, 25 * chargeDensityScalar, 90, vec(3, 0, 0)))
-    allChargedObjs.append(PlateChargedObj(-5*chargeScalar, 25 * chargeDensityScalar, 90, vec(-3, 0, 0)))
+    allChargedObjs.append(PlateChargedObj(5*chargeScalar, 5*chargeScalar / (25 * chargeDensityScalar), 90, vec(3, 0, 0)))
+    allChargedObjs.append(PlateChargedObj(-5*chargeScalar, 5*chargeScalar / (25 * chargeDensityScalar), 90, vec(-3, 0, 0)))
     allChargedObjs.append(SphereChargedObj(massScalar, chargeScalar, vec(-1,10,0), vec(0, -1, 0), False))
     allChargedObjs.append(SphereChargedObj(massScalar, -chargeScalar, vec(1,10,0), vec(0, -1, 0), False))
 
@@ -2165,12 +2165,12 @@ def selectedChargeModified():
             createCaptionSelectScreen()
         # change from 0 charge
         elif (chargedObjSelected.charge == 0 and num != 0):
-            if (num > 0):
-                chargedObjSelected.charge = selectedChargeSlider.max * chargeScalar
-            else:  
-                chargedObjSelected.charge = selectedChargeSlider.min * chargeScalar
-            len = chargedObjSelected.display.length
-            chargedObjSelected.chargeDensity = chargedObjSelected.charge / len / len
+            chargedObjSelected.charge = num * chargeScalar  
+            len = sqrt(abs(chargedObjSelected.charge) / chargedObjSelected.chargeDensity)
+            chargedObjSelected.display.length = len
+            chargedObjSelected.display.height = len / plateHeightFactor
+            chargedObjSelected.display.width = len
+            chargedObjSelected.displaySelect()
             createCaptionSelectScreen()
         # not related to 0 charge
         elif (chargedObjSelected.charge != 0 and num != 0):
