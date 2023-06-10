@@ -494,15 +494,29 @@ class SphereChargedObj:
 
     def posCheck(self):
         for co in allChargedObjs:
-            if (co.type == "Sphere"):
-                if (mag(self.pos - co.pos) <= self.display.radius + co.display.radius):
-                    dif = self.display.radius + co.display.radius - mag(self.pos - co.pos) 
-                    tempPos = self.pos + norm(self.pos - co.pos) * dif / 2
-                    co.pos = co.pos + norm(co.pos - self.pos) * dif / 2
-                    self.pos = tempPos
-                    co.noTrailUpdateDisplay()
-        self.noTrailUpdateDisplay()
-    # endregion
+            if (co != self):
+                if (co.type == "Sphere"):
+                    # colliding distance
+                    if (mag(self.pos - co.pos) <= self.display.radius + co.display.radius):
+                        # push away
+                        dif = self.display.radius + co.display.radius - mag(self.pos - co.pos) 
+                        dir = norm(co.pos - self.pos)
+                        if (mag(dir) == 0):
+                            randomTheta = random() * pi * 2
+                            dir = vec(cos(randomTheta), sin(randomTheta), 0)
+                        co.pos += dir * dif
+                        co.noTrailUpdateDisplay()
+                elif (co.type == "Plate"):
+                    # colliding distance
+                    if (co.onObj(self.pos)):
+                        # using cross product to find colliding point
+                        if ((self.pos - co.pos).cross(co.display.axis).z > 0):
+                            co.pos += norm(vec(-co.display.axis.y, co.display.axis.x, 0)) * (self.display.radius + co.display.height)
+                        else:
+                            co.pos += norm(vec(co.display.axis.y, -co.display.axis.x, 0)) * (self.display.radius + co.display.height)
+                        co.display.pos = co.pos
+                    
+    # endregion 
 
 # endregion
 
@@ -817,7 +831,17 @@ class PlateChargedObj:
                     co.vel = - co.vel
 
     def posCheck(self):
-        return
+        for co in allChargedObjs:
+            if (co != self):
+                if (co.type == "Sphere"):
+                    # colliding distance
+                    if (self.onObj(co.pos)):
+                        # using cross product to find colliding point
+                        if ((co.pos - self.pos).cross(self.display.axis).z > 0):
+                            co.pos -= norm(vec(-self.display.axis.y, self.display.axis.x, 0)) * (co.display.radius + self.display.height)
+                        else:
+                            co.pos -= norm(vec(self.display.axis.y, -self.display.axis.x, 0)) * (co.display.radius + self.display.height)
+                        co.noTrailUpdateDisplay()
     
     # endregion
 
@@ -1542,7 +1566,7 @@ def timeShift():
     timeText.text = "<center>Time in program for every second in real life:" + str(time) + "s</center>"
 
 # time slider
-updateTime = 1
+updateTime = 0.1
 
 def updateTimeShift():
     global updateTime, updateTimeText
@@ -2307,6 +2331,7 @@ def selectedAngleShift():
     angle = radians(selectedAngleSlider.value)
     chargedObjSelected.display.axis = vec(cos(angle), sin(angle), 0) * mag(chargedObjSelected.display.axis)
     chargedObjSelected.displaySelect()
+    chargedObjSelected.posCheck()
 
 def selectedAngleInput():
     global chargedObjSelected, selectedAngleSlider, selectedAngleInputField 
@@ -2321,6 +2346,7 @@ def selectedAngleInput():
         angle = radians(num)
         chargedObjSelected.display.axis = vec(cos(angle), sin(angle), 0) * mag(chargedObjSelected.display.axis)
         chargedObjSelected.displaySelect()
+        chargedObjSelected.posCheck()
     else:
         selectedAngleInputField.text = degrees(atan2(chargedObjSelected.display.axis.y, chargedObjSelected.display.axis.x))
 
@@ -2333,6 +2359,8 @@ def angleModified(angle):
     # change display
     chargedObjSelected.display.axis = vec(cos(radians(angle)), sin(radians(angle)), 0) * mag(chargedObjSelected.display.axis)
     chargedObjSelected.displaySelect()
+    # prevent overlap
+    chargedObjSelected.posCheck()
     # update force vectors
     if (vectorToShow == "Force"):
         for co in allChargedObjs:
