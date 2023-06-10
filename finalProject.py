@@ -1866,28 +1866,28 @@ def createCaptionSelectScreen():
 
     # for plate
     if (chargedObjSelected.type == "Plate"):
-        # if (chargedObjSelected.charge == 0):
-        #     # select area slider and input field
-        #     global selectedAreaSlider, selectedAreaInputField
-        #     scene.append_to_caption("\n\n")
-        #     selectedAreaSlider = slider(bind = selectedAreaShift, min = 4, max = 500, value = round(chargedObjSelected.display.length *  chargedObjSelected.display.width), step = 1, length = sliderLength)
-        #     scene.append_to_caption("\n" + slider30Spaces + "Area: ")
-        #     selectedAreaInputField = winput(bind = selectedAreaInput, text = selectedAreaSlider.value, width = 35)
-        #     scene.append_to_caption(" m^2")
+        if (chargedObjSelected.charge == 0):
+            # select area slider and input field
+            global selectedAreaSlider, selectedAreaInputField
+            scene.append_to_caption("\n\n")
+            selectedAreaSlider = slider(bind = selectedAreaShift, min = 4, max = 500, value = round(chargedObjSelected.display.length *  chargedObjSelected.display.width), step = 1, length = sliderLength)
+            scene.append_to_caption("\n" + slider30Spaces + "Area: ")
+            selectedAreaInputField = winput(bind = selectedAreaInput, text = selectedAreaSlider.value, width = 35)
+            scene.append_to_caption(" m^2")
 
-        #     selectedAreaSlider.disabled = playing
-        #     selectedAreaInputField.disabled = playing
-        # else:
+            selectedAreaSlider.disabled = playing
+            selectedAreaInputField.disabled = playing
+        else:
         # select charge density slider and input field
-        global selectedChargeDensitySlider, selectedChargeDensityInputField
-        scene.append_to_caption("\n\n")
-        selectedChargeDensitySlider = slider(bind = selectedChargeDensityShift, min = 10, max = 25, value = chargedObjSelected.chargeDensity / chargeDensityScalar, step = 1, length = sliderLength)
-        scene.append_to_caption("\n" + slider20Spaces + "Charge Density: ")
-        selectedChargeDensityInputField = winput(bind = selectedChargeDensityInput, text = selectedChargeDensitySlider.value, width = 35)
-        scene.append_to_caption(" pC/m^2")
+            global selectedChargeDensitySlider, selectedChargeDensityInputField
+            scene.append_to_caption("\n\n")
+            selectedChargeDensitySlider = slider(bind = selectedChargeDensityShift, min = 10, max = 25, value = chargedObjSelected.chargeDensity / chargeDensityScalar, step = 1, length = sliderLength)
+            scene.append_to_caption("\n" + slider20Spaces + "Charge Density: ")
+            selectedChargeDensityInputField = winput(bind = selectedChargeDensityInput, text = selectedChargeDensitySlider.value, width = 35)
+            scene.append_to_caption(" pC/m^2")
 
-        selectedChargeDensitySlider.disabled = playing
-        selectedChargeDensityInputField.disabled = playing
+            selectedChargeDensitySlider.disabled = playing
+            selectedChargeDensityInputField.disabled = playing
 
     # select mass slider and input field
     global selectedMassSlider, selectedMassInputField
@@ -2039,7 +2039,7 @@ def selectedChargeModified():
         if ((chargedObjSelected.charge == 0 and num != 0) or (chargedObjSelected.charge != 0 and num == 0)):
             # change charge density to length
             chargedObjSelected.charge = num * chargeScalar
-            createCaptionSelectScreen()
+            # createCaptionSelectScreen()
         elif (chargedObjSelected.charge != 0 and num != 0):
             chargedObjSelected.charge = num * chargeScalar  
             len = sqrt(abs(chargedObjSelected.charge) / chargedObjSelected.chargeDensity)
