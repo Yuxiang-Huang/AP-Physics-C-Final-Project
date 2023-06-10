@@ -746,6 +746,7 @@ class PlateChargedObj:
                     collidingPoint = co.pos + norm(vec(-self.display.axis.y, self.display.axis.x, 0)) * co.display.radius
                     # colliding distance
                     if (self.onObj(collidingPoint)):
+                        print("collide!1")
                         angleIn = acos(dot(co.vel, self.display.axis) / mag(co.vel) / mag(self.display.axis))
                         magnitude = mag(co.vel)
                         # subtract angle
@@ -755,11 +756,16 @@ class PlateChargedObj:
                     collidingPoint = co.pos + norm(vec(self.display.axis.y, -self.display.axis.x, 0)) * co.display.radius
                     # colliding distance
                     if (self.onObj(collidingPoint)):
+                        print("collide!2")
                         angleIn = acos(dot(co.vel, self.display.axis) / mag(co.vel) / mag(self.display.axis))
                         magnitude = mag(co.vel)
                         # add angle
                         finalAngle = atan2(self.display.axis.y, self.display.axis.x) + angleIn
                         co.vel = vec(magnitude * cos(finalAngle), magnitude * sin(finalAngle), 0)
+                
+                # edge detection
+                if (co.onObj(self.pos + self.display.axis / 2)):
+                    co.vel = - co.vel
 
 # endregion
 
@@ -779,7 +785,7 @@ def clone(co):
 def testPlate():
     start()
     allChargedObjs.append(PlateChargedObj(chargeScalar, 25 * chargeDensityScalar, 90, vec(0, 0, 0)))
-    allChargedObjs.append(SphereChargedObj(massScalar, chargeScalar, vec(1,0,0), vec(0, 0, 0), False))
+    allChargedObjs.append(SphereChargedObj(massScalar, 0, vec(0,6,0), vec(0, -3, 0), False))
 
 ####################################################################################################
 
@@ -1356,7 +1362,7 @@ def createCaptionMainScreen():
     scene.append_to_caption("\n")
     updateTimeSlider = slider(bind=updateTimeShift, min = 0.1, max = 2, value = updateTime, step = 0.1, length = sliderLength) 
     scene.append_to_caption("\n")
-    updateTimeText = wtext(text = "<center>Physical variables update every " + str(time) + "s</center>")
+    updateTimeText = wtext(text = "<center>Physical variables update every " + str(updateTime) + "s</center>")
 
     # vector menu
     global vectorMenu
@@ -1694,7 +1700,8 @@ def spawnChargeInput():
         # min max and restrain on magnitude
         num = max(spawnChargeSlider.min, spawnChargeInputField.number)
         num = min(spawnChargeSlider.max, num)
-        num = max(spawnChargeSlider.step, abs(num)) * round(abs(num) / num)
+        if (num != 0):
+            num = max(0.1, abs(num)) * round(abs(num) / num)
         # set values
         if (chargeMenu.selected == "Sphere"):
             spawnChargeSphere = num * chargeScalar
@@ -2041,7 +2048,8 @@ def selectedChargeInput():
         # min max and restrain on magnitude
         num = max(selectedChargeSlider.min, selectedChargeInputField.number)
         num = min(selectedChargeSlider.max, num)
-        num = max(selectedChargeSlider.step, abs(num)) * round(abs(num) / num)
+        if (num != 0):
+            num = max(0.1, abs(num)) * round(abs(num) / num)
         # set values
         chargedObjSelected.charge = num * chargeScalar
         selectedChargeSlider.value = num
