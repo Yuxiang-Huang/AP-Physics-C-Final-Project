@@ -2102,24 +2102,27 @@ def cameraFollow():
 def selectedChargeModified():
     global chargedObjSelected
     if (chargedObjSelected.type == "Sphere"):
+        num = selectedChargeSlider.value
         # change the texture
-        if (chargedObjSelected.charge > 0):
+        if (num > 0 and chargedObjSelected.charge <= 0):
             if (chargedObjSelected.fixed):
                 chargedObjSelected.display.texture = fixedPositiveSphereTexture
             else:
                 chargedObjSelected.display.texture = positiveSphereTexture
-        elif (chargedObjSelected.charge < 0): 
+        elif (num < 0 and chargedObjSelected.charge >= 0): 
             if (chargedObjSelected.fixed):
                 chargedObjSelected.display.texture = fixedNegativeSphereTexture
             else:
                 chargedObjSelected.display.texture = negativeSphereTexture
-        else:
+        elif (num == 0 and chargedObjSelected.charge != 0):
             if (chargedObjSelected.fixed):
                 chargedObjSelected.display.texture = fixedNeutralSphereTexture
             else:
                 chargedObjSelected.display.texture = neutralSphereTexture
 
-        # colors
+        chargedObjSelected.charge = num * chargeScalar
+
+        # colors    
         if (chargedObjSelected.charge > 0):
             curColor = color.red
         elif (chargedObjSelected.charge < 0):
