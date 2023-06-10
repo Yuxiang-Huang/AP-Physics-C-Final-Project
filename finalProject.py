@@ -69,6 +69,13 @@ neutralPlateTexture = "https://i.imgur.com/eLOxvSS.png"
 allChargedObjs = []
 allTrails = []
 
+# each charged obj will do maximum one pos check per run
+posChecked = []
+
+def resetPosChecked():
+    global posChecked
+    posChecked = []
+
 # Math for rescaling (assume height > width)
 def setUnits():
     global unitWidth, unitHeight
@@ -493,6 +500,10 @@ class SphereChargedObj:
         self.updateDisplay()
 
     def posCheck(self):
+        # each charged obj will do maximum one pos check per run
+        if (self in posChecked):
+            return
+        posChecked.append(self)
         # push away other objs on top of obj
         for co in allChargedObjs:
             if (co != self):
@@ -509,7 +520,7 @@ class SphereChargedObj:
                         co.posCheck()
                 elif (co.type == "Plate"):
                     # colliding distance
-                    dif = pointLineDist(self.pos, co.pos, co.display.axis) - (self.display.radius + co.display.height / 2)
+                    dif = pointLineDist(self.pos, co.pos, co.display.axis, co.display.height) - (self.display.radius + co.display.height / 2)
                     if (dif < 0):
                         # using cross product to find colliding point
                         if ((self.pos - co.pos).cross(co.display.axis).z > 0):
@@ -834,12 +845,16 @@ class PlateChargedObj:
                     co.vel = - co.vel
 
     def posCheck(self):
+        # each charged obj will do maximum one pos check per run
+        if (self in posChecked):
+            return
+        posChecked.append(self)
         # push away other objs on top of obj
         for co in allChargedObjs:
             if (co != self):
                 if (co.type == "Sphere"):
                     # colliding distance
-                    dif = pointLineDist(co.pos, self.pos, self.display.axis) - (co.display.radius + self.display.height / 2)
+                    dif = pointLineDist(co.pos, self.pos, self.display.axis, self.display.height) - (co.display.radius + self.display.height / 2)
                     if (dif < 0):
                         # using cross product to find colliding point
                         if ((co.pos - self.pos).cross(self.display.axis).z > 0):
@@ -853,11 +868,11 @@ class PlateChargedObj:
 
 # endregion
 
-def pointLineDist(pointPos, linePos, lineAxis):
+def pointLineDist(pointPos, linePos, lineAxis, height):
     # too far away to draw perpendicular case
     if (mag(pointPos - linePos) > mag(lineAxis/2)):
-        # two endpoints
-        return min(mag(linePos + lineAxis / 2 - pointPos), mag(linePos - lineAxis / 2 - pointPos))
+        # two endpoints (subtract by half the height to prevent counting it when calculating collision)
+        return min(mag(linePos + lineAxis / 2 - pointPos), mag(linePos - lineAxis / 2 - pointPos)) + height / 2
     else:    
         # vector way to find distance between point and line from multi
         v0 = linePos - pointPos
@@ -1064,6 +1079,7 @@ def onMouseMove():
                 chargedObjToDrag.trail.stop()
 
                 chargedObjToDrag.posCheck()
+                resetPosChecked()
 
                 # could have impacted electric field and potential in the spawn screen
                 if (spawnPos != None):
@@ -1944,6 +1960,9 @@ def spawnChargedObj():
         allChargedObjs.append(SphereChargedObj(spawnMass, spawnChargeSphere, spawnPos, vec(0, 0, 0), False))
     elif (spawnType == "Plate"):
         allChargedObjs.append(PlateChargedObj(spawnChargePlate, spawnArea, spawnAngle, spawnPos))
+    # prevent overlap
+    allChargedObjs[-1].posCheck()
+    resetPosChecked()
     back()
 
 # back button
@@ -2221,6 +2240,9 @@ def selectedChargeModified():
             chargedObjSelected.display.height = len / plateHeightFactor
             chargedObjSelected.display.width = len
             chargedObjSelected.displaySelect()
+    # prevent overlap
+    chargedObjSelected.posCheck()
+    resetPosChecked()
 
     # update force vectors
     if (vectorToShow == "Force"):
@@ -2260,6 +2282,9 @@ def selectedChargeDensityShift():
     chargedObjSelected.display.height = len / plateHeightFactor
     chargedObjSelected.display.width = len
     chargedObjSelected.displaySelect()
+    # prevent overlap
+    chargedObjSelected.posCheck()
+    resetPosChecked()
     # update force vectors
     if (vectorToShow == "Force"):
         for co in allChargedObjs:
@@ -2282,6 +2307,8 @@ def selectedChargeDensityInput():
         chargedObjSelected.display.height = len / plateHeightFactor
         chargedObjSelected.display.width = len
         chargedObjSelected.displaySelect()
+        chargedObjSelected.posCheck()
+        resetPosChecked()
         # update force vectors
         if (vectorToShow == "Force"):
             for co in allChargedObjs:
@@ -2323,6 +2350,9 @@ def selectedMassShift():
     # change radius
     chargedObjSelected.display.radius = ((chargedObjSelected.mass) / (((4/3)* pi*sphereMassDensity)))**(1/3)
     chargedObjSelected.displaySelect()
+    # prevent overlap
+    chargedObjSelected.posCheck()
+    resetPosChecked()
 
 def selectedMassInput():
     global chargedObjSelected, selectedMassSlider, selectedMassInputField 
@@ -2337,6 +2367,9 @@ def selectedMassInput():
         # change radius
         chargedObjSelected.display.radius = ((chargedObjSelected.mass) / (((4/3)* pi*sphereMassDensity)))**(1/3)
         chargedObjSelected.displaySelect()
+        # prevent overlap
+        chargedObjSelected.posCheck()
+        resetPosChecked()
     else:
         selectedMassInputField.text = chargedObjSelected.mass / massScalar
 
@@ -2348,7 +2381,9 @@ def selectedAngleShift():
     angle = radians(selectedAngleSlider.value)
     chargedObjSelected.display.axis = vec(cos(angle), sin(angle), 0) * mag(chargedObjSelected.display.axis)
     chargedObjSelected.displaySelect()
+    # prevent overlap
     chargedObjSelected.posCheck()
+    resetPosChecked()
 
 def selectedAngleInput():
     global chargedObjSelected, selectedAngleSlider, selectedAngleInputField 
@@ -2363,7 +2398,9 @@ def selectedAngleInput():
         angle = radians(num)
         chargedObjSelected.display.axis = vec(cos(angle), sin(angle), 0) * mag(chargedObjSelected.display.axis)
         chargedObjSelected.displaySelect()
+        # prevent overlap
         chargedObjSelected.posCheck()
+        resetPosChecked()
     else:
         selectedAngleInputField.text = degrees(atan2(chargedObjSelected.display.axis.y, chargedObjSelected.display.axis.x))
 
@@ -2378,6 +2415,7 @@ def angleModified(angle):
     chargedObjSelected.displaySelect()
     # prevent overlap
     chargedObjSelected.posCheck()
+    resetPosChecked()
     # update force vectors
     if (vectorToShow == "Force"):
         for co in allChargedObjs:
