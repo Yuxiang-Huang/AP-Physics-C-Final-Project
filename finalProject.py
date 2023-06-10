@@ -509,7 +509,7 @@ class SphereChargedObj:
 # region Plate
 
 class PlateChargedObj:       
-    def __init__(self, spawnCharge, spawnChargeDensity, spawnAngle, spawnPos):
+    def __init__(self, spawnCharge, spawnArea, spawnAngle, spawnPos):
         # patch for making sure deleting everything
         self.deleted = False
 
@@ -518,12 +518,12 @@ class PlateChargedObj:
 
         # physics variables
         self.charge = spawnCharge
-        self.chargeDensity = spawnChargeDensity
+        self.chargeDensity = spawnCharge / spawnArea
         self.pos = spawnPos
         self.collided = []
 
         # radius
-        spawnLen = sqrt(abs(self.charge) / self.chargeDensity)
+        spawnLen = sqrt(spawnArea)
 
         # thin boxes
         self.display = box(pos = spawnPos, size = vec(spawnLen, spawnLen / plateHeightFactor, spawnLen),
@@ -1674,13 +1674,29 @@ def createCaptionSpawnScreen():
     spawnChargeInputField = winput(bind = spawnChargeInput, text = spawnChargeSlider.value, width = 35)
     scene.append_to_caption(" nC")
 
-    global spawnChargeDensitySlider, spawnChargeDensityInputField
     if (chargeMenu.selected == "Plate"):
-        scene.append_to_caption("\n\n")
-        spawnChargeDensitySlider = slider(bind = spawnChargeDensityShift, min = 10, max = 25, value = spawnChargeDensity / chargeDensityScalar, step = 1, length = sliderLength)
-        scene.append_to_caption("\n" + slider20Spaces + "Charge Density: ")
-        spawnChargeDensityInputField = winput(bind = spawnChargeDensityInput, text = spawnChargeDensitySlider.value, width = 35)
-        scene.append_to_caption(" pC/m^2")
+        if (spawnChargePlate == 0):
+            # select area slider and input field
+            global spawnAreaSlider, spawnAreaInputField
+            scene.append_to_caption("\n\n")
+            spawnAreaSlider = slider(bind = spawnAreaShift, min = 4, max = 500, value = spawnArea, step = 1, length = sliderLength)
+            scene.append_to_caption("\n" + slider30Spaces + "Area: ")
+            spawnAreaInputField = winput(bind = spawnAreaInput, text = spawnAreaSlider.value, width = 35)
+            scene.append_to_caption(" m^2")
+
+            spawnAreaSlider.disabled = playing
+            spawnAreaInputField.disabled = playing
+        else:
+        # select charge density slider and input field
+            global spawnChargeDensitySlider, spawnChargeDensityInputField
+            scene.append_to_caption("\n\n")
+            spawnChargeDensitySlider = slider(bind = spawnChargeDensityShift, min = 10, max = 25, value = spawnChargeDensity / chargeDensityScalar, step = 1, length = sliderLength)
+            scene.append_to_caption("\n" + slider20Spaces + "Charge Density: ")
+            spawnChargeDensityInputField = winput(bind = spawnChargeDensityInput, text = spawnChargeDensitySlider.value, width = 35)
+            scene.append_to_caption(" pC/m^2")
+
+            spawnChargeDensitySlider.disabled = playing
+            spawnChargeDensityInputField.disabled = playing
 
     # spawn mass slider and input field
     global spawnMassSlider, spawnMassInputField
@@ -1735,13 +1751,32 @@ def selectSpawnChargeObj():
 spawnChargeSphere = chargeScalar
 spawnChargePlate = chargeScalar
 
+def plateSpawnChargeCheck():
+    global spawnChargePlate, spawnArea
+    # for 0 charge case
+    num = spawnChargeSlider.value
+    # change to 0 charge
+    if (spawnChargePlate != 0 and num == 0):
+        # change charge density to length
+        spawnChargePlate = num * chargeScalar
+        createCaptionSpawnScreen()
+    # change from 0 charge
+    elif (spawnChargePlate == 0 and num != 0):
+        spawnChargePlate = num * chargeScalar  
+        spawnArea = round(spawnChargePlate / spawnChargeDensity)
+        createCaptionSpawnScreen()
+    # not related to 0 charge
+    elif (spawnChargePlate != 0 and num != 0):
+        spawnChargePlate = num * chargeScalar  
+        spawnArea = round(spawnChargePlate / spawnChargeDensity)
+
 def spawnChargeShift():
     global spawnChargeSphere, spawnChargePlate, spawnChargeInputField
+    spawnChargeInputField.text = spawnChargeSlider.value
     if (chargeMenu.selected == "Sphere"):
         spawnChargeSphere = spawnChargeSlider.value * chargeScalar    
     elif (chargeMenu.selected == "Plate"):
-        spawnChargePlate = spawnChargeSlider.value * chargeScalar    
-    spawnChargeInputField.text = spawnChargeSlider.value
+        plateSpawnChargeCheck()
 
 def spawnChargeInput():
     global spawnChargeSphere, spawnChargePlate, spawnChargeSlider, spawnChargeInputField
@@ -1752,12 +1787,12 @@ def spawnChargeInput():
         if (num != 0):
             num = max(0.1, abs(num)) * round(abs(num) / num)
         # set values
+        spawnChargeSlider.value = num
+        spawnChargeInputField.text = num
         if (chargeMenu.selected == "Sphere"):
             spawnChargeSphere = num * chargeScalar
         elif (chargeMenu.selected == "Plate"):
-            spawnChargePlate = num * chargeScalar
-        spawnChargeSlider.value = num
-        spawnChargeInputField.text = num
+            plateSpawnChargeCheck()
     else:
         # invalid input
         if (chargeMenu.selected == "Sphere"):
@@ -1769,23 +1804,47 @@ def spawnChargeInput():
 spawnChargeDensity = 10 * chargeDensityScalar
 
 def spawnChargeDensityShift():
-    global spawnChargeDensity, spawnChargeDensityInputField
+    global spawnChargeDensity, spawnArea, spawnChargeDensityInputField
     spawnChargeDensity = spawnChargeDensitySlider.value * chargeDensityScalar    
+    spawnArea = spawnChargePlate / spawnChargeDensity
     spawnChargeDensityInputField.text = spawnChargeDensitySlider.value
 
 def spawnChargeDensityInput():
-    global spawnChargeDensity, spawnChargeDensitySlider, spawnChargeDensityInputField
+    global spawnChargeDensity, spawnArea, spawnChargeDensitySlider, spawnChargeDensityInputField
     if (spawnChargeDensityInputField.number != None):
         # min max
         num = max(spawnChargeDensitySlider.min, spawnChargeDensityInputField.number)
         num = min(spawnChargeDensitySlider.max, num)
         # set values
         spawnChargeDensity = num * chargeDensityScalar
+        spawnArea = spawnChargePlate / spawnChargeDensity
         spawnChargeDensitySlider.value = num
         spawnChargeDensityInputField.text = num
     else:
         # invalid input
         spawnChargeDensityInputField.text = spawnChargeDensity / chargeDensityScalar
+
+# spawn area slider and input field
+spawnArea = 100
+
+def spawnAreaShift():
+    global spawnArea, spawnAreaInputField
+    spawnArea = spawnAreaSlider.value
+    spawnAreaInputField.text = spawnAreaSlider.value
+
+def spawnAreaInput():
+    global spawnArea, spawnAreaSlider, spawnAreaInputField
+    if (spawnAreaInputField.number != None):
+        # min max
+        num = max(spawnAreaSlider.min, spawnAreaInputField.number)
+        num = min(spawnAreaSlider.max, num)
+        # set values
+        spawnArea = num
+        spawnAreaSlider.value = num
+        spawnAreaInputField.text = num
+    else:
+        # invalid input
+        spawnAreaInputField.text = spawnArea
 
 # spawn mass slider and input field
 spawnMass = massScalar
@@ -1836,7 +1895,7 @@ def spawnChargedObj():
     if (spawnType == "Sphere"):
         allChargedObjs.append(SphereChargedObj(spawnMass, spawnChargeSphere, spawnPos, vec(0, 0, 0), False))
     elif (spawnType == "Plate"):
-        allChargedObjs.append(PlateChargedObj(spawnChargePlate, spawnChargeDensity, spawnAngle, spawnPos))
+        allChargedObjs.append(PlateChargedObj(spawnChargePlate, spawnArea, spawnAngle, spawnPos))
     back()
 
 # back button
