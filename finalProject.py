@@ -741,17 +741,25 @@ class PlateChargedObj:
     def checkCollision(self):
         for co in allChargedObjs:
             if (co.type == "Sphere"):
-                # colliding point (Just check both points...)
-                # if (mag((co.pos - self.pos).cross(self.display.axis)) > 0):
-                collidingPoint0 = co.pos + norm(vec(-self.display.axis.y, self.display.axis.x, 0)) * co.display.radius
-                # else:
-                collidingPoint1 = co.pos + norm(vec(self.display.axis.y, -self.display.axis.x, 0)) * co.display.radius
-                # colliding distance
-                if (self.onObj(collidingPoint0) or self.onObj(collidingPoint1)):
-                    angleIn = acos(dot(co.vel, self.display.axis) / mag(co.vel) / mag(self.display.axis))
-                    magnitude = mag(co.vel)
-                    finalAngle = atan2(self.display.axis.y, self.display.axis.x) - angleIn
-                    co.vel = vec(magnitude * cos(finalAngle), magnitude * sin(finalAngle), 0)
+                # using cross product to find colliding point
+                if ((co.pos - self.pos).cross(self.display.axis).z > 0):
+                    collidingPoint = co.pos + norm(vec(-self.display.axis.y, self.display.axis.x, 0)) * co.display.radius
+                    # colliding distance
+                    if (self.onObj(collidingPoint)):
+                        angleIn = acos(dot(co.vel, self.display.axis) / mag(co.vel) / mag(self.display.axis))
+                        magnitude = mag(co.vel)
+                        # subtract angle
+                        finalAngle = atan2(self.display.axis.y, self.display.axis.x) - angleIn
+                        co.vel = vec(magnitude * cos(finalAngle), magnitude * sin(finalAngle), 0)
+                else:
+                    collidingPoint = co.pos + norm(vec(self.display.axis.y, -self.display.axis.x, 0)) * co.display.radius
+                    # colliding distance
+                    if (self.onObj(collidingPoint)):
+                        angleIn = acos(dot(co.vel, self.display.axis) / mag(co.vel) / mag(self.display.axis))
+                        magnitude = mag(co.vel)
+                        # add angle
+                        finalAngle = atan2(self.display.axis.y, self.display.axis.x) + angleIn
+                        co.vel = vec(magnitude * cos(finalAngle), magnitude * sin(finalAngle), 0)
 
 # endregion
 
@@ -1102,8 +1110,7 @@ def figureEightPreset():
     allChargedObjs.append(SphereChargedObj(massScalar, -chargeScalar, vec(0,0,0), vec(1,1, 0), False))
     allChargedObjs.append(SphereChargedObj(massScalar, 1.1*chargeScalar, vec(0,-5,0), vec(0, 0, 0), True))
     allChargedObjs.append(SphereChargedObj(massScalar, 1.1*chargeScalar, vec(0,5,0), vec(0, 0, 0), True))
-    
-    
+       
 def circularOrbitPreset(): 
     start()
     allChargedObjs.append(SphereChargedObj(massScalar, -chargeScalar, vec(0,0,0), vec(0, 0, 0), True))
@@ -1141,8 +1148,8 @@ def faradayBucketPreset():
     
 def parallelPlatesExperimentPreset():
     start()
-    allChargedObjs.append(PlateChargedObj(5*chargeScalar, 125 * chargeDensityScalar, 90, vec(3, 0, 0)))
-    allChargedObjs.append(PlateChargedObj(-5*chargeScalar, 125 * chargeDensityScalar, 90, vec(-3, 0, 0)))
+    allChargedObjs.append(PlateChargedObj(5*chargeScalar, 100 * chargeDensityScalar, 90, vec(3, 0, 0)))
+    allChargedObjs.append(PlateChargedObj(-5*chargeScalar, 100 * chargeDensityScalar, 90, vec(-3, 0, 0)))
     allChargedObjs.append(SphereChargedObj(massScalar, chargeScalar, vec(-1,10,0), vec(0, -1, 0), False))
     allChargedObjs.append(SphereChargedObj(massScalar, -chargeScalar, vec(1,10,0), vec(0, -1, 0), False))
 
