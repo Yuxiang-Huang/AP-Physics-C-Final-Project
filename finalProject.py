@@ -5,6 +5,8 @@ from vpython import *
 
 # region Variables
 
+testMode = False
+
 # set scene
 scene.background = color.white
 scene.width = 1000
@@ -470,8 +472,18 @@ class SphereChargedObj:
                     if (not (chargedObj in self.collided)):
                         # collide with fixed obj
                         if (chargedObj.fixed):
-                            # reverse velocity
-                            self.vel = - self.vel
+                            # find theta (angle between vectors)
+                            magnitude = mag(self.vel)
+                            dif = chargedObj.pos - self.pos
+                            theta = acos(dif.dot(self.vel) / mag(dif) / mag(self.vel))
+
+                            # cross product to figure out add or subtract
+                            if (dif.cross(self.vel).z < 0):
+                                finalTheta = atan2(dif.y, dif.x) + theta
+                            else:
+                                finalTheta = atan2(dif.y, dif.x) - theta
+
+                            self.vel = -vec(magnitude * cos(finalTheta), magnitude * sin(finalTheta), 0)
 
                             # position check
                             self.pos = chargedObj.pos + norm(self.pos - chargedObj.pos) * (self.display.radius + chargedObj.display.radius)
@@ -891,10 +903,10 @@ def clone(co):
 
 # endregion
 
-def testPlate():
-   
-    allChargedObjs.append(PlateChargedObj(chargeScalar, chargeScalar / 25 / chargeDensityScalar, 90, vec(0, 0, 0)))
-    allChargedObjs.append(SphereChargedObj(massScalar, chargeScalar, vec(1,0,0), vec(0, -3, 0), False))
+def test():
+    startSimulation()
+    allChargedObjs.append(SphereChargedObj(massScalar, chargeScalar, vec(0,0,0), vec(0, 0, 0), True))
+    allChargedObjs.append(SphereChargedObj(massScalar, 0, vec(-3,2,0), vec(2, -1, 0), False))
 
 ####################################################################################################
 
@@ -2350,7 +2362,6 @@ def dipolePreset():
     startSimulation()
     allChargedObjs.append(SphereChargedObj(massScalar, chargeScalar, vec(5,0,0), vec(0, 0, 0), False))
     allChargedObjs.append(SphereChargedObj(massScalar, -chargeScalar, vec(-5, 0, 0) , vec(0, 0, 0), False))
-    allChargedObjs.append(SphereChargedObj(massScalar, 0, vec(5, -1, 0) , vec(0, 0, 0), False))
 configurationList.append(dipolePreset)
 
 def threeChargePreset(): 
@@ -2373,12 +2384,6 @@ def helixGunPreset ():
     allChargedObjs.append(SphereChargedObj(massScalar, -chargeScalar, vec(0,1.5,0), vec(0, 0, 0), False))
     allChargedObjs.append(SphereChargedObj(massScalar, chargeScalar, vec(0,-1.5,0), vec(0, 0, 0), False))
 configurationList.append(helixGunPreset)  
-
-def somethingPreset():
-    startSimulation()
-    allChargedObjs.append(SphereChargedObj(massScalar, -5*chargeScalar, vec(0,5,0), vec(3, 0, 0), False))
-    allChargedObjs.append(SphereChargedObj(massScalar, chargeScalar, vec(5*cos(30),-5*sin(30),0), vec(-1, 2, 0), False))
-    allChargedObjs.append(SphereChargedObj(massScalar, 5*chargeScalar, vec(-5*cos(30),-5*sin(30),0), vec(1, 2, 0), False))
 
 def yPreset():
     startSimulation()
@@ -2458,13 +2463,20 @@ def faradayBucketPreset():
     allChargedObjs.append(SphereChargedObj(massScalar, chargeScalar, vec(0,5,0), vec(0, 0, 0), False))
 configurationList.append(faradayBucketPreset)   
 
-def parallelPlatesExperimentPreset():
+def plateTunnelPreset():
     startSimulation()
     allChargedObjs.append(PlateChargedObj(5*chargeScalar, 5*chargeScalar / (25 * chargeDensityScalar), 90, vec(3, 0, 0)))
     allChargedObjs.append(PlateChargedObj(-5*chargeScalar, 5*chargeScalar / (25 * chargeDensityScalar), 90, vec(-3, 0, 0)))
     allChargedObjs.append(SphereChargedObj(massScalar, 0.5*chargeScalar, vec(-1,10,0), vec(0, -1, 0), False))
     allChargedObjs.append(SphereChargedObj(massScalar, -0.5*chargeScalar, vec(1,10,0), vec(0, -1, 0), False))
-configurationList.append(parallelPlatesExperimentPreset)
+configurationList.append(plateTunnelPreset)
+
+def chargeTrampoline2Preset():
+    startSimulation()
+    allChargedObjs.append(PlateChargedObj(5*chargeScalar, 5*chargeScalar / (25 * chargeDensityScalar), 45, vec(0, 0, 0)))
+    allChargedObjs.append(SphereChargedObj(massScalar, chargeScalar, vec(2.5,-2.5,0), vec(0, 0, 0), True))
+    allChargedObjs.append(SphereChargedObj(massScalar, -7.5*chargeScalar, vec(7.5,2.5,0), vec(0, -1, 0), False))
+configurationList.append(chargeTrampoline2Preset)
 
 # endregion    
 
@@ -2475,12 +2487,12 @@ def createSecondScreen():
     scene.append_to_caption("   ")
     button(text = "Start without preset", bind = start)
     scene.append_to_caption("\n\n   ")
-    button(text = "test plate", bind = testPlate)
-    scene.append_to_caption("  ")
-    button(text = "Something Preset", bind = parallelPlatesExperimentPreset)
+    button(text = "Plate Tunnel", bind = plateTunnelPreset)
+    scene.append_to_caption("   ")
+    button(text = "draw figure 8", bind = figureEightPreset)
     scene.append_to_caption("\n\n   ")
     button(text = "Dipole", bind = dipolePreset)
-    scene.append_to_caption("  ")
+    scene.append_to_caption("   ")
     button(text = "Three-Charge Motion", bind = threeChargePreset)
     scene.append_to_caption("\n\n   ")
     button(text = "Parallel Plates", bind = parallelPlatesPreset)
@@ -2505,9 +2517,9 @@ def createSecondScreen():
     scene.append_to_caption("  ")
     button(text="Collision Wave", bind = collisionWavePreset) 
     scene.append_to_caption("\n\n   ")
-    button(text = "draw figure 8", bind = figureEightPreset)
-    scene.append_to_caption("  ")
     button(text = "Charge Trampoline", bind = chargeTrampolinePreset) 
+    scene.append_to_caption("  ")
+    button(text = "Charge Trampoline 2", bind = chargeTrampoline2Preset)
     # endregion
     
     # number of electric field lines slider and input field
@@ -2673,7 +2685,10 @@ def start():
 scene.bind('click', start)
 
 # intro configuration
-configurationList[int(random() * len(configurationList))]()
+if (testMode):
+    test()
+else:
+    configurationList[int(random() * len(configurationList))]()
 
 # endregion
 
@@ -2691,12 +2706,9 @@ while True:
 
     # before simulation
     if (not secondScreen):
-        mousePos = getMousePos()
+        mousePos = scene.mouse.project(normal=vec(0, 0, 1), point = vec(0, 0, -20))
         # hover over start text
-        if (mousePos.x < startBox.pos.x + startBox.length / 2 and 
-            mousePos.x > startBox.pos.x - startBox.length / 2 and 
-            mousePos.y < startBox.pos.y + startBox.height / 2 and 
-            mousePos.y > startBox.pos.y - startBox.height / 2):
+        if ((mousePos.x < startBox.pos.x + startBox.length / 2) and (mousePos.x > startBox.pos.x - startBox.length / 2) and (mousePos.y < startBox.pos.y + startBox.height / 2) and (mousePos.y > startBox.pos.y - startBox.height / 2)):
             startText.color = color.black
             hover = True
         else:
