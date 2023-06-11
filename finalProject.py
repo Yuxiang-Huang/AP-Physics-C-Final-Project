@@ -5,7 +5,7 @@ from vpython import *
 
 # region Variables
 
-testMode = False
+testMode = True
 
 # set scene
 scene.background = color.white
@@ -904,8 +904,9 @@ def clone(co):
 # endregion
 
 def test():
-
-# def butterfly():
+    startSimulation()
+    
+def butterfly():
     global quantumTunneling
     quantumTunneling = True
     startSimulation()
@@ -1204,7 +1205,7 @@ def createCaptionMainScreen():
     # electric field mode button
     global electricFieldButton
     scene.append_to_caption("\n\n   ")
-    electricFieldButton = button(text="Electric Field: Mode " + str(electricFieldMode), bind = changeElectricField)
+    electricFieldButton = button(text="Electric Field Mode " + str(electricFieldMode), bind = changeElectricField)
 
     # electric field opacity checkbox
     global electricOpacityCheckbox
@@ -1377,7 +1378,7 @@ def changeElectricField():
             for j in range(gridPrecision):
                 electricFieldArrowsAll[i][j].visible = False
 
-    electricFieldButton.text = "Electric Field: Mode " + str(electricFieldMode)
+    electricFieldButton.text = "Electric Field Mode " + str(electricFieldMode)
 
 # electric field opacity checkbox
 electricOpacityMode = False
@@ -2324,7 +2325,7 @@ def updateForceStatSelectScreen():
 # start simulation button
 def startSimulation():
     # also use in intro screen random charge configuration
-    if (not secondScreen):
+    if (not presetScreen):
         return
     
     # bind events
@@ -2333,9 +2334,9 @@ def startSimulation():
     scene.bind('mouseup', onMouseUp)
     scene.bind('mousemove', onMouseMove)
     
-    global playing, secondScreenText
+    global playing, presetScreenText
     playing = False
-    secondScreenText.visible = False
+    presetScreenText.visible = False
 
     scene.userzoom = True
 
@@ -2356,6 +2357,9 @@ configurationList = []
 
 # region presets
 def dipolePreset():
+    if (presetScreen):
+        global electricFieldMode
+        electricFieldMode = 1
     startSimulation()
     allChargedObjs.append(SphereChargedObj(massScalar, chargeScalar, vec(5,0,0), vec(0, 0, 0), False))
     allChargedObjs.append(SphereChargedObj(massScalar, -chargeScalar, vec(-5, 0, 0) , vec(0, 0, 0), False))
@@ -2453,6 +2457,10 @@ def parallelPlatesPreset():
 configurationList.append(parallelPlatesPreset)
   
 def faradayBucketPreset(): 
+    if (presetScreen):
+        global gridMode, electricPotentialMode
+        gridMode = True
+        electricPotentialMode = 1
     startSimulation()
     allChargedObjs.append(PlateChargedObj(-chargeScalar, 100, 0, vec(0, -7, 0)))
     allChargedObjs.append(PlateChargedObj(-chargeScalar, 100, 90, vec(-5, -2, 0)))
@@ -2553,15 +2561,14 @@ def randomChargeArena():
     for co in allChargedObjs:
         co.trail.stop() 
         co.trailState = False
-configurationList.append(randomChargeArena)
 
 def twoBodyMotionPreset():
+    if (presetScreen):
+        global electricFieldMode
+        electricFieldMode = 2
     startSimulation()
-    global electricFieldMode
-    electricFieldMode = 2
     allChargedObjs.append(SphereChargedObj(massScalar, -5*chargeScalar, vec(-5,0,0), vec(0, sqrt(11.25), 0), False))
     allChargedObjs.append(SphereChargedObj(massScalar, 5*chargeScalar, vec(5,0,0), vec(0, -sqrt(11.25), 0), False))
-
 configurationList.append(twoBodyMotionPreset)
 
 # endregion    
@@ -2571,19 +2578,19 @@ def createPresetScreen():
 
     # region preset buttons
     
-    # First
+    # Default
     scene.append_to_caption("   ")
     button(text = "Start without preset", bind = startSimulation)
     scene.append_to_caption("   ")
-    button(text = "J", bind = jPreset, color = color.orange, background = color.blue)
+    button(text = "J", bind = jPreset, color = color.yellow, background = color.purple)
     scene.append_to_caption("   ")
-    button(text = "Y", bind = yPreset, color = color.yellow, background = color.purple)
+    button(text = "Y", bind = yPreset, color = color.orange, background = color.blue)
 
     # Basics
     scene.append_to_caption("\n\n   <b>Basics</b>\n   ")
     button(text = "Dipole", bind = dipolePreset)
     scene.append_to_caption("   ")
-    button(text = "Draw figure 8", bind = figureEightPreset)
+    button(text = "Figure 8", bind = figureEightPreset)
     scene.append_to_caption("   ")
     button(text = "Three-Charge Motion", bind = threeChargePreset)
 
@@ -2842,15 +2849,15 @@ hover = False
 startBox = box(pos = vec(0, -6, -20), size = vec(12, 6, 0.1), color = color.green)
 
 # click to the second screen
-secondScreen = False
+presetScreen = False
 
 def start():
-    global secondScreen, introText, startText, hover
+    global presetScreen, introText, startText, hover
     # start only when click on button
     if (not hover):
         return
     hover = False
-    secondScreen = True
+    presetScreen = True
     # clear
     introText.visible = False
     startText.visible = False
@@ -2868,30 +2875,12 @@ def start():
         allTrails.remove(allTrails[i])
         i -= 1
     
-    # reset modes
-    global electricFieldMode, electricPotentialMode
-    electricFieldMode = 0
-    for i in range(gridPrecision):
-        for j in range(gridPrecision):
-            electricFieldArrowsAll[i][j].visible = False
-    
-    electricPotentialMode = 0
-    for i in range(gridPrecision):
-        # rows
-        potentialGridRows[i].visible = False
-        # cols
-        potentialGridCols[i].visible = False
-
-    for i in range(gridPrecision-1):
-        for j in range(gridPrecision-1):
-            electricPotentialLabels[i][j].visible = False
-    
     # new text
-    global secondScreenText
-    secondScreenText = text(pos = vec(0, -3, -10), text="Pick Your Preset", align='center', color = color.cyan, visible = False)
-    secondScreenText.height = 10    
-    secondScreenText.length = 30
-    secondScreenText.visible = True
+    global presetScreenText
+    presetScreenText = text(pos = vec(0, -3, -10), text="Pick Your Preset", align='center', color = color.cyan, visible = False)
+    presetScreenText.height = 10    
+    presetScreenText.length = 30
+    presetScreenText.visible = True
 
     # caption
     createPresetScreen()
@@ -2904,15 +2893,8 @@ if (testMode):
     start()
     test()
 else:
-    # configurationList[int(random() * len(configurationList))]()
-    twoBodyMotionPreset()
-
-# electric field and potential and grid for intro screen
-setUnits()
-createElectricFieldArrowsAll()
-setElectricFieldArrowsAll()
-createPotentialGrid()
-setElectricPotentialGrid()
+    configurationList[int(random() * len(configurationList))]()
+    # twoBodyMotionPreset()
 
 # endregion
 
@@ -2931,7 +2913,7 @@ while True:
     t += 1
 
     # before simulation
-    if (not secondScreen):
+    if (not presetScreen):
         mousePos = scene.mouse.project(normal=vec(0, 0, 1), point = vec(0, 0, -20))
         # hover over start text
         if ((mousePos.x < startBox.pos.x + startBox.length / 2) and (mousePos.x > startBox.pos.x - startBox.length / 2) and (mousePos.y < startBox.pos.y + startBox.height / 2) and (mousePos.y > startBox.pos.y - startBox.height / 2)):
