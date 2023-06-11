@@ -5,7 +5,7 @@ from vpython import *
 
 # region Variables
 
-testMode = False
+testMode = True
 
 # set scene
 scene.background = color.white
@@ -904,6 +904,11 @@ def clone(co):
 # endregion
 
 def test():
+    startSimulation()
+    allChargedObjs.append(SphereChargedObj(massScalar, -5*chargeScalar, vec(-5,0,0), vec(0, sqrt(11.25), 0), False))
+    allChargedObjs.append(SphereChargedObj(massScalar, 5*chargeScalar, vec(5,0,0), vec(0, -sqrt(11.25), 0), False))
+
+def butterfly():
     global quantumTunneling
     quantumTunneling = True
     startSimulation()
@@ -2553,6 +2558,11 @@ def randomChargeArena():
         co.trailState = False
 configurationList.append(randomChargeArena)
 
+def twoBodyMotionPreset():
+    startSimulation()
+
+configurationList.append(twoBodyMotionPreset)
+
 # endregion    
 
 def createPresetScreen():
@@ -2564,9 +2574,9 @@ def createPresetScreen():
     scene.append_to_caption("   ")
     button(text = "Start without preset", bind = startSimulation)
     scene.append_to_caption("   ")
-    button(text = "Y", bind = yPreset)
+    button(text = "J", bind = jPreset, color = color.orange, background = color.blue)
     scene.append_to_caption("   ")
-    button(text = "J", bind = jPreset)
+    button(text = "Y", bind = yPreset, color = color.yellow, background = color.purple)
 
     # Basics
     scene.append_to_caption("\n\n   <b>Basics</b>\n   ")
@@ -2582,7 +2592,7 @@ def createPresetScreen():
     scene.append_to_caption("   ")
     button(text = 'Eliptical Orbit', bind = elipticalObritPreset) 
     scene.append_to_caption("   ")
-    button(text = "Two-Body Motion", bind = test)
+    button(text = "Two-Body Motion", bind = twoBodyMotionPreset)
 
     # Helixes
     scene.append_to_caption("\n\n   <b>Helixes</b>\n   ")
@@ -2611,7 +2621,7 @@ def createPresetScreen():
     # Trampoline
     scene.append_to_caption("\n\n   <b>Trampoline</b>\n   ")
     button(text = "Sphere Trampoline", bind = chargeTrampolinePreset) 
-    scene.append_to_caption("  ")
+    scene.append_to_caption("   ")
     button(text = "Plate Trampoline", bind = chargeTrampoline2Preset)
 
     # Flowers
@@ -2625,9 +2635,9 @@ def createPresetScreen():
     # Randomness
     scene.append_to_caption("\n\n   <b>Randomness</b>\n   ")
     button(text = "Orbits", bind = orbits)
-    scene.append_to_caption("  ")
+    scene.append_to_caption("   ")
     button(text = "MineField", bind = mineField)
-    scene.append_to_caption("  ")
+    scene.append_to_caption("   ")
     button(text = "Chaos", bind = randomChargeArena)
     
     # endregion
