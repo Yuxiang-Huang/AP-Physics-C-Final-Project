@@ -2644,22 +2644,25 @@ def createPresetScreen():
     # endregion
     
     # number of electric field lines slider and input field
+    global numOfLineSlider, numOfLineInputField
     scene.append_to_caption("\n\n\n")
-    slider(min = 4, max = 16, value = numOfLine, step = 1, bind = numOfLineShift, length = sliderLength)
+    numOfLineSlider = slider(min = 4, max = 16, value = numOfLine, step = 1, bind = numOfLineShift, length = sliderLength)
     scene.append_to_caption("\n         Number of Electric Field Line Directions: ")
-    winput(bind = numOfLineInput, text = numOfLine, width = 25)
+    numOfLineInputField = winput(bind = numOfLineInput, text = numOfLine, width = 25)
 
     # electric field precision slider and input field
+    global electricFieldPrecisionSlider, electricFieldPrecisionInputField
     scene.append_to_caption("\n\n")
-    slider(min = 5, max = 20, value = electricFieldPrecision, step = 1, bind = electricFieldPrecisionShift, length = sliderLength)
+    electricFieldPrecisionSlider = slider(min = 5, max = 20, value = electricFieldPrecision, step = 1, bind = electricFieldPrecisionShift, length = sliderLength)
     scene.append_to_caption("\n      Number of Electric Field Lines Per Direction: ")
-    winput(bind = electricFieldPrecisionInput, text = electricFieldPrecision, width = 25)
+    electricFieldPrecisionInputField = winput(bind = electricFieldPrecisionInput, text = electricFieldPrecision, width = 25)
 
     # grid precision slider and input field
+    global gridPrecisionSlider, gridPrecisionInputField
     scene.append_to_caption("\n\n")
-    slider(min = 5, max = 20, value = gridPrecision, step = 1, bind = gridPrecisionShift, length = sliderLength)
+    gridPrecisionSlider = slider(min = 5, max = 20, value = gridPrecision, step = 1, bind = gridPrecisionShift, length = sliderLength)
     scene.append_to_caption("\n" + slider20Spaces + "    Number of Grid Lines: ")
-    winput(bind = gridPrecisionInput, text = gridPrecision, width = 25)
+    gridPrecisionInputField = winput(bind = gridPrecisionInput, text = gridPrecision, width = 25)
 
 # region intro screen sliders and input fields
 
@@ -2843,35 +2846,55 @@ secondScreen = False
 
 def start():
     global secondScreen, introText, startText, hover
-    if (hover):
-        hover = False
-        secondScreen = True
-        # clear
-        introText.visible = False
-        startText.visible = False
-        startBox.visible = False
-    
-        # clear all charged objs
-        i = len(allChargedObjs) - 1
-        while i >= 0:
-            deleteChargedObj(allChargedObjs[i])
-            i -= 1
-        # clear all trails
-        i = len(allTrails) - 1
-        while i >= 0:
-            allTrails[i].clear()
-            allTrails.remove(allTrails[i])
-            i -= 1
-        
-        # new text
-        global secondScreenText
-        secondScreenText = text(pos = vec(0, -3, -10), text="Pick Your Preset", align='center', color = color.cyan, visible = False)
-        secondScreenText.height = 10    
-        secondScreenText.length = 30
-        secondScreenText.visible = True
+    # start only when click on button
+    if (not hover):
+        return
+    hover = False
+    secondScreen = True
+    # clear
+    introText.visible = False
+    startText.visible = False
+    startBox.visible = False
 
-        # caption
-        createPresetScreen()
+    # clear all charged objs
+    i = len(allChargedObjs) - 1
+    while i >= 0:
+        deleteChargedObj(allChargedObjs[i])
+        i -= 1
+    # clear all trails
+    i = len(allTrails) - 1
+    while i >= 0:
+        allTrails[i].clear()
+        allTrails.remove(allTrails[i])
+        i -= 1
+    
+    # reset modes
+    global electricFieldMode, electricPotentialMode
+    electricFieldMode = 0
+    for i in range(gridPrecision):
+        for j in range(gridPrecision):
+            electricFieldArrowsAll[i][j].visible = False
+    
+    electricPotentialMode = 0
+    for i in range(gridPrecision):
+        # rows
+        potentialGridRows[i].visible = False
+        # cols
+        potentialGridCols[i].visible = False
+
+    for i in range(gridPrecision-1):
+        for j in range(gridPrecision-1):
+            electricPotentialLabels[i][j].visible = False
+    
+    # new text
+    global secondScreenText
+    secondScreenText = text(pos = vec(0, -3, -10), text="Pick Your Preset", align='center', color = color.cyan, visible = False)
+    secondScreenText.height = 10    
+    secondScreenText.length = 30
+    secondScreenText.visible = True
+
+    # caption
+    createPresetScreen()
     
 scene.bind('click', start)
 
@@ -2888,6 +2911,8 @@ else:
 setUnits()
 createElectricFieldArrowsAll()
 setElectricFieldArrowsAll()
+createPotentialGrid()
+setElectricPotentialGrid()
 
 # endregion
 
