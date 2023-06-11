@@ -906,63 +906,6 @@ def clone(co):
 def test():
     startSimulation()
 
-def orbits():
-    startSimulation()
-    allChargedObjs.append(SphereChargedObj(massScalar, 5*chargeScalar, vec(0, 0, 0), vec(0, 0, 0), True))
-    allChargedObjs.append(SphereChargedObj(massScalar, -0.1 * chargeScalar, vec(2, 0, 0), vec(0, 1.5, 0), False))
-    allChargedObjs.append(SphereChargedObj(massScalar, -0.1 * chargeScalar, vec(-4, 0, 0), vec(0, -sqrt(1.125), 0), False))
-    allChargedObjs.append(SphereChargedObj(massScalar, -0.1 * chargeScalar, vec(0, 6, 0), vec(-sqrt(0.75), 0, 0), False))
-    allChargedObjs.append(SphereChargedObj(massScalar, -0.1 * chargeScalar, vec(0, -8, 0), vec(0.75, 0, 0), False))
-
-def mineField():
-    startSimulation()
-    # 5 - 10 postive charges
-    num = round(random() * 5) + 5
-    len = 10
-    maxVel = 10
-    minVel = 5
-    # positive charge
-    for i in range(num):
-        randomPos = vec(random() * len - len / 2, random() * len - len / 2, 0)
-        allChargedObjs.append(SphereChargedObj(massScalar, chargeScalar, randomPos, vec(0, 0, 0), True))
-        allChargedObjs[-1].posCheck()
-    # negative charge
-    theta = random() * 2 * pi
-    magnitude = random() * maxVel + minVel
-    randomVel = vec(magnitude * cos(theta), magnitude * cos(theta), 0)
-    allChargedObjs.append(SphereChargedObj(massScalar, -chargeScalar, vec(0, 0, 0), randomVel, False))
-    allChargedObjs[-1].posCheck()
-
-def randomChargeArena():
-    startSimulation()
-    # borders
-    len = 5
-    allChargedObjs.append(PlateChargedObj(0 * chargeScalar, 4 * len * len, 0, vec(0, -len, 0)))
-    allChargedObjs.append(PlateChargedObj(0 * chargeScalar, 4 * len * len, 0, vec(0, len, 0)))
-    allChargedObjs.append(PlateChargedObj(0 * chargeScalar, 4 * len * len, 90, vec(len, 0, 0)))
-    allChargedObjs.append(PlateChargedObj(0 * chargeScalar, 4 * len * len, 90, vec(-len, 0, 0)))
-
-    # sphere charged
-    num = 10
-    maxVel = 10
-    minVel = 5
-    for i in range(num):
-        randomPos = vec(random() * len - len / 2, random() * len - len / 2, 0)
-        theta = random() * 2 * pi
-        magnitude = random() * maxVel + minVel
-        randomVel = vec(magnitude * cos(theta), magnitude * cos(theta), 0)
-        if (random() >= 0.5):
-            allChargedObjs.append(SphereChargedObj(massScalar, chargeScalar, randomPos, randomVel, False))
-        else:
-            allChargedObjs.append(SphereChargedObj(massScalar, -chargeScalar, randomPos, randomVel, False))
-        allChargedObjs[-1].posCheck()
-
-    # clear trail
-    global allTrailCheckbox
-    allTrailCheckbox.checked = False
-    for co in allChargedObjs:
-        co.trail.stop() 
-
 ####################################################################################################
 
 # region Electric Field and Potential
@@ -2557,6 +2500,67 @@ def fourHelixPreset():
     allChargedObjs.append(SphereChargedObj(massScalar, -chargeScalar, vec(-10,-1.5,0), vec(2, .25, 0), False))
 configurationList.append(fourHelixPreset)
 
+def orbits():
+    startSimulation()
+    allChargedObjs.append(SphereChargedObj(massScalar, 5*chargeScalar, vec(0, 0, 0), vec(0, 0, 0), True))
+    allChargedObjs.append(SphereChargedObj(massScalar, -0.1 * chargeScalar, vec(2, 0, 0), vec(0, 1.5, 0), False))
+    allChargedObjs.append(SphereChargedObj(massScalar, -0.1 * chargeScalar, vec(-4, 0, 0), vec(0, -sqrt(1.125), 0), False))
+    allChargedObjs.append(SphereChargedObj(massScalar, -0.1 * chargeScalar, vec(0, 6, 0), vec(-sqrt(0.75), 0, 0), False))
+    allChargedObjs.append(SphereChargedObj(massScalar, -0.1 * chargeScalar, vec(0, -8, 0), vec(0.75, 0, 0), False))
+configurationList.append(orbits)
+
+def mineField():
+    startSimulation()
+    # 5 - 10 postive charges
+    num = round(random() * 5) + 5
+    len = 10
+    maxVel = 10
+    minVel = 5
+    # positive charge
+    for i in range(num):
+        randomPos = vec(random() * len - len / 2, random() * len - len / 2, 0)
+        allChargedObjs.append(SphereChargedObj(massScalar, chargeScalar, randomPos, vec(0, 0, 0), True))
+        allChargedObjs[-1].posCheck()
+    # negative charge
+    theta = random() * 2 * pi
+    magnitude = random() * maxVel + minVel
+    randomVel = vec(magnitude * cos(theta), magnitude * cos(theta), 0)
+    allChargedObjs.append(SphereChargedObj(massScalar, -chargeScalar, vec(0, 0, 0), randomVel, False))
+    allChargedObjs[-1].posCheck()
+configurationList.append(mineField)
+
+def randomChargeArena():
+    startSimulation()
+    # borders
+    len = 9
+    allChargedObjs.append(PlateChargedObj(0 * chargeScalar, 4 * len * len, 0, vec(0, -len, 0)))
+    allChargedObjs.append(PlateChargedObj(0 * chargeScalar, 4 * len * len, 0, vec(0, len, 0)))
+    allChargedObjs.append(PlateChargedObj(0 * chargeScalar, 4 * len * len, 90, vec(len, 0, 0)))
+    allChargedObjs.append(PlateChargedObj(0 * chargeScalar, 4 * len * len, 90, vec(-len, 0, 0)))
+
+    # sphere charged
+    num = 10
+    maxVel = 15
+    minVel = 10
+    for i in range(num):
+        randomPos = vec(random() * len - len / 2, random() * len - len / 2, 0)
+        theta = random() * 2 * pi
+        magnitude = random() * maxVel + minVel
+        randomVel = vec(magnitude * cos(theta), magnitude * cos(theta), 0)
+        if (random() >= 0.5):
+            allChargedObjs.append(SphereChargedObj(massScalar, 5*chargeScalar, randomPos, vec(0, 0, 0), False))
+        else:
+            allChargedObjs.append(SphereChargedObj(massScalar, -5*chargeScalar, randomPos, vec(0, 0, 0), False))
+        allChargedObjs[-1].posCheck()
+
+    # clear trail
+    global allTrailCheckbox
+    allTrailCheckbox.checked = False
+    for co in allChargedObjs:
+        co.trail.stop() 
+        co.trailState = False
+configurationList.append(randomChargeArena)
+
 # endregion    
 
 def createPresetScreen():
@@ -2601,8 +2605,14 @@ def createPresetScreen():
     button(text = "Charge Trampoline 2", bind = chargeTrampoline2Preset)
     scene.append_to_caption("\n\n  ")
     button(text = "Flower", bind = flowerPreset)
-    scene.append_to_caption("\n\n  ")
+    scene.append_to_caption("  ")
     button(text = "Helix Madness", bind = fourHelixPreset)
+    scene.append_to_caption("\n\n  ")
+    button(text = "Orbits", bind = orbits)
+    scene.append_to_caption("  ")
+    button(text = "MineField", bind = mineField)
+    scene.append_to_caption("  ")
+    button(text = "Chaos", bind = randomChargeArena)
     
     # endregion
     
