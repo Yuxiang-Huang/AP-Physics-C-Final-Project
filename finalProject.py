@@ -904,7 +904,12 @@ def clone(co):
 # endregion
 
 def test():
+    global quantumTunneling
+    quantumTunneling = True
     startSimulation()
+    allChargedObjs.append(SphereChargedObj(massScalar, -chargeScalar, vec(0,5,0), vec(1, -1, 0), False))
+    allChargedObjs.append(SphereChargedObj(massScalar, -chargeScalar, vec(5,5,0), vec(-1, -1, 0), False))
+    allChargedObjs.append(SphereChargedObj(massScalar, 5*chargeScalar, vec(2.5,0,0), vec(0, 1, 0), False))
 
 ####################################################################################################
 
@@ -2348,14 +2353,6 @@ quantumTunneling = False
 configurationList = []
 
 # region presets
-def butterflyPreset():
-    global quantumTunneling
-    quantumTunneling = True
-    startSimulation()
-    allChargedObjs.append(SphereChargedObj(massScalar, -chargeScalar, vec(0,5,0), vec(1, -1, 0), False))
-    allChargedObjs.append(SphereChargedObj(massScalar, -chargeScalar, vec(5,5,0), vec(-1, -1, 0), False))
-    allChargedObjs.append(SphereChargedObj(massScalar, 5*chargeScalar, vec(2.5,0,0), vec(0, 1, 0), False))
-
 def dipolePreset():
     startSimulation()
     allChargedObjs.append(SphereChargedObj(massScalar, chargeScalar, vec(5,0,0), vec(0, 0, 0), False))
@@ -2514,8 +2511,8 @@ def mineField():
     # 5 - 10 postive charges
     num = round(random() * 5) + 5
     len = 10
-    maxVel = 10
-    minVel = 5
+    maxVel = 5
+    minVel = 2
     # positive charge
     for i in range(num):
         randomPos = vec(random() * len - len / 2, random() * len - len / 2, 0)
@@ -2538,15 +2535,10 @@ def randomChargeArena():
     allChargedObjs.append(PlateChargedObj(0 * chargeScalar, 4 * len * len, 90, vec(len, 0, 0)))
     allChargedObjs.append(PlateChargedObj(0 * chargeScalar, 4 * len * len, 90, vec(-len, 0, 0)))
 
-    # sphere charged
-    num = 10
-    maxVel = 15
-    minVel = 10
+    # 5 - 10 sphere charges
+    num = round(random() * 5) + 5
     for i in range(num):
         randomPos = vec(random() * len - len / 2, random() * len - len / 2, 0)
-        theta = random() * 2 * pi
-        magnitude = random() * maxVel + minVel
-        randomVel = vec(magnitude * cos(theta), magnitude * cos(theta), 0)
         if (random() >= 0.5):
             allChargedObjs.append(SphereChargedObj(massScalar, 5*chargeScalar, randomPos, vec(0, 0, 0), False))
         else:
@@ -2554,8 +2546,8 @@ def randomChargeArena():
         allChargedObjs[-1].posCheck()
 
     # clear trail
-    global allTrailCheckbox
-    allTrailCheckbox.checked = False
+    global trailStateAll
+    trailStateAll = False
     for co in allChargedObjs:
         co.trail.stop() 
         co.trailState = False
@@ -2569,6 +2561,11 @@ def createPresetScreen():
     # region preset buttons
     scene.append_to_caption("   ")
     button(text = "Start without preset", bind = startSimulation)
+    scene.append_to_caption("   ")
+    button(text = "Y", bind = yPreset)
+    scene.append_to_caption("   ")
+    button(text = "J", bind = jPreset)
+
     scene.append_to_caption("\n\n  ")
     button(text = "Plate Tunnel", bind = plateTunnelPreset)
     scene.append_to_caption("  ")
@@ -2582,15 +2579,9 @@ def createPresetScreen():
     scene.append_to_caption("  ")
     button(text = "Faraday Bucket", bind = faradayBucketPreset)
     scene.append_to_caption("\n\n   ")
-    button(text = "Draw Butterfly", bind = butterflyPreset) 
-    scene.append_to_caption("\n\n   ")
     button(text = "Draw Helix", bind = helixPreset) 
     scene.append_to_caption("  ")
     button(text = "helix gun (kinda)", bind = helixGunPreset)
-    scene.append_to_caption("\n\n   ")
-    button(text = "Draw a Y", bind = yPreset)
-    scene.append_to_caption("  ")
-    button(text = "Draw a J", bind = jPreset)
     scene.append_to_caption("\n\n   ")
     button(text = "model circular orbit", bind = circularOrbitPreset)
     scene.append_to_caption("  ")
@@ -2742,7 +2733,7 @@ Show Vector Menu: Allows the user to see either the velocity vector, the force v
 
 All Trail Check Box: Allows the user to see the path traveled by each particle throughout the simulation when checked. 
 
-Clear All Trails Button: Allows the user to clear all the trails.
+Clear All Trail Button: Allows the user to clear all the trails.
 
 Electric Field Mode: Allows the user to either see no electric field in mode 0, the electric field on each object in mode 1, or the net electric field for the entire configuration in mode 2. 
 
@@ -2783,7 +2774,7 @@ Clear Trail Button: Clears the trail for the selected object.
 Delete: Deletes the selected object.
 
 <b>Disclaimers:</b>
-Loading Times: Because each screen takes time to load the caption, the user should allow each screen a couple of seconds to load or there will be an error message.
+Loading Time: Because each screen takes time to load the caption, the user should allow each screen a couple of seconds to load or there will be an error message.
 
 Precision Error: There is a low innate precision error in the program, which means that after a long enough time, some of the symmetric charge configurations will break out of their cycle. 
 
@@ -2848,7 +2839,7 @@ def start():
     
 scene.bind('click', start)
 
-# intro configuration
+# test mode or intro configuration
 if (testMode):
     hover = True
     start()
