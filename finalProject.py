@@ -1151,7 +1151,7 @@ def createCaptionMainScreen():
     # instruction button
     global instructionButton
     scene.append_to_caption("   ")
-    instructionButton = button(text="Instructions", bind = displayInstructionPage)
+    instructionButton = button(text="README", bind = displayInstructionPage)
 
     # clear button
     global clearButton
@@ -1236,7 +1236,7 @@ def displayInstructionPage():
     global startButton
     scene.caption = ""
     startButton = button(text = "Back", bind = createCaptionMainScreen)
-    scene.append_to_caption("\n")
+    scene.append_to_caption("\n\n")
     createInstruction()
 
 # save button
@@ -1425,7 +1425,7 @@ def createCaptionSpawnScreen():
 
     # spawn charge menu
     global chargeMenu
-    scene.append_to_caption("   Spawn Charge Object Menu: ")
+    scene.append_to_caption("   Spawn Object Menu: ")
     chargeMenu = menu(choices = ["Sphere", "Plate"], bind = selectSpawnChargeObj, selected = spawnType) 
     
     # spawn charge slider and input field
@@ -2706,23 +2706,92 @@ def gridPrecisionInput():
 
 # instruction
 def createInstruction():
-    scene.append_to_caption("""Instruction: 
+    scene.append_to_caption("""README: 
 
-Controls:
-    Not Playing:
-        Click:
-            Charge not selected:
-                Empty Space = Spawn Screen
-                On a charge = Select Screen
-            Charge selected:
-                Empty Space = Deselect
-        Drag:
-            Start on a charge:
-                Charge not selected = Position
-                Charge selected = Velocity
-            Start on empty space = Ruler
-    Playing:
-        Click & Drag = Force vector for selected charge
+<b>Mouse Controls:</b>
+Clicking:
+When Not Playing: If an object is not selected, clicking on empty space will bring you to the spawn screen, and clicking an object will bring you to the select screen. If an object is already selected, clicking on empty space will deselect that object.
+When Playing: When an object is selected, clicking will apply an impulse in that direction. 
+
+Dragging: 
+When Not Playing: Dragging an unselected object will move it. Dragging a selected spherical object will set its velocity and change the show vector mode to velocity. Dragging a selected plate object will set its angle. Dragging starting from empty space will measure the distance from that point to the point when you stop dragging. 
+When Playing: When an object is selected, dragging and releasing will also apply an impulse in that direction.
+
+<b>Intro Screen:</b>
+Click on the start text to start the program.
+
+<b>Preset Screen:</b> 
+Presets: The user can choose to start the simulation without any preset, which will bring them to the main screen without any object placed down. They can also choose to start with a preset, which will bring them to the main screen with the premade charge configuration already placed down. 
+
+Number of Electric Field Directions and Number of Electric Field Lines Per Direction Slider: Set the respective stats in electric field mode 1.
+
+Number of Grid Lines Slider: Sets the respective quantity for electric field mode 2, electric potential mode 1, and the grid option. 
+
+<b>Main Screen:</b> 
+Play Button: Once objects are placed down, the play button starts the simulation of how those objects interact. When playing, the play button becomes a stop button, which allows the user to pause the simulation at any point to change the configuration. 
+
+Clear Button: Clears all objects and trails from the screen.
+
+Save Button: Saves the current charge configuration as a button so that the user can access any charge configuration that they find interesting at a later point in time. 
+
+Time in Program Slider: Speeds up or slows down the simulation. (Disclaimer: due to the speed the computer runs the program, it is possible that this slider has no significant effect on the speed of the simulation.)
+
+Update Time in Program Slider: Every this amount of time, the program will update the following physical variables: electric field mode, electric potential mode, and select screen.
+
+Show Vector Menu: Allows the user to see either the velocity vector, the force vector, or neither on each spherical object throughout the simulation.
+
+All Trail Check Box: Allows the user to see the path traveled by each particle throughout the simulation when checked. 
+
+Clear All Trails Button: Allows the user to clear all the trails.
+
+Electric Field Mode: Allows the user to either see no electric field in mode 0, the electric field on each object in mode 1, or the net electric field for the entire configuration in mode 2. 
+
+Electric Field Opacity Check Box: When checked, displays the magnitude of the electric field through the opacity of the field arrows. 
+
+Electric Potential Mode Button: Allows the user to either see no electric potential data in mode 0, or see the value of the electric potential of a grid of points across the screen in mode 1.
+
+Grid Checkbox: When checked, allows the user to display a grid with the electric potential measurements at the center of each box and the electric field arrows at the vertices.
+
+<b>Spawn Screen:</b> entered when empty space is clicked in the main screen
+Spawn Object Menu: allows the user to select whether to spawn a sphere or plate.
+
+Charge Slider: Sets the charge of the object to be spawned.
+
+Mass Slider (For Spheres): Sets the mass of the sphere to be spawned.
+
+Charge Density Slider (For Plates): Sets the area charge density of the plate to be spawned.
+
+Angle Slider (For Plates): Sets the angle of placement with respect to the x-axis of the plate to be spawned.
+
+Spawn Button: Spawns an object with variables set by the sliders.
+
+Back Button: Takes the user back to the Main Screen.
+
+Position, Electric Field, and Electric Potential Text: Display the position where the object will be spawned, and the electric field and electric potential at that point, denoted by the yellow triangle.
+
+<b>Select Screen:</b> Entered when the user clicks on an object in the main screen while not playing. Denoted by the yellow arcs around the selected object. Contains all the same options as the main screen, Plus: 
+Camera Follow Button: When pressed, the camera will follow the selected object when play is pressed, rather than remaining at the center of the screen.
+
+Charge, Charge Density, Mass, and Angle Sliders: Allow the user to change the respective variables for the selected object (Cannot be changed while playing).
+
+Fix Button: Allows the user to fix the selected object in place so it will not move when Play is pressed, but will still exert a force on other objects. Denoted by a black texture.
+
+Trail Check Box: Allows the user to turn the trail on or off for the selected object (rather than for all objects through the All Trail Check Box). 
+
+Clear Trail Button: Clears the trail for the selected object.
+
+Delete: Deletes the selected object.
+
+<b>Disclaimers:</b>
+Loading Times: Because each screen takes time to load the caption, the user should allow each screen a couple of seconds to load or there will be an error message.
+
+Precision Error: There is a low innate precision error in the program, which means that after a long enough time, some of the symmetric charge configurations will break out of their cycle. 
+
+Slowing Down the Program: The user should be advised that turning on a lot of the modes, such as selecting an object while playing, turning on electric field lines, and turning on electric potential data, can slow down the program, and thus the movements of the objects, quite a bit. 
+
+Presets: We suggest playing around with the masses in the presets! It yields cool results. 
+
+Plates: The user should keep in mind that we assume that the mass of plates >> mass of spheres.
 """)
 
 createInstruction()
