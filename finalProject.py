@@ -2559,6 +2559,8 @@ def createPresetScreen():
     scene.caption = ""
 
     # region preset buttons
+    
+    # First
     scene.append_to_caption("   ")
     button(text = "Start without preset", bind = startSimulation)
     scene.append_to_caption("   ")
@@ -2566,39 +2568,62 @@ def createPresetScreen():
     scene.append_to_caption("   ")
     button(text = "J", bind = jPreset)
 
-    scene.append_to_caption("\n\n  ")
-    button(text = "Plate Tunnel", bind = plateTunnelPreset)
-    scene.append_to_caption("  ")
-    button(text = "draw figure 8", bind = figureEightPreset)
-    scene.append_to_caption("\n\n   ")
+    # Basics
+    scene.append_to_caption("\n\n   <b>Basics</b>\n   ")
     button(text = "Dipole", bind = dipolePreset)
-    scene.append_to_caption("  ")
+    scene.append_to_caption("   ")
+    button(text = "Draw figure 8", bind = figureEightPreset)
+    scene.append_to_caption("   ")
     button(text = "Three-Charge Motion", bind = threeChargePreset)
-    scene.append_to_caption("\n\n   ")
-    button(text = "Parallel Plates", bind = parallelPlatesPreset)
-    scene.append_to_caption("  ")
-    button(text = "Faraday Bucket", bind = faradayBucketPreset)
-    scene.append_to_caption("\n\n   ")
-    button(text = "Draw Helix", bind = helixPreset) 
-    scene.append_to_caption("  ")
-    button(text = "helix gun (kinda)", bind = helixGunPreset)
-    scene.append_to_caption("\n\n   ")
-    button(text = "model circular orbit", bind = circularOrbitPreset)
-    scene.append_to_caption("  ")
-    button(text = 'model eliptical orbit', bind = elipticalObritPreset) 
-    scene.append_to_caption("\n\n   ")
-    button(text = "loop Wave", bind = loopWavePreset)
-    scene.append_to_caption("  ")
-    button(text="Collision Wave", bind = collisionWavePreset) 
-    scene.append_to_caption("\n\n   ")
-    button(text = "Charge Trampoline", bind = chargeTrampolinePreset) 
-    scene.append_to_caption("  ")
-    button(text = "Charge Trampoline 2", bind = chargeTrampoline2Preset)
-    scene.append_to_caption("\n\n  ")
-    button(text = "Flower", bind = flowerPreset)
-    scene.append_to_caption("  ")
+
+    # Orbits
+    scene.append_to_caption("\n\n   <b>Orbits</b>\n   ")
+    button(text = "Circular Orbit", bind = circularOrbitPreset)
+    scene.append_to_caption("   ")
+    button(text = 'Eliptical Orbit', bind = elipticalObritPreset) 
+    scene.append_to_caption("   ")
+    button(text = "Two-Body Motion", bind = test)
+
+    # Helixes
+    scene.append_to_caption("\n\n   <b>Helixes</b>\n   ")
+    button(text = "Helix", bind = helixPreset)
+    scene.append_to_caption("   ")
+    button(text = 'Helix Gun', bind = helixGunPreset) 
+    scene.append_to_caption("   ")
     button(text = "Helix Madness", bind = fourHelixPreset)
-    scene.append_to_caption("\n\n  ")
+
+    # Waves
+    scene.append_to_caption("\n\n   <b>Waves</b>\n   ")
+    button(text = "Loop Wave", bind = loopWavePreset)
+    scene.append_to_caption("   ")
+    button(text= "Collision Wave", bind = collisionWavePreset) 
+    scene.append_to_caption("   ")
+    button(text = "??? Wave", bind = test)
+
+    # Plates
+    scene.append_to_caption("\n\n   <b>Plates</b>\n   ")
+    button(text = "Parallel Plates", bind = parallelPlatesPreset)
+    scene.append_to_caption("   ")
+    button(text = "Plate Tunnel", bind = plateTunnelPreset)
+    scene.append_to_caption("   ")
+    button(text = "Faraday Bucket", bind = faradayBucketPreset)
+
+    # Trampoline
+    scene.append_to_caption("\n\n   <b>Trampoline</b>\n   ")
+    button(text = "Sphere Trampoline", bind = chargeTrampolinePreset) 
+    scene.append_to_caption("  ")
+    button(text = "Plate Trampoline", bind = chargeTrampoline2Preset)
+
+    # Flowers
+    scene.append_to_caption("\n\n   <b>Trampoline</b>\n   ")
+    button(text = "Flower", bind = flowerPreset)
+    scene.append_to_caption("   ")
+    button(text = "Flower", bind = flowerPreset)
+    scene.append_to_caption("   ")
+    button(text = "Random Flower", bind = flowerPreset)
+
+    # Randomness
+    scene.append_to_caption("\n\n   <b>Randomness</b>\n   ")
     button(text = "Orbits", bind = orbits)
     scene.append_to_caption("  ")
     button(text = "MineField", bind = mineField)
@@ -2608,7 +2633,7 @@ def createPresetScreen():
     # endregion
     
     # number of electric field lines slider and input field
-    scene.append_to_caption("\n\n")
+    scene.append_to_caption("\n\n\n")
     slider(min = 4, max = 16, value = numOfLine, step = 1, bind = numOfLineShift, length = sliderLength)
     scene.append_to_caption("\n         Number of Electric Field Line Directions: ")
     winput(bind = numOfLineInput, text = numOfLine, width = 25)
