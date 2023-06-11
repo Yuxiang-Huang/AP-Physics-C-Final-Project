@@ -5,7 +5,7 @@ from vpython import *
 
 # region Variables
 
-testMode = True
+testMode = False
 
 # set scene
 scene.background = color.white
@@ -904,11 +904,8 @@ def clone(co):
 # endregion
 
 def test():
-    startSimulation()
-    allChargedObjs.append(SphereChargedObj(massScalar, -5*chargeScalar, vec(-5,0,0), vec(0, sqrt(11.25), 0), False))
-    allChargedObjs.append(SphereChargedObj(massScalar, 5*chargeScalar, vec(5,0,0), vec(0, -sqrt(11.25), 0), False))
 
-def butterfly():
+# def butterfly():
     global quantumTunneling
     quantumTunneling = True
     startSimulation()
@@ -2560,6 +2557,10 @@ configurationList.append(randomChargeArena)
 
 def twoBodyMotionPreset():
     startSimulation()
+    global electricFieldMode
+    electricFieldMode = 2
+    allChargedObjs.append(SphereChargedObj(massScalar, -5*chargeScalar, vec(-5,0,0), vec(0, sqrt(11.25), 0), False))
+    allChargedObjs.append(SphereChargedObj(massScalar, 5*chargeScalar, vec(5,0,0), vec(0, -sqrt(11.25), 0), False))
 
 configurationList.append(twoBodyMotionPreset)
 
@@ -2880,7 +2881,13 @@ if (testMode):
     start()
     test()
 else:
-    configurationList[int(random() * len(configurationList))]()
+    # configurationList[int(random() * len(configurationList))]()
+    twoBodyMotionPreset()
+
+# electric field and potential and grid for intro screen
+setUnits()
+createElectricFieldArrowsAll()
+setElectricFieldArrowsAll()
 
 # endregion
 
