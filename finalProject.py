@@ -5,7 +5,7 @@ from vpython import *
 
 # region Variables
 
-testMode = True
+testMode = False
 
 # set scene
 scene.background = color.white
@@ -904,6 +904,9 @@ def clone(co):
 # endregion
 
 def test():
+    startSimulation()
+
+def orbits():
     startSimulation()
     allChargedObjs.append(SphereChargedObj(massScalar, 5*chargeScalar, vec(0, 0, 0), vec(0, 0, 0), True))
     allChargedObjs.append(SphereChargedObj(massScalar, -0.1 * chargeScalar, vec(2, 0, 0), vec(0, 1.5, 0), False))
@@ -2412,8 +2415,8 @@ def butterflyPreset():
 
 def dipolePreset():
     startSimulation()
-    allChargedObjs.append(SphereChargedObj(massScalar, 5*chargeScalar, vec(5,0,0), vec(0, 0, 0), False))
-    allChargedObjs.append(SphereChargedObj(massScalar, -5*chargeScalar, vec(-5, 0, 0) , vec(0, 0, 0), False))
+    allChargedObjs.append(SphereChargedObj(massScalar, chargeScalar, vec(5,0,0), vec(0, 0, 0), False))
+    allChargedObjs.append(SphereChargedObj(massScalar, -chargeScalar, vec(-5, 0, 0) , vec(0, 0, 0), False))
 configurationList.append(dipolePreset)
 
 def threeChargePreset(): 
@@ -2542,6 +2545,18 @@ def flowerPreset():
     allChargedObjs.append(SphereChargedObj(massScalar, chargeScalar, vec(0,5,0), vec(sqrt((9E9*1E-9*1E-9)/(5*1E-9)), 0, 0), False))
 configurationList.append(flowerPreset)
 
+def fourHelixPreset(): 
+    startSimulation()
+    allChargedObjs.append(SphereChargedObj(massScalar, -chargeScalar, vec(-1.5,10,0), vec(.25, -2, 0), False))
+    allChargedObjs.append(SphereChargedObj(massScalar, chargeScalar, vec(1.5,10,0), vec(-.25, -2, 0), False))
+    allChargedObjs.append(SphereChargedObj(massScalar, -chargeScalar, vec(1.5,-10,0), vec(-.25, 2, 0), False))
+    allChargedObjs.append(SphereChargedObj(massScalar, chargeScalar, vec(-1.5,-10,0), vec(.25, 2, 0), False))
+    allChargedObjs.append(SphereChargedObj(massScalar, -chargeScalar, vec(10,1.5,0), vec(-2, -.25, 0), False))
+    allChargedObjs.append(SphereChargedObj(massScalar, chargeScalar, vec(10,-1.5,0), vec(-2, .25, 0), False))
+    allChargedObjs.append(SphereChargedObj(massScalar, chargeScalar, vec(-10,1.5,0), vec(2, -.25, 0), False))
+    allChargedObjs.append(SphereChargedObj(massScalar, -chargeScalar, vec(-10,-1.5,0), vec(2, .25, 0), False))
+configurationList.append(fourHelixPreset)
+
 # endregion    
 
 def createPresetScreen():
@@ -2584,8 +2599,11 @@ def createPresetScreen():
     button(text = "Charge Trampoline", bind = chargeTrampolinePreset) 
     scene.append_to_caption("  ")
     button(text = "Charge Trampoline 2", bind = chargeTrampoline2Preset)
-    scene.append_to_caption("  ")
+    scene.append_to_caption("\n\n  ")
     button(text = "Flower", bind = flowerPreset)
+    scene.append_to_caption("\n\n  ")
+    button(text = "Helix Madness", bind = fourHelixPreset)
+    
     # endregion
     
     # number of electric field lines slider and input field
