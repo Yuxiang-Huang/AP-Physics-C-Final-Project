@@ -5,7 +5,7 @@ from vpython import *
 
 # region Variables
 
-testMode = False
+testMode = True
 
 # set scene
 scene.background = color.white
@@ -905,8 +905,52 @@ def clone(co):
 
 def test():
     startSimulation()
-    allChargedObjs.append(SphereChargedObj(massScalar, chargeScalar, vec(0,0,0), vec(0, 0, 0), True))
-    allChargedObjs.append(SphereChargedObj(massScalar, 0, vec(-3,2,0), vec(2, -1, 0), False))
+    # 5 - 10 postive charges
+    num = round(random() * 5) + 5
+    len = 10
+    maxVel = 10
+    minVel = 5
+    # positive charge
+    for i in range(num):
+        randomPos = vec(random() * len - len / 2, random() * len - len / 2, 0)
+        allChargedObjs.append(SphereChargedObj(massScalar, chargeScalar, randomPos, vec(0, 0, 0), True))
+        allChargedObjs[-1].posCheck()
+    # negative charge
+    theta = random() * 2 * pi
+    magnitude = random() * maxVel + minVel
+    randomVel = vec(magnitude * cos(theta), magnitude * cos(theta), 0)
+    allChargedObjs.append(SphereChargedObj(massScalar, -chargeScalar, vec(0, 0, 0), randomVel, False))
+    allChargedObjs[-1].posCheck()
+
+def randomChargeArena():
+    startSimulation()
+    # borders
+    len = 5
+    allChargedObjs.append(PlateChargedObj(0 * chargeScalar, 4 * len * len, 0, vec(0, -len, 0)))
+    allChargedObjs.append(PlateChargedObj(0 * chargeScalar, 4 * len * len, 0, vec(0, len, 0)))
+    allChargedObjs.append(PlateChargedObj(0 * chargeScalar, 4 * len * len, 90, vec(len, 0, 0)))
+    allChargedObjs.append(PlateChargedObj(0 * chargeScalar, 4 * len * len, 90, vec(-len, 0, 0)))
+
+    # sphere charged
+    num = 10
+    maxVel = 10
+    minVel = 5
+    for i in range(num):
+        randomPos = vec(random() * len - len / 2, random() * len - len / 2, 0)
+        theta = random() * 2 * pi
+        magnitude = random() * maxVel + minVel
+        randomVel = vec(magnitude * cos(theta), magnitude * cos(theta), 0)
+        if (random() >= 0.5):
+            allChargedObjs.append(SphereChargedObj(massScalar, chargeScalar, randomPos, randomVel, False))
+        else:
+            allChargedObjs.append(SphereChargedObj(massScalar, -chargeScalar, randomPos, randomVel, False))
+        allChargedObjs[-1].posCheck()
+
+    # clear trail
+    global allTrailCheckbox
+    allTrailCheckbox.checked = False
+    for co in allChargedObjs:
+        co.trail.stop() 
 
 ####################################################################################################
 
@@ -2322,6 +2366,12 @@ def startSimulation():
     if (not secondScreen):
         return
     
+    # bind events
+    scene.bind('click', clicked)
+    scene.bind('mousedown', onMouseDown)
+    scene.bind('mouseup', onMouseUp)
+    scene.bind('mousemove', onMouseMove)
+    
     global playing, secondScreenText
     playing = False
     secondScreenText.visible = False
@@ -2338,12 +2388,6 @@ def startSimulation():
     setElectricPotentialGrid()
     
     createCaptionMainScreen()
-
-    # bind events
-    scene.bind('click', clicked)
-    scene.bind('mousedown', onMouseDown)
-    scene.bind('mouseup', onMouseUp)
-    scene.bind('mousemove', onMouseMove)
 
 quantumTunneling = False
 
@@ -2478,6 +2522,18 @@ def chargeTrampoline2Preset():
     allChargedObjs.append(SphereChargedObj(massScalar, -7.5*chargeScalar, vec(7.5,2.5,0), vec(0, -1, 0), False))
 configurationList.append(chargeTrampoline2Preset)
 
+def flowerPreset():
+    startSimulation()
+    num = 50
+    radius = 10
+    # ring of charge
+    for i in range(num):
+        theta = 2 * pi / num * i
+        allChargedObjs.append(SphereChargedObj(massScalar, chargeScalar, vec(cos(theta) * radius, sin(theta) * radius, 0), vec(0, 0, 0), True))
+    allChargedObjs.append(SphereChargedObj(massScalar, -chargeScalar, vec(0,0,0), vec(0, 0, 0), True))
+    allChargedObjs.append(SphereChargedObj(massScalar, chargeScalar, vec(0,5,0), vec(sqrt((9E9*1E-9*1E-9)/(5*1E-9)), 0, 0), False))
+configurationList.append(flowerPreset)
+
 # endregion    
 
 def createSecondScreen():
@@ -2485,14 +2541,14 @@ def createSecondScreen():
 
     # region preset buttons
     scene.append_to_caption("   ")
-    button(text = "Start without preset", bind = start)
-    scene.append_to_caption("\n\n   ")
+    button(text = "Start without preset", bind = startSimulation)
+    scene.append_to_caption("\n\n  ")
     button(text = "Plate Tunnel", bind = plateTunnelPreset)
-    scene.append_to_caption("   ")
+    scene.append_to_caption("  ")
     button(text = "draw figure 8", bind = figureEightPreset)
     scene.append_to_caption("\n\n   ")
     button(text = "Dipole", bind = dipolePreset)
-    scene.append_to_caption("   ")
+    scene.append_to_caption("  ")
     button(text = "Three-Charge Motion", bind = threeChargePreset)
     scene.append_to_caption("\n\n   ")
     button(text = "Parallel Plates", bind = parallelPlatesPreset)
@@ -2520,6 +2576,8 @@ def createSecondScreen():
     button(text = "Charge Trampoline", bind = chargeTrampolinePreset) 
     scene.append_to_caption("  ")
     button(text = "Charge Trampoline 2", bind = chargeTrampoline2Preset)
+    scene.append_to_caption("  ")
+    button(text = "Flower", bind = flowerPreset)
     # endregion
     
     # number of electric field lines slider and input field
@@ -2633,7 +2691,7 @@ Controls:
 
 createInstruction()
 
-# after everything is initialized
+# region create first screen
 
 # intro text
 introText = text(pos = vec(0, -1, -10), text="Electric Draw", align='center', color = color.cyan)
@@ -2652,8 +2710,9 @@ startBox = box(pos = vec(0, -6, -20), size = vec(12, 6, 0.1), color = color.gree
 secondScreen = False
 
 def start():
-    global secondScreen, introText, startText
+    global secondScreen, introText, startText, hover
     if (hover):
+        hover = False
         secondScreen = True
         # clear
         introText.visible = False
@@ -2686,9 +2745,13 @@ scene.bind('click', start)
 
 # intro configuration
 if (testMode):
+    hover = True
+    start()
     test()
 else:
     configurationList[int(random() * len(configurationList))]()
+
+# endregion
 
 # endregion
 
