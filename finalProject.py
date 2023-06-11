@@ -905,6 +905,14 @@ def clone(co):
 
 def test():
     startSimulation()
+    allChargedObjs.append(SphereChargedObj(massScalar, 5*chargeScalar, vec(0, 0, 0), vec(0, 0, 0), True))
+    allChargedObjs.append(SphereChargedObj(massScalar, -0.1 * chargeScalar, vec(2, 0, 0), vec(0, 1.5, 0), False))
+    allChargedObjs.append(SphereChargedObj(massScalar, -0.1 * chargeScalar, vec(-4, 0, 0), vec(0, -sqrt(1.125), 0), False))
+    allChargedObjs.append(SphereChargedObj(massScalar, -0.1 * chargeScalar, vec(0, 6, 0), vec(-sqrt(0.75), 0, 0), False))
+    allChargedObjs.append(SphereChargedObj(massScalar, -0.1 * chargeScalar, vec(0, -8, 0), vec(0.75, 0, 0), False))
+
+def mineField():
+    startSimulation()
     # 5 - 10 postive charges
     num = round(random() * 5) + 5
     len = 10
@@ -2358,7 +2366,7 @@ def updateForceStatSelectScreen():
 
 ####################################################################################################
 
-# region Intro Screen
+# region Intro and Preset Screen
 
 # start simulation button
 def startSimulation():
@@ -2404,8 +2412,8 @@ def butterflyPreset():
 
 def dipolePreset():
     startSimulation()
-    allChargedObjs.append(SphereChargedObj(massScalar, chargeScalar, vec(5,0,0), vec(0, 0, 0), False))
-    allChargedObjs.append(SphereChargedObj(massScalar, -chargeScalar, vec(-5, 0, 0) , vec(0, 0, 0), False))
+    allChargedObjs.append(SphereChargedObj(massScalar, 5*chargeScalar, vec(5,0,0), vec(0, 0, 0), False))
+    allChargedObjs.append(SphereChargedObj(massScalar, -5*chargeScalar, vec(-5, 0, 0) , vec(0, 0, 0), False))
 configurationList.append(dipolePreset)
 
 def threeChargePreset(): 
@@ -2421,7 +2429,7 @@ def helixPreset():
     allChargedObjs.append(SphereChargedObj(massScalar, chargeScalar, vec(1.5,10,0), vec(-.25, -2, 0), False))
 configurationList.append(helixPreset)
 
-def helixGunPreset ():
+def helixGunPreset():
     startSimulation()
     allChargedObjs.append(SphereChargedObj(massScalar, -chargeScalar, vec(-15,1.5,0), vec(2, -.25, 0), False))
     allChargedObjs.append(SphereChargedObj(massScalar, chargeScalar, vec(-15,-1.5,0), vec(2, .25, 0), False))
@@ -2536,7 +2544,7 @@ configurationList.append(flowerPreset)
 
 # endregion    
 
-def createSecondScreen():
+def createPresetScreen():
     scene.caption = ""
 
     # region preset buttons
@@ -2691,10 +2699,10 @@ Controls:
 
 createInstruction()
 
-# region create first screen
+# region create intro screen
 
 # intro text
-introText = text(pos = vec(0, -1, -10), text="Electric Draw", align='center', color = color.cyan)
+introText = text(pos = vec(0, -1, -10), text="Electro-Sketch", align='center', color = color.cyan)
 introText.height = 10
 introText.length = 30
 
@@ -2739,7 +2747,7 @@ def start():
         secondScreenText.visible = True
 
         # caption
-        createSecondScreen()
+        createPresetScreen()
     
 scene.bind('click', start)
 
