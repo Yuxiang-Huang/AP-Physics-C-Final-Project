@@ -5,7 +5,7 @@ from vpython import *
 
 # region Variables
 
-testMode = False
+testMode = True
 
 # set scene
 scene.background = color.white
@@ -2428,14 +2428,6 @@ def jPreset():
     #allChargedObjs.append(SphereChargedObj(massScalar, 0, vec(0,5.95,0), vec(0, 0, 0), True))
 configurationList.append(jPreset)
 
-def chargeTrampolinePreset():
-    startSimulation()
-    allChargedObjs.append(SphereChargedObj(massScalar, -chargeScalar, vec(0,5,0), vec(0, 0, 0), True))
-    allChargedObjs.append(SphereChargedObj(massScalar, chargeScalar, vec(5,5,0), vec(0, 0, 0), False))
-    allChargedObjs.append(SphereChargedObj(massScalar, chargeScalar, vec(0,0,0), vec(0, 0, 0), True))
-    allChargedObjs.append(SphereChargedObj(massScalar, -chargeScalar, vec(5,0,0), vec(0, 0, 0), False))
-configurationList.append(chargeTrampolinePreset)
-
 def figureEightPreset():
     startSimulation()
     allChargedObjs.append(SphereChargedObj(massScalar, -chargeScalar, vec(0,0,0), vec(1,1, 0), False))
@@ -2496,12 +2488,12 @@ def plateTunnelPreset():
     allChargedObjs.append(SphereChargedObj(massScalar, -0.5*chargeScalar, vec(1,10,0), vec(0, -1, 0), False))
 configurationList.append(plateTunnelPreset)
 
-def chargeTrampoline2Preset():
+def chargeTrampolinePreset():
     startSimulation()
     allChargedObjs.append(PlateChargedObj(5*chargeScalar, 5*chargeScalar / (25 * chargeDensityScalar), 45, vec(0, 0, 0)))
     allChargedObjs.append(SphereChargedObj(massScalar, chargeScalar, vec(2.5,-2.5,0), vec(0, 0, 0), True))
     allChargedObjs.append(SphereChargedObj(massScalar, -7.5*chargeScalar, vec(7.5,2.5,0), vec(-2, -.25, 0), False))
-configurationList.append(chargeTrampoline2Preset)
+configurationList.append(chargeTrampolinePreset)
 
 def planeOscillationPreset(): 
     startSimulation()
@@ -2545,14 +2537,14 @@ def fourHelixPreset():
     allChargedObjs.append(SphereChargedObj(massScalar, -chargeScalar, vec(-10,-1.5,0), vec(2, .25, 0), False))
 configurationList.append(fourHelixPreset)
 
-def orbits():
+def fourOrbits():
     startSimulation()
     allChargedObjs.append(SphereChargedObj(massScalar, 5*chargeScalar, vec(0, 0, 0), vec(0, 0, 0), True))
     allChargedObjs.append(SphereChargedObj(massScalar, -0.1 * chargeScalar, vec(2, 0, 0), vec(0, 1.5, 0), False))
     allChargedObjs.append(SphereChargedObj(massScalar, -0.1 * chargeScalar, vec(-4, 0, 0), vec(0, -sqrt(1.125), 0), False))
     allChargedObjs.append(SphereChargedObj(massScalar, -0.1 * chargeScalar, vec(0, 6, 0), vec(-sqrt(0.75), 0, 0), False))
     allChargedObjs.append(SphereChargedObj(massScalar, -0.1 * chargeScalar, vec(0, -8, 0), vec(0.75, 0, 0), False))
-configurationList.append(orbits)
+configurationList.append(fourOrbits)
 
 def mineField():
     startSimulation()
@@ -2609,6 +2601,25 @@ def twoBodyMotionPreset():
     allChargedObjs.append(SphereChargedObj(massScalar, 5*chargeScalar, vec(5,0,0), vec(0, -sqrt(11.25), 0), False))
 configurationList.append(twoBodyMotionPreset)
 
+def randomFlowerPreset():
+    startSimulation()
+    num = 50
+    radius = 10
+    # ring of charge
+    for i in range(num):
+        theta = 2 * pi / num * i
+        allChargedObjs.append(SphereChargedObj(massScalar, chargeScalar, vec(cos(theta) * radius, sin(theta) * radius, 0), vec(0, 0, 0), True))
+    allChargedObjs.append(SphereChargedObj(massScalar, -chargeScalar, vec(0,0,0), vec(0, 0, 0), True))
+    
+    # random velocity
+    maxVel = 5
+    minVel = 2
+    theta = random() * 2 * pi
+    magnitude = random() * maxVel + minVel
+    randomVel = vec(magnitude * cos(theta), magnitude * cos(theta), 0)
+    allChargedObjs.append(SphereChargedObj(massScalar, chargeScalar, vec(0,5,0), randomVel, False))
+configurationList.append(randomFlowerPreset)
+
 # endregion    
 
 def createPresetScreen():
@@ -2639,6 +2650,8 @@ def createPresetScreen():
     button(text = 'Eliptical Orbit', bind = elipticalObritPreset) 
     scene.append_to_caption("   ")
     button(text = "Two-Body Motion", bind = twoBodyMotionPreset)
+    scene.append_to_caption("   ")
+    button(text = "Four Orbits", bind = fourOrbits)
 
     # Helixes
     scene.append_to_caption("\n\n   <b>Helixes</b>\n   ")
@@ -2649,12 +2662,12 @@ def createPresetScreen():
     button(text = "Helix Madness", bind = fourHelixPreset)
 
     # Waves
-    scene.append_to_caption("\n\n   <b>Waves</b>\n   ")
+    scene.append_to_caption("\n\n   <b>Oscillations</b>\n   ")
     button(text = "Loop Wave", bind = loopWavePreset)
     scene.append_to_caption("   ")
     button(text= "Collision Wave", bind = collisionWavePreset) 
     scene.append_to_caption("   ")
-    button(text = "??? Wave", bind = test)
+    button(text = "Plane Oscillation", bind = planeOscillationPreset)
 
     # Plates
     scene.append_to_caption("\n\n   <b>Plates</b>\n   ")
@@ -2664,23 +2677,17 @@ def createPresetScreen():
     scene.append_to_caption("   ")
     button(text = "Faraday Bucket", bind = faradayBucketPreset)
 
-    # Trampoline
-    scene.append_to_caption("\n\n   <b>Trampoline</b>\n   ")
-    button(text = "Sphere Trampoline", bind = chargeTrampolinePreset) 
-    scene.append_to_caption("   ")
-    button(text = "Plate Trampoline", bind = chargeTrampoline2Preset)
-
     # Flowers
-    scene.append_to_caption("\n\n   <b>Trampoline</b>\n   ")
+    scene.append_to_caption("\n\n   <b>Flowers</b>\n   ")
     button(text = "Flower", bind = flowerPreset)
     scene.append_to_caption("   ")
-    button(text = "Flower", bind = flowerPreset)
+    button(text = "Flower", bind = flowerTwoPreset)
     scene.append_to_caption("   ")
-    button(text = "Random Flower", bind = flowerPreset)
+    button(text = "Random Flower", bind = randomFlowerPreset)
 
     # Randomness
     scene.append_to_caption("\n\n   <b>Randomness</b>\n   ")
-    button(text = "Orbits", bind = orbits)
+    button(text = "Trampoline", bind = chargeTrampolinePreset)
     scene.append_to_caption("   ")
     button(text = "MineField", bind = mineField)
     scene.append_to_caption("   ")
@@ -2886,7 +2893,7 @@ startText.length = 10
 hover = False
 startBox = box(pos = vec(0, -6, -20), size = vec(12, 6, 0.1), color = color.green)
 
-# click to the second screen
+# click to the preset screen
 presetScreen = False
 
 def start():
@@ -2929,10 +2936,9 @@ scene.bind('click', start)
 if (testMode):
     hover = True
     start()
-    test()
+    randomFlowerPreset()
 else:
-    # configurationList[int(random() * len(configurationList))]()
-    planeOscillationPreset()
+    configurationList[int(random() * len(configurationList))]()
 
 # endregion
 
