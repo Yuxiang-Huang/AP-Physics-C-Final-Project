@@ -5,7 +5,7 @@ from vpython import *
 
 # region Variables
 
-testMode = True
+testMode = False
 
 # set scene
 scene.background = color.white
@@ -1285,8 +1285,7 @@ def save():
         newVersion.append(copy)
     # add to stored versions
     savedVersions.append(newVersion)
-    # name = input("Save as: ")
-    name = "D"
+    name = input("Save as: ")
     # name already exists
     if (name in savedVersionsNames):
         name += " ({})".format(len(savedVersionsNames))
@@ -2442,6 +2441,9 @@ def figureEightPreset():
 configurationList.append(figureEightPreset)
 
 def circularOrbitPreset(): 
+    if (presetScreen):
+        global electricFieldMode
+        electricFieldMode = 2
     startSimulation()
     allChargedObjs.append(SphereChargedObj(massScalar, -chargeScalar, vec(0,0,0), vec(0, 0, 0), True))
     allChargedObjs.append(SphereChargedObj(massScalar, chargeScalar, vec(0,5,0), vec(sqrt((9E9*1E-9*1E-9)/(5*1E-9)), 0, 0), False))
@@ -2480,6 +2482,13 @@ def faradayBucketPreset():
         gridMode = True
         electricPotentialMode = 1
     startSimulation()
+    if (presetScreen):
+        for i in range(gridPrecision):
+            potentialGridRows[i].visible = True
+            potentialGridCols[i].visible = True
+        for i in range(gridPrecision-1):
+            for j in range(gridPrecision-1):
+                electricPotentialLabels[i][j].visible = True
     allChargedObjs.append(PlateChargedObj(-chargeScalar, 100, 0, vec(0, -7, 0)))
     allChargedObjs.append(PlateChargedObj(-chargeScalar, 100, 90, vec(-5, -2, 0)))
     allChargedObjs.append(PlateChargedObj(-chargeScalar, 100, 90, vec(5, -2, 0)))
@@ -2947,7 +2956,7 @@ scene.bind('click', start)
 if (testMode):
     hover = True
     start()
-    plateTunnelPreset()
+    fourOrbits()
 else:
     configurationList[int(random() * len(configurationList))]()
 
@@ -3015,6 +3024,7 @@ while True:
             if (chargedObjSelected.type == "Sphere"):
                 updateVelocityStatsSelectScreen()
                 updateForceStatSelectScreen()
+    # updates every run if not playing
     elif (not playing):
         for chargedObj in allChargedObjs:
             chargedObj.displayElectricField()
