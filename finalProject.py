@@ -910,7 +910,8 @@ def clone(co):
 # endregion
 
 def test():
-    butterfly()
+    startSimulation()
+    # butterfly()
     
 def butterfly():
     global quantumTunneling
@@ -1544,12 +1545,12 @@ def plateSpawnChargeCheck():
     # change from 0 charge
     elif (spawnChargePlate == 0 and num != 0):
         spawnChargePlate = num * chargeScalar  
-        spawnArea = round(spawnChargePlate / spawnChargeDensity)
+        spawnArea = round(abs(spawnChargePlate) / spawnChargeDensity)
         createCaptionSpawnScreen()
     # not related to 0 charge
     elif (spawnChargePlate != 0 and num != 0):
         spawnChargePlate = num * chargeScalar  
-        spawnArea = round(spawnChargePlate / spawnChargeDensity)
+        spawnArea = round(abs(spawnChargePlate) / spawnChargeDensity)
 
 def spawnChargeShift():
     global spawnChargeSphere, spawnChargePlate, spawnChargeInputField
@@ -2462,8 +2463,8 @@ def parallelPlatesPreset():
         global electricFieldMode
         electricFieldMode = 1
     startSimulation()
-    allChargedObjs.append(PlateChargedObj(5*chargeScalar, 100, 90, vec(5, 0, 0)))
-    allChargedObjs.append(PlateChargedObj(-5*chargeScalar, 100, 90, vec(-5, 0, 0)))
+    allChargedObjs.append(PlateChargedObj(5*chargeScalar, 5*chargeScalar / (25 * chargeDensityScalar), 90, vec(5, 0, 0)))
+    allChargedObjs.append(PlateChargedObj(-5*chargeScalar, 5*chargeScalar / (25 * chargeDensityScalar), 90, vec(-5, 0, 0)))
     allChargedObjs.append(SphereChargedObj(massScalar, chargeScalar, vec(0,5,0), vec(0, -1, 0), False))
 configurationList.append(parallelPlatesPreset)
   
@@ -2561,7 +2562,7 @@ def mineField():
     # 5 - 10 postive charges
     num = round(random() * 5) + 5
     len = 10
-    maxVel = 5
+    maxVel = 3
     minVel = 2
     # positive charge
     for i in range(num):
