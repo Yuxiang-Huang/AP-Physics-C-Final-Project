@@ -5,7 +5,7 @@ from vpython import *
 
 # region Variables
 
-testMode = False
+testMode = True
 
 # set scene
 scene.background = color.white
@@ -911,20 +911,6 @@ def clone(co):
 
 def test():
     startSimulation()
-    num = 50
-    radius = 10
-    # ring of charge
-    for i in range(num):
-        theta = 2 * pi / num * i
-        allChargedObjs.append(SphereChargedObj(massScalar, chargeScalar, vec(cos(theta) * radius, sin(theta) * radius, 0), vec(0, 0, 0), True))
-    allChargedObjs.append(SphereChargedObj(massScalar, -chargeScalar, vec(0,0,0), vec(0, 0, 0), True))
-    allChargedObjs.append(SphereChargedObj(massScalar, chargeScalar, vec(0,5,0), vec(sqrt((9E9*1E-9*1E-9)/(5*1E-9)), 0, 0), False))
-
-    # allChargedObjs.append(SphereChargedObj(massScalar, 5*chargeScalar, vec(0,0,0), vec(0, 0, 0), True))
-
-    # allChargedObjs.append(SphereChargedObj(massScalar, -chargeScalar, vec(5,5,0), vec(0, 0, 0), False))
-    # allChargedObjs.append(SphereChargedObj(massScalar, -chargeScalar, vec(-5,5,0), vec(0, 0, 0), False))
-    # allChargedObjs.append(SphereChargedObj(massScalar, -chargeScalar, vec(0,-5,0), vec(0, 0, 0), False))
     
 def butterfly():
     global quantumTunneling
@@ -2412,16 +2398,14 @@ configurationList.append(helixGunPreset)
 
 def yPreset():
     startSimulation()
-    # allChargedObjs.append(SphereChargedObj(massScalar, 0, vec(5,5,0), vec(-1, -1, 0), False))
-    # allChargedObjs.append(SphereChargedObj(massScalar, 0, vec(-5,5,0), vec(1, -1, 0), False))
-    # allChargedObjs.append(SphereChargedObj(massScalar, 0, vec(0,-7,0), vec(0, -7/5, 0), False))
+    allChargedObjs.append(SphereChargedObj(massScalar, 0, vec(5,5,0), vec(-1, -1, 0), False))
+    allChargedObjs.append(SphereChargedObj(massScalar, 0, vec(-5,5,0), vec(1, -1, 0), False))
+    allChargedObjs.append(SphereChargedObj(massScalar, 0, vec(0,-7,0), vec(0, 7/5, 0), False))
 
     allChargedObjs.append(SphereChargedObj(.1*massScalar, 0, vec(5.5,5.5,0), vec(0, 0, 0), True))
     allChargedObjs.append(SphereChargedObj(.1*massScalar, 0, vec(-5.5,5.5,0), vec(0, 0, 0), True))
     allChargedObjs.append(SphereChargedObj(.1*massScalar, 0, vec(0,-7 - sqrt(0.5),0), vec(0, 0, 0), True))
     allChargedObjs.append(SphereChargedObj(.1*massScalar, 0, vec(0,0,0), vec(0, 0, 0), True))
-    allChargedObjs.append(SphereChargedObj(.1*massScalar, 0, vec(.5,.5,0), vec(0, 0, 0), True))
-    allChargedObjs.append(SphereChargedObj(.1*massScalar, 0, vec(-.5,.5,0), vec(0, 0, 0), True))
 configurationList.append(yPreset)
 
 def jPreset():
@@ -2477,8 +2461,8 @@ def parallelPlatesPreset():
         global electricFieldMode
         electricFieldMode = 1
     startSimulation()
-    allChargedObjs.append(PlateChargedObj(chargeScalar, 100, 90, vec(5, 0, 0)))
-    allChargedObjs.append(PlateChargedObj(-chargeScalar, 100, 90, vec(-5, 0, 0)))
+    allChargedObjs.append(PlateChargedObj(5*chargeScalar, 100, 90, vec(5, 0, 0)))
+    allChargedObjs.append(PlateChargedObj(-5*chargeScalar, 100, 90, vec(-5, 0, 0)))
     allChargedObjs.append(SphereChargedObj(massScalar, chargeScalar, vec(0,5,0), vec(0, -1, 0), False))
 configurationList.append(parallelPlatesPreset)
   
@@ -2575,12 +2559,12 @@ def mineField():
     startSimulation()
     # 5 - 10 postive charges
     num = round(random() * 5) + 5
-    len = 8
+    len = 10
     maxVel = 5
     minVel = 2
     # positive charge
     for i in range(num):
-        randomPos = vec(random() * 2 * len - len, random() * len * 2 - len, 0)
+        randomPos = vec(random() * 2 * (len+5) - (len+5), random() * len * 2 - len, 0)
         allChargedObjs.append(SphereChargedObj(massScalar, chargeScalar, randomPos, vec(0, 0, 0), True))
         allChargedObjs[-1].posCheck()
     # negative charge
@@ -2962,7 +2946,7 @@ scene.bind('click', start)
 if (testMode):
     hover = True
     start()
-    fourOrbits()
+    yPreset()
 else:
     configurationList[int(random() * len(configurationList))]()
 
