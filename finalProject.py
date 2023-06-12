@@ -1,11 +1,11 @@
-# Web VPython 3.2
+#Web VPython 3.2
 from vpython import *
 
 ####################################################################################################
 
 # region Variables
 
-testMode = True
+testMode = False
 
 # set scene
 scene.background = color.white
@@ -30,7 +30,7 @@ plateHeightFactor = 20
 # ratio of length to length of select display
 plateSelectDisplayFactor = 40
 # for plate when calculating electric field and potential
-deltaFactor = 10
+deltaFactor = 25
 
 # runs this many times per second
 numOfRate = 2000
@@ -910,7 +910,7 @@ def clone(co):
 # endregion
 
 def test():
-    startSimulation()
+    butterfly()
     
 def butterfly():
     global quantumTunneling
@@ -1286,6 +1286,7 @@ def createSavedCaption():
 def toSaved(version):
     global allChargedObjs 
     clear()
+    sleep(0.01)
     i = savedVersionsNames.index(version.text)
     for co in savedVersions[i]:
         # clone again so the button can be reused
@@ -2946,7 +2947,7 @@ scene.bind('click', start)
 if (testMode):
     hover = True
     start()
-    yPreset()
+    test()
 else:
     configurationList[int(random() * len(configurationList))]()
 
