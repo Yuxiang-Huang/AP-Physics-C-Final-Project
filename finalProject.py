@@ -5,7 +5,7 @@ from vpython import *
 
 # region Variables
 
-testMode = True
+testMode = False
 
 # set scene
 scene.background = color.white
@@ -475,7 +475,13 @@ class SphereChargedObj:
                             # find theta (angle between vectors)
                             magnitude = mag(self.vel)
                             dif = chargedObj.pos - self.pos
-                            theta = acos(dif.dot(self.vel) / mag(dif) / mag(self.vel))
+
+                            # prevent floating-point error
+                            cosTheta = dif.dot(self.vel) / mag(dif) / mag(self.vel)
+                            cosTheta = min(1, cosTheta)
+                            cosTheta = max(-1, cosTheta)
+
+                            theta = acos(cosTheta)
 
                             # cross product to figure out add or subtract
                             if (dif.cross(self.vel).z < 0):
@@ -905,6 +911,20 @@ def clone(co):
 
 def test():
     startSimulation()
+    num = 50
+    radius = 10
+    # ring of charge
+    for i in range(num):
+        theta = 2 * pi / num * i
+        allChargedObjs.append(SphereChargedObj(massScalar, chargeScalar, vec(cos(theta) * radius, sin(theta) * radius, 0), vec(0, 0, 0), True))
+    allChargedObjs.append(SphereChargedObj(massScalar, -chargeScalar, vec(0,0,0), vec(0, 0, 0), True))
+    allChargedObjs.append(SphereChargedObj(massScalar, chargeScalar, vec(0,5,0), vec(sqrt((9E9*1E-9*1E-9)/(5*1E-9)), 0, 0), False))
+
+    # allChargedObjs.append(SphereChargedObj(massScalar, 5*chargeScalar, vec(0,0,0), vec(0, 0, 0), True))
+
+    # allChargedObjs.append(SphereChargedObj(massScalar, -chargeScalar, vec(5,5,0), vec(0, 0, 0), False))
+    # allChargedObjs.append(SphereChargedObj(massScalar, -chargeScalar, vec(-5,5,0), vec(0, 0, 0), False))
+    # allChargedObjs.append(SphereChargedObj(massScalar, -chargeScalar, vec(0,-5,0), vec(0, 0, 0), False))
     
 def butterfly():
     global quantumTunneling
@@ -2404,8 +2424,8 @@ def jPreset():
     allChargedObjs.append(SphereChargedObj(massScalar, -chargeScalar, vec(0,5,0), vec(0, -1, 0), False))
     allChargedObjs.append(SphereChargedObj(massScalar, -.25*chargeScalar, vec(2.5,-4,0), vec(0, 0, 0), True))
     allChargedObjs.append(SphereChargedObj(massScalar, -.25*chargeScalar, vec(-3.5,-7,0), vec(0, 0, 0), True))
-    allChargedObjs.append(SphereChargedObj(massScalar, 0, vec(-4.572,.584,0), vec(0, 0, 0), True))
-    allChargedObjs.append(SphereChargedObj(massScalar, 0, vec(0,5.95,0), vec(0, 0, 0), True))
+    #allChargedObjs.append(SphereChargedObj(massScalar, 0, vec(-4.782449013,1.174905471,0), vec(0, 0, 0), True))
+    #allChargedObjs.append(SphereChargedObj(massScalar, 0, vec(0,5.95,0), vec(0, 0, 0), True))
 configurationList.append(jPreset)
 
 def chargeTrampolinePreset():
@@ -2480,8 +2500,14 @@ def chargeTrampoline2Preset():
     startSimulation()
     allChargedObjs.append(PlateChargedObj(5*chargeScalar, 5*chargeScalar / (25 * chargeDensityScalar), 45, vec(0, 0, 0)))
     allChargedObjs.append(SphereChargedObj(massScalar, chargeScalar, vec(2.5,-2.5,0), vec(0, 0, 0), True))
-    allChargedObjs.append(SphereChargedObj(massScalar, -7.5*chargeScalar, vec(7.5,2.5,0), vec(0, -1, 0), False))
+    allChargedObjs.append(SphereChargedObj(massScalar, -7.5*chargeScalar, vec(7.5,2.5,0), vec(-2, -.25, 0), False))
 configurationList.append(chargeTrampoline2Preset)
+
+def planeOscillationPreset(): 
+    startSimulation()
+    allChargedObjs.append(PlateChargedObj(5*chargeScalar, 5*chargeScalar / (25 * chargeDensityScalar), 90, vec(0, 0, 0)))
+    allChargedObjs.append(SphereChargedObj(massScalar, -chargeScalar, vec(3,0,0), vec(-1, -1, 0), False))
+configurationList.append(planeOscillationPreset)
 
 def flowerPreset():
     startSimulation()
@@ -2494,6 +2520,18 @@ def flowerPreset():
     allChargedObjs.append(SphereChargedObj(massScalar, -chargeScalar, vec(0,0,0), vec(0, 0, 0), True))
     allChargedObjs.append(SphereChargedObj(massScalar, chargeScalar, vec(0,5,0), vec(sqrt((9E9*1E-9*1E-9)/(5*1E-9)), 0, 0), False))
 configurationList.append(flowerPreset)
+
+def flowerTwoPreset():
+    startSimulation()
+    num = 50
+    radius = 10
+    # ring of charge
+    for i in range(num):
+        theta = 2 * pi / num * i
+        allChargedObjs.append(SphereChargedObj(massScalar, chargeScalar, vec(cos(theta) * radius, sin(theta) * radius, 0), vec(0, 0, 0), True))
+    allChargedObjs.append(SphereChargedObj(massScalar, -chargeScalar, vec(0,0,0), vec(0, 0, 0), True))
+    allChargedObjs.append(SphereChargedObj(massScalar, chargeScalar, vec(0,5,0), vec(1.031, -2.323, 0), False))
+configurationList.append(flowerTwoPreset)
 
 def fourHelixPreset(): 
     startSimulation()
@@ -2893,8 +2931,8 @@ if (testMode):
     start()
     test()
 else:
-    configurationList[int(random() * len(configurationList))]()
-    # twoBodyMotionPreset()
+    # configurationList[int(random() * len(configurationList))]()
+    planeOscillationPreset()
 
 # endregion
 
