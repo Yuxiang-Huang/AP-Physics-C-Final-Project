@@ -901,7 +901,7 @@ def clone(co):
     if (co.type == "Sphere"):
         copy = SphereChargedObj(co.mass, co.charge, co.pos, co.vel, co.fixed)
     elif (co.type == "Plate"):
-        copy = PlateChargedObj(co.mass, co.charge, co.pos, co.vel)
+        copy = PlateChargedObj(co.charge, co.display.length * co.display.width, degrees(atan2(co.display.axis.y, co.display.axis.x)), co.pos)
     copy.trailState = co.trailState
     if (not copy.trailState):
         copy.trail.stop()
@@ -1279,12 +1279,14 @@ def save():
         copy = clone(co)
         # hide
         copy.display.visible = False
-        copy.hideVec()
+        if (copy.type == "Sphere"):
+            copy.hideVec()
         # add to new list
         newVersion.append(copy)
     # add to stored versions
     savedVersions.append(newVersion)
-    name = input("Save as: ")
+    # name = input("Save as: ")
+    name = "D"
     # name already exists
     if (name in savedVersionsNames):
         name += " ({})".format(len(savedVersionsNames))
@@ -2069,7 +2071,7 @@ def selectedAreaInput():
         chargedObjSelected.display.size = vec(len, len / plateHeightFactor, len)
         chargedObjSelected.displaySelect()
     else:
-        selectedAreaInputField.text = chargedObjSelected.display.length
+        selectedAreaInputField.text = chargedObjSelected.display.length * chargedObjSelected.display.width
 
 # selected mass slider and input field
 def selectedMassShift(): 
@@ -2131,7 +2133,7 @@ def selectedAngleInput():
         chargedObjSelected.posCheck()
         resetPosChecked()
     else:
-        selectedAngleInputField.text = degrees(atan2(chargedObjSelected.display.axis.y, chargedObjSelected.display.axis.x))
+        selectedAngleInputField.text = round(degrees(atan2(chargedObjSelected.display.axis.y, chargedObjSelected.display.axis.x)))
 
 # use for mouse control
 def angleModified(angle):
@@ -2408,12 +2410,16 @@ configurationList.append(helixGunPreset)
 
 def yPreset():
     startSimulation()
-    allChargedObjs.append(SphereChargedObj(massScalar, 0, vec(0,5,0), vec(1, -1, 0), False))
-    allChargedObjs.append(SphereChargedObj(.1*massScalar, 0, vec(4.5,.5,0), vec(0, 0, 0), True))
-    allChargedObjs.append(SphereChargedObj(massScalar, 0, vec(10,5,0), vec(-1, -1, 0), False))
-    allChargedObjs.append(SphereChargedObj(.1*massScalar, 0, vec(0,-5,0), vec(0, 0, 0), True))
-    allChargedObjs.append(SphereChargedObj(.1*massScalar, 0, vec(-.5,5.5,0), vec(0, 0, 0), True))
-    allChargedObjs.append(SphereChargedObj(.1*massScalar, 0, vec(10.5,5.5,0), vec(0, 0, 0), True))
+    # allChargedObjs.append(SphereChargedObj(massScalar, 0, vec(5,5,0), vec(-1, -1, 0), False))
+    # allChargedObjs.append(SphereChargedObj(massScalar, 0, vec(-5,5,0), vec(1, -1, 0), False))
+    # allChargedObjs.append(SphereChargedObj(massScalar, 0, vec(0,-7,0), vec(0, -7/5, 0), False))
+
+    allChargedObjs.append(SphereChargedObj(.1*massScalar, 0, vec(5.5,5.5,0), vec(0, 0, 0), True))
+    allChargedObjs.append(SphereChargedObj(.1*massScalar, 0, vec(-5.5,5.5,0), vec(0, 0, 0), True))
+    allChargedObjs.append(SphereChargedObj(.1*massScalar, 0, vec(0,-7 - sqrt(0.5),0), vec(0, 0, 0), True))
+    allChargedObjs.append(SphereChargedObj(.1*massScalar, 0, vec(0,0,0), vec(0, 0, 0), True))
+    allChargedObjs.append(SphereChargedObj(.1*massScalar, 0, vec(.5,.5,0), vec(0, 0, 0), True))
+    allChargedObjs.append(SphereChargedObj(.1*massScalar, 0, vec(-.5,.5,0), vec(0, 0, 0), True))
 configurationList.append(yPreset)
 
 def jPreset():
@@ -2554,24 +2560,27 @@ def mineField():
     startSimulation()
     # 5 - 10 postive charges
     num = round(random() * 5) + 5
-    len = 10
+    len = 8
     maxVel = 5
     minVel = 2
     # positive charge
     for i in range(num):
-        randomPos = vec(random() * len - len / 2, random() * len - len / 2, 0)
+        randomPos = vec(random() * 2 * len - len, random() * len * 2 - len, 0)
         allChargedObjs.append(SphereChargedObj(massScalar, chargeScalar, randomPos, vec(0, 0, 0), True))
         allChargedObjs[-1].posCheck()
     # negative charge
     theta = random() * 2 * pi
-    magnitude = random() * maxVel + minVel
+    magnitude = random() * (maxVel - minVel) + minVel
     randomVel = vec(magnitude * cos(theta), magnitude * sin(theta), 0)
     allChargedObjs.append(SphereChargedObj(massScalar, -chargeScalar, vec(0, 0, 0), randomVel, False))
     allChargedObjs[-1].posCheck()
 configurationList.append(mineField)
 
 def randomChargeArena():
+    global trailStateAll
+    trailStateAll = False
     startSimulation()
+
     # borders
     len = 9
     allChargedObjs.append(PlateChargedObj(0 * chargeScalar, 4 * len * len, 0, vec(0, -len, 0)))
@@ -2590,8 +2599,6 @@ def randomChargeArena():
         allChargedObjs[-1].posCheck()
 
     # clear trail
-    global trailStateAll
-    trailStateAll = False
     for co in allChargedObjs:
         co.trail.stop() 
         co.trailState = False
@@ -2619,7 +2626,7 @@ def randomFlowerPreset():
     maxVel = 5
     minVel = 2
     theta = random() * 2 * pi
-    magnitude = random() * maxVel + minVel
+    magnitude = random() * (maxVel - minVel) + minVel
     randomVel = vec(magnitude * cos(theta), magnitude * sin(theta), 0)
     allChargedObjs.append(SphereChargedObj(massScalar, chargeScalar, vec(0,5,0), randomVel, False))
 configurationList.append(randomFlowerPreset)
@@ -2683,9 +2690,9 @@ def createPresetScreen():
 
     # Flowers
     scene.append_to_caption("\n\n   <b>Flowers</b>\n   ")
-    button(text = "Daisy", bind = flowerPreset)
+    button(text = "Clematis", bind = flowerPreset)
     scene.append_to_caption("   ")
-    button(text = "Clematis", bind = flowerTwoPreset)
+    button(text = "Daisy", bind = flowerTwoPreset)
     scene.append_to_caption("   ")
     button(text = "Random Flower", bind = randomFlowerPreset)
 
@@ -2693,7 +2700,7 @@ def createPresetScreen():
     scene.append_to_caption("\n\n   <b>Randomness</b>\n   ")
     button(text = "Trampoline", bind = chargeTrampolinePreset)
     scene.append_to_caption("   ")
-    button(text = "MineField", bind = mineField)
+    button(text = "Mine Field", bind = mineField)
     scene.append_to_caption("   ")
     button(text = "Chaos", bind = randomChargeArena)
     
@@ -2940,7 +2947,7 @@ scene.bind('click', start)
 if (testMode):
     hover = True
     start()
-    chargeTrampolinePreset()
+    plateTunnelPreset()
 else:
     configurationList[int(random() * len(configurationList))]()
 
