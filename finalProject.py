@@ -2394,6 +2394,9 @@ def threeChargePreset():
 configurationList.append(threeChargePreset)
 
 def helixPreset(): 
+    if (presetScreen):
+        global electricFieldMode
+        electricFieldMode = 2
     startSimulation()
     allChargedObjs.append(SphereChargedObj(massScalar, -chargeScalar, vec(-1.5,10,0), vec(.25, -2, 0), False))
     allChargedObjs.append(SphereChargedObj(massScalar, chargeScalar, vec(1.5,10,0), vec(-.25, -2, 0), False))
@@ -2470,6 +2473,9 @@ configurationList.append(elipticalObritPreset)
 
 #(self, spawnCharge, spawnArea, spawnAngle, spawnPos)
 def parallelPlatesPreset():
+    if (presetScreen):
+        global electricFieldMode
+        electricFieldMode = 1
     startSimulation()
     allChargedObjs.append(PlateChargedObj(chargeScalar, 100, 90, vec(5, 0, 0)))
     allChargedObjs.append(PlateChargedObj(-chargeScalar, 100, 90, vec(-5, 0, 0)))
@@ -2489,10 +2495,10 @@ def faradayBucketPreset():
         for i in range(gridPrecision-1):
             for j in range(gridPrecision-1):
                 electricPotentialLabels[i][j].visible = True
-    allChargedObjs.append(PlateChargedObj(-chargeScalar, 100, 0, vec(0, -7, 0)))
-    allChargedObjs.append(PlateChargedObj(-chargeScalar, 100, 90, vec(-5, -2, 0)))
-    allChargedObjs.append(PlateChargedObj(-chargeScalar, 100, 90, vec(5, -2, 0)))
-    allChargedObjs.append(SphereChargedObj(massScalar, chargeScalar, vec(0,5,0), vec(0, 0, 0), False))
+    allChargedObjs.append(PlateChargedObj(-chargeScalar, 100, 90, vec(-7, 0, 0)))
+    allChargedObjs.append(PlateChargedObj(-chargeScalar, 100, 0, vec(-2, -5, 0)))
+    allChargedObjs.append(PlateChargedObj(-chargeScalar, 100, 0, vec(-2, 5, 0)))
+    allChargedObjs.append(SphereChargedObj(massScalar, chargeScalar, vec(5,0,0), vec(0, 0, 0), False))
 configurationList.append(faradayBucketPreset)   
 
 def plateTunnelPreset():
